@@ -466,28 +466,7 @@ Screen groups expand into individual screens plus states (empty, loading, error,
 
 ---
 
-## 22. Open Questions — To Confirm Before Kickoff
-
-From the design scope, plus additions:
-
-1. **Platform target:** mobile app, responsive web, or both for MVP? *(MVP doc says responsive web — confirm.)*
-2. **Brand identity:** logo/colors exist (Medra blue-gradient mark) — is any further brand work in scope?
-3. **Staff roles beyond doctors** (nurses, receptionists, lab techs) needing distinct permissions? *(Drives RBAC.)*
-4. **Booking depth:** real-time calendar sync, waitlists, cancellations, **rescheduling** — which are MVP? *(Cancellation is in; rescheduling appears Phase 2.)*
-5. **Inter-staff communication:** direct messaging, task assignment, notes on records, or all three?
-6. **Patient→institution payments:** ever processed in-platform, or always offline? *(Currently offline.)*
-7. **Development team in place?** Affects handoff-doc depth.
-8. **Reference apps** to emulate or avoid (look/feel/UX)?
-9. **NDPR/medical-data handling:** specific consent, access-logging, or visibility requirements the UI must reflect?
-10. **MVP vs v2 feature line** — confirm the cut in §7/§9 is final.
-11. **SMS provider** and cost model (Termii vs Twilio vs other)?
-12. **Subscription price point** (₦___/month) and plan tiers by size?
-13. **Employer/organisation-sponsored plans** — in or out for pilot? *(Raised on call as feasible; suggest Phase 2+.)*
-14. **Consultation-fee handling for virtual bookings** — some clinics require pre-booking payment for online consults; how is that reconciled with "patients pay institutions directly"?
-
----
-
-## 23. What You Might Be Missing — Gaps & Recommendations
+## 22. What You Might Be Missing — Gaps & Recommendations
 
 A candid list of things not fully addressed in the brief/scope/MVP that typically bite medical platforms. Prioritised.
 
@@ -529,7 +508,7 @@ A candid list of things not fully addressed in the brief/scope/MVP that typicall
 
 ---
 
-## 24. Glossary
+## 23. Glossary
 
 - **MDCN** — Medical and Dental Council of Nigeria (doctor licensing/identity).
 - **NDPA / NDPR** — Nigeria Data Protection Act 2023 / Regulation.
@@ -541,11 +520,3 @@ A candid list of things not fully addressed in the brief/scope/MVP that typicall
 
 ---
 
-## 25. Appendix — Source Traceability
-
-This PRD synthesises three inputs:
-1. **UI/UX Design Brief** — discovery call transcript (Godwin Okwor × Israel Oni, 10 Jul 2026): three-tier vision, institution-pays model, portable history, drug-clash motivation, Abuja pilot, enterprise/multi-branch, private practitioners.
-2. **UI/UX Design Scope** — roles, per-role design scope, deliverables, 5–7 week process, and 10 pre-kickoff questions.
-3. **Medra MVP Feature Set** — the nine modules, the "one question" MVP thesis, explicit out-of-scope list, and the one-paragraph MVP definition.
-
-*End of document.*
