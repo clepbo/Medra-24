@@ -91,7 +91,7 @@ cover = (f'<Frame name="Medra DS — 00 Cover" w={{1440}} minH={{1024}} flex="ro
         '</Frame>'
       '</Frame>'
       '<Frame w={600} h="fill" bg="var:bg/subtle" overflow="hidden" flex="col" justify="center" items="center" p={40}>'
-        '<Image image="assets/logo/logo-primary-glow.png" w={500} h={343} />'
+        '<Image image="assets/logo/logo-primary-glow.png" w={520} h={399} />'
       '</Frame>'
     '</Frame>'
   '</Frame>')
@@ -185,10 +185,10 @@ frames.append((3,"03-brand-goals.jsx",frame("Medra DS — 03 Brand Goals", goals
 logo_body = (header("04","IDENTITY","Logo — Primary","The Medra mark: a script “M” ribbon flowing into a medical cross with an ECG pulse.")
     + '<Frame w="fill" flex="row" gap={20}>'
       '<Frame grow={1} h={360} rounded={20} bg="var:bg/subtle" stroke="var:border/subtle" strokeWidth={1} flex="col" justify="center" items="center">'
-        '<Image image="assets/logo/logo-primary.png" w={360} h={270} />'
+        '<Image image="assets/logo/logo-gradient.png" w={360} h={267} />'
       '</Frame>'
-      '<Frame w={360} h={360} rounded={20} image="assets/img/gradient-hero.png" overflow="hidden" flex="col" justify="center" items="center">'
-        '<Image image="assets/logo/logo-white.png" w={280} h={210} />'
+      '<Frame w={360} h={360} rounded={20} bg="var:bg/band" overflow="hidden" flex="col" justify="center" items="center">'
+        '<Image image="assets/logo/logo-white.png" w={300} h={223} />'
       '</Frame>'
     '</Frame>'
     + '<Frame w="fill" flex="row" gap={16}>'
@@ -204,7 +204,7 @@ constr_body = (header("05","IDENTITY","Logo — Construction &amp; Clear Space",
     + '<Frame w="fill" flex="row" gap={20}>'
       '<Frame grow={1} h={380} rounded={20} bg="var:bg/base" stroke="var:border/default" strokeWidth={1} flex="col" justify="center" items="center" p={40}>'
         '<Frame p={40} rounded={16} stroke="var:brand/teal" strokeWidth={2} bg="var:bg/subtle" flex="col" justify="center" items="center">'
-          '<Image image="assets/logo/logo-primary.png" w={300} h={225} />'
+          '<Image image="assets/logo/logo-gradient.png" w={300} h={223} />'
         '</Frame>'
         '<Text font="Inter" size={13} weight="regular" color="var:text/faint" >Clear space = height of the cross (X)</Text>'
       '</Frame>'
@@ -231,20 +231,20 @@ def logo_tile(img, label, dark=False, gradient=False):
             f'<Text font="Inter" size={{13}} weight="medium" color="{lblcol}">{label}</Text></Frame>')
 var_body = (header("06","IDENTITY","Logo — Variations","Use the version with the strongest contrast for its background. Never invent new colourways.")
     + '<Frame w="fill" flex="row" gap={16}>'
-      + logo_tile("assets/logo/logo-primary.png","Primary gradient")
-      + logo_tile("assets/logo/logo-navy.png","Solid navy")
+      + logo_tile("assets/logo/logo-gradient.png","Primary gradient")
+      + logo_tile("assets/logo/logo-navy.png","Navy blue")
       + logo_tile("assets/logo/logo-teal.png","Solid teal")
     + '</Frame>'
     + '<Frame w="fill" flex="row" gap={16}>'
       + logo_tile("assets/logo/logo-white.png","Reverse / white", dark=True)
-      + logo_tile("assets/logo/hero-white-glow.png","Soft glow (hero)", dark=True)
-      + logo_tile("assets/logo/logo-black.png","Mono black")
+      + logo_tile("assets/logo/logo-inverse.png","Inverse")
+      + logo_tile("assets/logo/logo-stroke.png","Stroke")
     + '</Frame>'
     + '<Frame w="fill" flex="row" gap={16}>'
       + card('<Text font="Inter" size={15} weight="semibold" color="var:text/strong">Lockups</Text>'
              '<Frame w="fill" flex="row" gap={24} items="center" pt={4}>'
-             '<Image image="assets/logo/lockup-horizontal.png" w={260} h={80} />'
-             '<Image image="assets/logo/lockup-stacked.png" w={150} h={90} />'
+             '<Image image="assets/logo/lockup-horizontal.png" w={280} h={78} />'
+             '<Image image="assets/logo/lockup-stacked.png" w={150} h={124} />'
              '</Frame>')
     + '</Frame>'
     + footer())
@@ -583,7 +583,7 @@ contact = (f'<Frame name="Medra DS — 20 Contact" w={{1440}} minH={{1024}} flex
         '<Rect w={56} h={3} bg="var:brand/teal" rounded={999} />'
       '</Frame>'
       '<Frame flex="col" gap={20}>'
-        '<Image image="assets/logo/hero-white-glow.png" w={450} h={309} />'
+        '<Image image="assets/logo/hero-white-glow.png" w={470} h={361} />'
         '<Text font="Inter" size={40} weight="bold" color="var:text/on-dark" w={720}>Every touchpoint is a brand touchpoint.</Text>'
       '</Frame>'
       '<Frame flex="row" gap={40} items="center">'

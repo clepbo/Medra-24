@@ -1,4 +1,8 @@
-# Medra
+<p align="center">
+  <img src="brand/png/medra-logo-primary.png" alt="Medra" width="240" />
+</p>
+
+<h1 align="center">Medra</h1>
 
 **A unified medical records & consultation-booking platform for Nigeria.**
 
