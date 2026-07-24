@@ -40,6 +40,15 @@ gradient panels, duotone imagery placeholders, doctor avatars.
 **Validation:** ALL 21 CLEAN, FULLY OFFLINE ✓ (0 prop warnings · 0 unknown tokens · no NaN ·
 all icons + images resolve).
 
+## v1.1 — Clean logo + canvas arrangement
+- **Logo:** replaced the glowing 3D treatment with the **clean vector mark** plus a
+  **subtle soft glow** (the 3D render's bloom is baked into its brightest pixels and can't be
+  cleanly separated). Cover uses the gradient mark on a light panel; Contact uses the reverse
+  mark on navy; Variations gains a "Soft glow (hero)" tile. New assets:
+  `logo-primary-glow.png`, `hero-white-glow.png`. Removed `logo-3d.png`.
+- **Canvas layout:** `link-medra.js` now **arranges the 21 frames into grouped section rows**
+  (Brand · Identity · Foundations · Components · Expression) instead of one horizontal line.
+
 ### Known / next
 - Hero uses the vector Medra mark as a placeholder — swap `assets/logo/hero-white.png`
   with the 3D render to embed it (re-render 00 + 20).

@@ -40,13 +40,19 @@ Get-ChildItem .\*.jsx | Sort-Object Name | ForEach-Object { figma-cli render (Ge
 .\render-changes.ps1 15-*.jsx        # just the buttons frame, etc.
 ```
 
-## 5. Wire the prototype
+## 5. Wire the prototype **and arrange the canvas**
 ```powershell
 figma-cli run .\link-medra.js
 ```
-The linker returns `{ linked, framesFound, missingHotspots }`. **If `missingHotspots` is
-non-empty**, that frame is a stale render — re-render just that `.jsx` (step 4b) and re-run
-the linker. Flow start is set to **00 Cover**.
+This does two things: (a) **arranges all 21 frames into grouped section rows** —
+Brand · Identity · Foundations · Components · Expression — so the canvas reads top-to-bottom
+by section instead of one long line; and (b) wires navigation. It returns
+`{ linked, framesFound, missingHotspots }`. **If `missingHotspots` is non-empty**, that frame
+is a stale render — re-render just that `.jsx` (step 4b) and re-run the linker. Flow start is
+set to **00 Cover**.
+
+> Re-running the linker re-arranges the grid. If you later hand-arrange frames yourself,
+> just don't re-run it — name-based linking means your layout is preserved regardless.
 
 ---
 

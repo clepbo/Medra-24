@@ -6,6 +6,28 @@
   frames.forEach(f => { byName[norm(f.name)] = f; });
   const F = name => byName[norm(name)];
 
+  // ---- arrange frames into grouped section rows (readable grid, not one long line) ----
+  const layoutRows = [
+    ["Medra DS — 00 Cover", "Medra DS — 01 Contents", "Medra DS — 02 Brand Story", "Medra DS — 03 Brand Goals"],
+    ["Medra DS — 04 Logo Primary", "Medra DS — 05 Logo Construction", "Medra DS — 06 Logo Variations", "Medra DS — 07 Logo Misuse"],
+    ["Medra DS — 08 Colour Primary", "Medra DS — 09 Colour Semantic", "Medra DS — 10 Gradient Elevation", "Medra DS — 11 Typography Typeface", "Medra DS — 12 Typography Scale", "Medra DS — 13 Iconography", "Medra DS — 14 Layout Grid"],
+    ["Medra DS — 15 Components Buttons", "Medra DS — 16 Components Forms", "Medra DS — 17 Components Cards", "Medra DS — 18 Components Badges"],
+    ["Medra DS — 19 Imagery", "Medra DS — 20 Contact"]
+  ];
+  const GAPX = 140, GAPY = 220;
+  let ay = 0;
+  for (const row of layoutRows) {
+    let ax = 0, rowH = 0;
+    for (const name of row) {
+      const f = F(name);
+      if (!f) continue;
+      f.x = ax; f.y = ay;
+      ax += f.width + GAPX;
+      rowH = Math.max(rowH, f.height);
+    }
+    ay += rowH + GAPY;
+  }
+
   // canonical frame order (drives "Next")
   const order = [
     "Medra DS — 00 Cover", "Medra DS — 01 Contents", "Medra DS — 02 Brand Story",
