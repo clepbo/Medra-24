@@ -90,8 +90,8 @@ cover = (f'<Frame name="Medra DS — 00 Cover" w={{1440}} minH={{1024}} flex="ro
           '<Text font="Inter" size={13} weight="regular" color="var:text/faint">medra.health · Abuja, Nigeria · 2026</Text>'
         '</Frame>'
       '</Frame>'
-      '<Frame w={600} h="fill" image="assets/img/gradient-hero.png" overflow="hidden" flex="col" justify="center" items="center" p={40}>'
-        '<Image image="assets/logo/hero-white.png" w={440} h={330} />'
+      '<Frame w={600} h="fill" bg="var:bg/band" overflow="hidden" flex="col" justify="center" items="center" p={40}>'
+        '<Image image="assets/logo/logo-3d.png" w={480} h={376} />'
       '</Frame>'
     '</Frame>'
   '</Frame>')
@@ -237,7 +237,7 @@ var_body = (header("06","IDENTITY","Logo — Variations","Use the version with t
     + '</Frame>'
     + '<Frame w="fill" flex="row" gap={16}>'
       + logo_tile("assets/logo/logo-white.png","Reverse / white", dark=True)
-      + logo_tile("assets/logo/hero-white.png","On gradient", gradient=True)
+      + logo_tile("assets/logo/logo-3d.png","3D hero (dark only)", dark=True)
       + logo_tile("assets/logo/logo-black.png","Mono black")
     + '</Frame>'
     + '<Frame w="fill" flex="row" gap={16}>'
@@ -583,7 +583,7 @@ contact = (f'<Frame name="Medra DS — 20 Contact" w={{1440}} minH={{1024}} flex
         '<Rect w={56} h={3} bg="var:brand/teal" rounded={999} />'
       '</Frame>'
       '<Frame flex="col" gap={20}>'
-        '<Image image="assets/logo/hero-white.png" w={360} h={270} />'
+        '<Image image="assets/logo/logo-3d.png" w={430} h={337} />'
         '<Text font="Inter" size={40} weight="bold" color="var:text/on-dark" w={720}>Every touchpoint is a brand touchpoint.</Text>'
       '</Frame>'
       '<Frame flex="row" gap={40} items="center">'
