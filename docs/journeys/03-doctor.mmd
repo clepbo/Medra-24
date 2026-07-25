@@ -1,0 +1,64 @@
+---
+title: Doctor / Staff Journey — "Dr. Ngozi" (works inside an institution)
+---
+flowchart TD
+    classDef start fill:#39B0CF,stroke:#1B3A5B,color:#FFFFFF;
+    classDef page fill:#F4F6F8,stroke:#B4C4D1,color:#0F2233;
+    classDef action fill:#1B3A5B,stroke:#0F2233,color:#FFFFFF;
+    classDef decision fill:#FBF1DD,stroke:#E0A32E,color:#0F2233;
+    classDef system fill:#E4F0F5,stroke:#2F8BAC,color:#0F2233;
+    classDef data fill:#0F2233,stroke:#39B0CF,color:#FFFFFF;
+    classDef done fill:#E6F5EE,stroke:#2FA36B,color:#0F2233;
+
+    A([Doctor opens Medra]):::start --> B{Has an account?}:::decision
+
+    %% ---- AUTH & VERIFY ----
+    B -- No --> R1[Register: phone number]:::page --> R2[/Enter OTP/]:::page
+    R2 --> R3[Enter MDCN number<br/>+ specialisation]:::page
+    R3 --> R4[[Pending: Medra verifies<br/>MDCN manually]]:::system
+    R4 --> R5{Verified?}:::decision
+    R5 -- Not yet --> R6[Awaiting verification<br/>screen]:::page --> R5
+    R5 -- Yes --> PROF
+    B -- Yes --> L1[Log in: phone + OTP]:::page --> SUBCHK
+
+    SUBCHK{Institution<br/>subscription active?}:::decision
+    SUBCHK -- Expired --> LOCK[Dashboard locked:<br/>ask admin to renew<br/>read-only]:::page --> SUBCHK
+    SUBCHK -- Active --> DASH
+
+    %% ---- PROFILE & AVAILABILITY ----
+    PROF[Set up profile:<br/>name · bio · photo · fee ·<br/>✔ verified badge]:::page --> AV1[Set weekly availability:<br/>days · hours · slot length]:::action
+    AV1 --> AV2[[Open slots now visible<br/>to patients]]:::system --> DASH
+
+    %% ---- DAILY DASHBOARD HUB ----
+    DASH[🩺 Daily Dashboard:<br/>today's appointment queue]:::page --> NAV{{Menu: Today · Calendar ·<br/>Patients · Messages · Settings}}:::system
+
+    DASH --> Q1{Pending booking<br/>to review?}:::decision
+    Q1 -- Decline --> Q2[Decline → reason]:::action --> Q3[[Patient & admin notified ·<br/>slot released]]:::system --> DASH
+    Q1 -- Confirm --> Q4[Confirm booking]:::action --> DASH
+    Q1 -- None --> START1
+
+    %% ---- CONSULTATION ----
+    DASH --> START1{Start next<br/>consultation?}:::decision
+    START1 -- No --> DASH
+    START1 -- Yes --> C1{Visit type?}:::decision
+    C1 -- Virtual --> C2[Send video room link<br/>via SMS]:::action --> C3
+    C1 -- In-person --> C3[Open patient record]:::page
+    C3 --> C4[(Read medical history:<br/>past visits · current meds ·<br/>allergies)]:::data
+    C4 --> C5[Write consultation note]:::action
+    C5 --> C6[Fields: complaint · diagnosis ·<br/>treatment · prescriptions ·<br/>follow-up date · comment ·<br/>private notes]:::page
+    C6 --> C7[Save note]:::action --> C8[(Saved to patient's<br/>shared history)]:::data
+    C8 --> C9{Outcome?}:::decision
+    C9 -- Completed --> C10[Mark appointment<br/>complete]:::done --> DASH
+    C9 -- Patient absent --> C11[Mark as no-show]:::page --> DASH
+
+    %% ---- CALENDAR / PATIENTS / MESSAGES ----
+    NAV --> CAL[Calendar:<br/>view & edit availability]:::page --> AV1
+    NAV --> PT1[Patients:<br/>search assigned patient]:::page --> C3
+    NAV --> MSG[Internal messaging<br/>with staff & admin]:::page --> DASH
+
+    %% ---- SETTINGS ----
+    NAV --> SET[Settings:<br/>edit profile · change password]:::page
+    SET --> LO[Log out]:::action --> END([Session ends]):::start
+    SET --> DASH
+
+    linkStyle default stroke:#5B6B7A,stroke-width:1.4px;

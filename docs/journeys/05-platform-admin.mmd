@@ -1,0 +1,52 @@
+---
+title: Platform Admin Journey — Medra Operations (runs the platform)
+---
+flowchart TD
+    classDef start fill:#39B0CF,stroke:#1B3A5B,color:#FFFFFF;
+    classDef page fill:#F4F6F8,stroke:#B4C4D1,color:#0F2233;
+    classDef action fill:#1B3A5B,stroke:#0F2233,color:#FFFFFF;
+    classDef decision fill:#FBF1DD,stroke:#E0A32E,color:#0F2233;
+    classDef system fill:#E4F0F5,stroke:#2F8BAC,color:#0F2233;
+    classDef done fill:#E6F5EE,stroke:#2FA36B,color:#0F2233;
+
+    A([Platform Admin logs in<br/>secure staff login]):::start --> DASH[🛡️ Admin Console:<br/>platform activity overview]:::page
+    DASH --> NAV{{Menu: Approvals · Verification ·<br/>Plans · Users · Activity · Settings}}:::system
+
+    %% ---- INSTITUTION APPROVALS ----
+    NAV --> AP1[Institution Approval Queue]:::page
+    AP1 --> AP2{Pending<br/>application?}:::decision
+    AP2 -- None --> DASH
+    AP2 -- Review --> AP3[Open application:<br/>licence · documents · details]:::page
+    AP3 --> AP4{Documents valid?}:::decision
+    AP4 -- Reject --> AP5[Reject with reason]:::action --> AP6[[Institution notified →<br/>can resubmit]]:::system --> AP1
+    AP4 -- Approve --> AP7[Approve institution]:::done --> AP8[[Institution goes live ·<br/>trial active]]:::system --> AP1
+
+    %% ---- MDCN VERIFICATION ----
+    NAV --> V1[MDCN Verification Queue:<br/>doctors & practitioners]:::page
+    V1 --> V2{Pending<br/>provider?}:::decision
+    V2 -- None --> DASH
+    V2 -- Review --> V3[Check MDCN number<br/>against register]:::page
+    V3 --> V4{Valid licence?}:::decision
+    V4 -- Reject --> V5[Reject → reason]:::action --> V6[[Provider notified]]:::system --> V1
+    V4 -- Approve --> V7[Grant ✔ verified badge]:::done --> V8[[Provider can go live]]:::system --> V1
+
+    %% ---- SUBSCRIPTION PLANS ----
+    NAV --> PL1[Subscription Plans]:::page
+    PL1 --> PL2[Create / edit plan:<br/>tier by institution size ·<br/>price · features]:::action --> PL3[[Plans available to<br/>institutions]]:::system --> DASH
+
+    %% ---- USERS ----
+    NAV --> U1[User Management:<br/>search institutions ·<br/>providers · patients]:::page
+    U1 --> U2{Action needed?}:::decision
+    U2 -- Suspend / flag --> U3[Suspend or flag account]:::action --> U1
+    U2 -- View only --> U1
+    U2 -- None --> DASH
+
+    %% ---- ACTIVITY / OVERSIGHT ----
+    NAV --> AC1[Platform Activity:<br/>bookings · subscriptions ·<br/>analytics*]:::page --> DASH
+
+    %% ---- SETTINGS ----
+    NAV --> SET[Settings:<br/>admin profile · security]:::page
+    SET --> LO[Log out]:::action --> END([Session ends]):::start
+    SET --> DASH
+
+    linkStyle default stroke:#5B6B7A,stroke-width:1.4px;

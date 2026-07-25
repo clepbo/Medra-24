@@ -1,0 +1,65 @@
+---
+title: Private Practitioner Journey — "Dr. Femi" (independent, pays own subscription)
+---
+flowchart TD
+    classDef start fill:#39B0CF,stroke:#1B3A5B,color:#FFFFFF;
+    classDef page fill:#F4F6F8,stroke:#B4C4D1,color:#0F2233;
+    classDef action fill:#1B3A5B,stroke:#0F2233,color:#FFFFFF;
+    classDef decision fill:#FBF1DD,stroke:#E0A32E,color:#0F2233;
+    classDef system fill:#E4F0F5,stroke:#2F8BAC,color:#0F2233;
+    classDef data fill:#0F2233,stroke:#39B0CF,color:#FFFFFF;
+    classDef done fill:#E6F5EE,stroke:#2FA36B,color:#0F2233;
+
+    A([Practitioner opens Medra]):::start --> B{Has an account?}:::decision
+
+    %% ---- REGISTER & VERIFY ----
+    B -- No --> R1[Enrol as independent<br/>service provider: phone]:::page --> R2[/Enter OTP/]:::page
+    R2 --> R3[Enter MDCN + specialisation<br/>+ practice details]:::page
+    R3 --> R4[[Pending: Medra verifies MDCN]]:::system --> R5{Verified?}:::decision
+    R5 -- Not yet --> R6[Awaiting verification]:::page --> R5
+    R5 -- Yes --> SUB1
+    B -- Yes --> L1[Log in: phone + OTP]:::page --> SUBCHK
+
+    %% ---- OWN SUBSCRIPTION ----
+    SUB1[[30-day free trial starts]]:::system --> PROF
+    SUBCHK{Subscription<br/>active?}:::decision
+    SUBCHK -- Expired --> EXP[Expired: profile hidden<br/>from search · dashboard locked]:::page --> PAY
+    SUBCHK -- Active --> DASH
+    PAY[Pay subscription<br/>Paystack]:::action --> PAYOK[[SMS: payment confirmed]]:::system --> DASH
+
+    %% ---- PROFILE & AVAILABILITY ----
+    PROF[Set up public profile:<br/>bio · photo · fee ·<br/>✔ verified badge]:::page --> AV1[Set weekly availability]:::action
+    AV1 --> AV2[[Profile now LIVE &<br/>bookable by patients]]:::system --> DASH
+
+    %% ---- DASHBOARD HUB ----
+    DASH[👨‍⚕️ Dashboard:<br/>today's appointments ·<br/>trial / plan status]:::page --> NAV{{Menu: Today · Calendar ·<br/>Patients · Billing · Settings}}:::system
+
+    %% ---- BOOKINGS (direct from patients) ----
+    DASH --> BK1{New direct<br/>booking?}:::decision
+    BK1 -- None --> START1
+    BK1 -- Review --> BK2{Accept?}:::decision
+    BK2 -- Decline --> BK3[Decline → reason]:::action --> BK4[[Patient notified ·<br/>slot released]]:::system --> DASH
+    BK2 -- Confirm --> BK5[Confirm booking]:::action --> DASH
+
+    %% ---- CONSULTATION ----
+    DASH --> START1{Start<br/>consultation?}:::decision
+    START1 -- No --> DASH
+    START1 -- Yes --> C1{Visit type?}:::decision
+    C1 -- Virtual --> C2[Send video link via SMS]:::action --> C3
+    C1 -- In-person --> C3[Open patient record]:::page
+    C3 --> C4[(Read medical history)]:::data --> C5[Write consultation note:<br/>diagnosis · prescriptions ·<br/>follow-up · comment]:::action
+    C5 --> C6[(Saved to patient's<br/>shared history)]:::data --> C7{Outcome?}:::decision
+    C7 -- Completed --> C8[Mark complete]:::done --> DASH
+    C7 -- Absent --> C9[Mark no-show]:::page --> DASH
+
+    %% ---- CALENDAR / PATIENTS / BILLING ----
+    NAV --> CAL[Calendar: edit availability]:::page --> AV1
+    NAV --> PT[Patients: my patient list]:::page --> C3
+    NAV --> BL[Billing: plan · invoices ·<br/>trial countdown]:::page --> SUBCHK
+
+    %% ---- SETTINGS ----
+    NAV --> SET[Settings:<br/>edit profile · change password]:::page
+    SET --> LO[Log out]:::action --> END([Session ends]):::start
+    SET --> DASH
+
+    linkStyle default stroke:#5B6B7A,stroke-width:1.4px;

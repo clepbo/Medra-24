@@ -1,0 +1,38 @@
+---
+title: Medra — Platform Overview (how everyone connects)
+---
+flowchart TD
+    classDef patient fill:#E4F0F5,stroke:#2F8BAC,color:#0F2233;
+    classDef doctor fill:#E6F5EE,stroke:#2FA36B,color:#0F2233;
+    classDef admin fill:#FBF1DD,stroke:#E0A32E,color:#0F2233;
+    classDef platform fill:#EAF1F5,stroke:#1B3A5B,color:#0F2233;
+    classDef data fill:#0F2233,stroke:#39B0CF,color:#FFFFFF;
+    classDef hub fill:#39B0CF,stroke:#1B3A5B,color:#FFFFFF;
+
+    P([👤 Patient<br/>free]):::patient
+    IA([🏥 Institution Admin<br/>paid subscription]):::admin
+    DR([🩺 Doctor / Staff]):::doctor
+    PP([👨‍⚕️ Private Practitioner<br/>paid subscription]):::doctor
+    PA([🛡️ Platform Admin<br/>Medra team]):::platform
+
+    MEDRA{{Medra Platform}}:::hub
+    DB[(Unified Medical<br/>Records Database)]:::data
+
+    PA -- approves & verifies --> IA
+    PA -- verifies MDCN --> DR
+    PA -- verifies MDCN --> PP
+    PA -- configures plans --> MEDRA
+
+    IA -- registers clinic, adds --> DR
+    IA -- allocates bookings to --> DR
+    P -- searches & books --> MEDRA
+    MEDRA -- routes booking --> IA
+    MEDRA -- direct booking --> PP
+    DR -- writes consultation note --> DB
+    PP -- writes consultation note --> DB
+    P -- reads own history --> DB
+    DB -- shared, portable record --> DR
+    IA -- pays subscription --> MEDRA
+    PP -- pays subscription --> MEDRA
+
+    linkStyle default stroke:#5B6B7A,stroke-width:1.5px;

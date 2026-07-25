@@ -49,6 +49,15 @@ all icons + images resolve).
 - **Canvas layout:** `link-medra.js` now **arranges the 21 frames into grouped section rows**
   (Brand · Identity · Foundations · Components · Expression) instead of one horizontal line.
 
+## v1.2 — Official logos + Variables & Styles
+- All logo art swapped to the **official Medra SVG set** (Gradient, Navy, Teal, White,
+  Inverse, Stroke) across cover, logo pages, variations + lockups, contact and sidebar;
+  glow / app-icon / favicon / lockups regenerated from the real mark.
+- Added **`styles-medra.js`** — creates Figma **Variables** (Medra Colour collection +
+  Medra Scale spacing/radius) and **Styles** (paint, text `Medra/Display…Caption`, and
+  effect `Medra/Elevation/E1, E2, Focus Ring`). Run via `figma-cli run .\styles-medra.js`
+  (see SETUP step 3b). Idempotent.
+
 ### Known / next
 - Hero uses the vector Medra mark as a placeholder — swap `assets/logo/hero-white.png`
   with the 3D render to embed it (re-render 00 + 20).

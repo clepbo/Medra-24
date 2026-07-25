@@ -29,6 +29,18 @@ figma-cli eval "(async()=>{const t='Medra — Design System';let p=figma.root.ch
 figma-cli tokens import-design-md .\DESIGN.md
 ```
 
+## 3b. Create Variables + Styles (colour, type, effect)
+```powershell
+figma-cli run .\styles-medra.js
+```
+Creates, under a **Medra** namespace: a **Medra Colour** variable collection (all palette
+tokens, single "Light" mode), a **Medra Scale** collection (spacing + radius number
+variables), **paint styles** (`Medra/brand/navy` …), **text styles** (`Medra/Display` …
+`Medra/Caption`, Inter), and **effect styles** (`Medra/Elevation/E1 Card`, `E2 Popover`,
+`Focus Ring`). Idempotent — it clears any existing `Medra/…` styles/collections first and
+returns a `{ variables, paintStyles, textStyles, effectStyles, notes }` report. Requires the
+**Inter** font available in Figma (it ships by default).
+
 ## 4a. FULL render (first time)
 ```powershell
 Get-ChildItem .\*.jsx | Sort-Object Name | ForEach-Object { figma-cli render (Get-Content $_.FullName -Raw) }

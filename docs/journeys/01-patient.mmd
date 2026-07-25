@@ -1,0 +1,80 @@
+---
+title: Patient Journey — "Amara" (end to end, no dead ends)
+---
+flowchart TD
+    classDef start fill:#39B0CF,stroke:#1B3A5B,color:#FFFFFF;
+    classDef page fill:#F4F6F8,stroke:#B4C4D1,color:#0F2233;
+    classDef action fill:#1B3A5B,stroke:#0F2233,color:#FFFFFF;
+    classDef decision fill:#FBF1DD,stroke:#E0A32E,color:#0F2233;
+    classDef system fill:#E4F0F5,stroke:#2F8BAC,color:#0F2233;
+    classDef data fill:#0F2233,stroke:#39B0CF,color:#FFFFFF;
+    classDef done fill:#E6F5EE,stroke:#2FA36B,color:#0F2233;
+
+    A([Amara opens Medra<br/>web app]):::start --> B{Already has<br/>an account?}:::decision
+
+    %% ---------- AUTH ----------
+    B -- No --> R1[Sign-up screen:<br/>enter phone number]:::page
+    R1 --> R2[/Enter 6-digit OTP<br/>sent by SMS/]:::page
+    R2 --> R3{Code correct?}:::decision
+    R3 -- No --> R4[Show error →<br/>Resend / re-enter]:::page --> R2
+    R3 -- Yes --> R5[Onboarding:<br/>name + optional details]:::page --> HOME
+    B -- Yes --> L1[Log in: phone number]:::page --> L2[/Enter OTP/]:::page --> L3{Correct?}:::decision
+    L3 -- No --> L4[Error → Forgot?<br/>Resend code]:::page --> L2
+    L3 -- Yes --> HOME
+    B -. Forgot access .-> FP[Password/OTP reset<br/>via SMS]:::page --> L2
+
+    %% ---------- HOME / SEARCH ----------
+    HOME[🏠 Home / Search<br/>search bar + specialties]:::page --> S1[Search doctors &<br/>institutions]:::action
+    HOME --> NAV{{Bottom nav: Home ·<br/>Appointments · Records · Profile}}:::system
+    S1 --> S2[Apply filters:<br/>specialty · location ·<br/>Today / This Week]:::page
+    S2 --> S3{Any matching<br/>providers?}:::decision
+    S3 -- No --> S4[Empty state:<br/>widen filters or<br/>'notify me' + suggestions]:::page --> S2
+    S3 -- Yes --> S5[Results list:<br/>verified badge · fee ·<br/>next open slot]:::page
+    S5 --> PROF[Provider profile:<br/>photo · bio · fee ·<br/>availability · reviews*]:::page
+    PROF -->|not the one| S5
+    PROF --> BK1{Book this<br/>provider?}:::decision
+    BK1 -- Not now --> S5
+
+    %% ---------- BOOKING ----------
+    BK1 -- Yes --> BK2[Pick a date &<br/>open time slot<br/>real-time calendar]:::page
+    BK2 --> BK3{Slot still<br/>available?}:::decision
+    BK3 -- No, just taken --> BK4[Notice → choose<br/>another slot]:::page --> BK2
+    BK3 -- Yes --> BK5[Choose type:<br/>In-person or Virtual]:::page
+    BK5 --> BK6{Pre-payment<br/>required?*}:::decision
+    BK6 -- Yes --> BK7[Pay consultation fee<br/>Paystack]:::action --> BK8
+    BK6 -- No --> BK8[Review & Confirm<br/>booking]:::action
+    BK8 --> CONF[✅ Confirmation screen<br/>booking reference no.]:::done
+    CONF --> SMS1[[SMS: booking confirmed<br/>+ in-app notice to doctor]]:::system
+    SMS1 --> APPT
+
+    %% ---------- APPOINTMENTS ----------
+    NAV --> APPT[📅 My Appointments:<br/>Upcoming · Past tabs]:::page
+    APPT --> AP1{Manage an<br/>upcoming visit?}:::decision
+    AP1 -- Cancel --> AP2[Cancel → confirm step]:::page --> AP3[[SMS: cancelled ·<br/>slot released]]:::system --> APPT
+    AP1 -- Reschedule* --> BK2
+    AP1 -- View details --> AP4[Appointment details:<br/>time · doctor · type · ref]:::page --> APPT
+
+    %% ---------- REMINDERS & VISIT ----------
+    CONF --> REM[[SMS reminders:<br/>24h before · 2h before]]:::system
+    REM --> VIS{Consultation<br/>type?}:::decision
+    VIS -- Virtual --> V1[[SMS: video room link<br/>before appointment]]:::system --> V2[Join video consult]:::page --> VISIT
+    VIS -- In-person --> V3[Attend clinic at<br/>booked time]:::page --> VISIT
+    VISIT[Consultation happens]:::action --> NOTE[[Doctor writes<br/>consultation note]]:::system --> DBW[(Saved to Amara's<br/>medical history)]:::data
+
+    %% ---------- MEDICAL HISTORY ----------
+    NAV --> H1[📖 My Medical Records:<br/>timeline of visits]:::page
+    DBW --> H1
+    H1 --> H2[Open a visit:<br/>complaint · diagnosis ·<br/>prescriptions · follow-up ·<br/>doctor's comment]:::page
+    H2 -->|private notes hidden| H1
+    H2 --> H3{Follow-up<br/>needed?}:::decision
+    H3 -- Yes --> PROF
+    H3 -- No --> H1
+
+    %% ---------- PROFILE / SETTINGS ----------
+    NAV --> PS[⚙️ Profile & Settings:<br/>edit profile · change password ·<br/>notifications]:::page
+    PS --> LO[Log out]:::action --> END([Session ends]):::start
+    PS --> HOME
+    APPT --> HOME
+    H1 --> HOME
+
+    linkStyle default stroke:#5B6B7A,stroke-width:1.4px;
