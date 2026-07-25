@@ -12,7 +12,8 @@
     ["Medra DS — 04 Logo Primary", "Medra DS — 05 Logo Construction", "Medra DS — 06 Logo Variations", "Medra DS — 07 Logo Misuse"],
     ["Medra DS — 08 Colour Primary", "Medra DS — 09 Colour Semantic", "Medra DS — 10 Gradient Elevation", "Medra DS — 11 Typography Typeface", "Medra DS — 12 Typography Scale", "Medra DS — 13 Iconography", "Medra DS — 14 Layout Grid"],
     ["Medra DS — 15 Components Buttons", "Medra DS — 16 Components Forms", "Medra DS — 17 Components Cards", "Medra DS — 18 Components Badges"],
-    ["Medra DS — 19 Imagery", "Medra DS — 20 Contact"]
+    ["Medra DS — 19 Imagery", "Medra DS — 20 Contact"],
+    ["Medra DS — J0 Platform Overview", "Medra DS — J1 Patient", "Medra DS — J2 Institution Admin", "Medra DS — J3 Doctor", "Medra DS — J4 Private Practitioner", "Medra DS — J5 Platform Admin"]
   ];
   const GAPX = 140, GAPY = 220;
   let ay = 0;
@@ -50,8 +51,15 @@
     "Nav Iconography": "Medra DS — 13 Iconography",
     "Nav Layout": "Medra DS — 14 Layout Grid",
     "Nav Components": "Medra DS — 15 Components Buttons",
-    "Nav Imagery & Contact": "Medra DS — 19 Imagery"
+    "Nav Imagery & Contact": "Medra DS — 19 Imagery",
+    "Nav User Journeys": "Medra DS — J0 Platform Overview"
   };
+
+  // user-journey cluster: chain "Next journey" J0→…→J5→Contents
+  const journeyChain = [
+    "Medra DS — J0 Platform Overview", "Medra DS — J1 Patient", "Medra DS — J2 Institution Admin",
+    "Medra DS — J3 Doctor", "Medra DS — J4 Private Practitioner", "Medra DS — J5 Platform Admin"
+  ];
 
   // find first descendant whose (normalised) name matches
   const findNamed = (root, target) => {
@@ -92,6 +100,12 @@
 
   // 3. a few in-context CTAs (no dead-ends)
   queue("Medra DS — 17 Components Cards", "Btn Book Ngozi", "Medra DS — 18 Components Badges");
+
+  // 3b. user-journey cluster navigation
+  journeyChain.forEach((name, i) => {
+    queue(name, "Btn Contents", "Medra DS — 01 Contents");
+    queue(name, "Btn Next", i < journeyChain.length - 1 ? journeyChain[i + 1] : "Medra DS — 01 Contents");
+  });
 
   // apply
   let linked = 0;

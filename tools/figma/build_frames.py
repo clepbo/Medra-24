@@ -120,6 +120,7 @@ toc_right = "".join([
     toc_row("14","Layout","Grid, spacing & radius"),
     toc_row("15","Components","Buttons, forms, cards, alerts"),
     toc_row("19","Imagery & Contact","Photography direction"),
+    toc_row("J","User Journeys","End-to-end flow per persona"),
 ])
 contents_body = (header("","INDEX","Table of Contents","A creative, product-grounded system — from brand foundations to production-ready UI components.")
     + '<Frame w="fill" flex="row" gap={20} items="start">'
@@ -595,6 +596,36 @@ contact = (f'<Frame name="Medra DS — 20 Contact" w={{1440}} minH={{1024}} flex
     '</Frame>'
   '</Frame>')
 frames.append((20,"20-contact.jsx",contact))
+
+# ============================================================ USER JOURNEYS (J0–J5)
+def journey_frame(fid, jnum, title, blurb, img, imgw, imgh):
+    body = (header(jnum, "USER JOURNEY", title, blurb)
+        + f'<Frame w="fill" flex="col" items="center" p={{24}} rounded={{16}} bg="var:bg/subtle" stroke="var:border/subtle" strokeWidth={{1}}>'
+          f'<Image image="assets/journeys/{img}" w={{{imgw}}} h={{{imgh}}} />'
+          f'</Frame>'
+        + '<Frame w="fill" flex="row" justify="between" items="center" pt={8}>'
+          '<Frame name="Btn Contents" flex="row" gap={8} items="center" px={16} py={10} rounded={999} bg="var:bg/subtle" stroke="var:border/default" strokeWidth={1}>'
+          '<Icon name="lucide:layout-dashboard" size={16} color="#5B6B7A" />'
+          '<Text font="Inter" size={14} weight="semibold" color="var:text/default">Back to Contents</Text>'
+          '</Frame>'
+          '<Frame name="Btn Next" flex="row" gap={8} items="center" px={18} py={10} rounded={999} bg="var:brand/navy">'
+          '<Text font="Inter" size={14} weight="semibold" color="var:text/on-dark">Next journey</Text>'
+          '<Icon name="lucide:arrow-right" size={16} color="#FFFFFF" />'
+          '</Frame>'
+          '</Frame>')
+    return frame(f"Medra DS — {fid}", body)
+
+journeys = [
+    ("J0 Platform Overview", "J0", "User Journey — Platform Overview", "How all five roles connect through the shared medical-records database.", "00-platform-overview.png", 1200, 689),
+    ("J1 Patient", "J1", "User Journey — Patient", "Sign up → find a verified doctor → book → reminders → attend → read history. No dead ends.", "01-patient.png", 1080, 3035),
+    ("J2 Institution Admin", "J2", "User Journey — Institution Admin", "Register the clinic → get approved → run bookings, staff, records, billing from one dashboard.", "02-institution-admin.png", 1200, 1221),
+    ("J3 Doctor", "J3", "User Journey — Doctor / Staff", "Register with MDCN → verify → set availability → work the daily queue → write consultation notes.", "03-doctor.png", 1160, 1963),
+    ("J4 Private Practitioner", "J4", "User Journey — Private Practitioner", "Independent provider — same care flow as a doctor, plus their own subscription.", "04-private-practitioner.png", 1200, 1405),
+    ("J5 Platform Admin", "J5", "User Journey — Platform Admin", "Approve institutions, verify every MDCN licence, configure plans, oversee activity.", "05-platform-admin.png", 1200, 706),
+]
+for i, (fid, jnum, title, blurb, img, iw, ih) in enumerate(journeys):
+    fn = f"J{i}-{fid.split(' ',1)[1].lower().replace(' ','-')}.jsx"
+    frames.append((21 + i, fn, journey_frame(fid, jnum, title, blurb, img, iw, ih)))
 
 # ---------- write ----------
 def sanitize(s):

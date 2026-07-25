@@ -3,9 +3,9 @@
 This bundle renders into **Figma Desktop** with `figma-ds-cli` — no API key, no internet.
 Run everything **from inside this unzipped folder**, with Figma Desktop open and connected.
 
-- **21 frames** (`*.jsx`) · **75 icons** (offline cache) · **1 linker** (`link-medra.js`)
+- **27 frames** (`*.jsx`) · **75 icons** (offline cache) · **1 linker** (`link-medra.js`)
 - Tokens: `DESIGN.md` (single-mode LIGHT) · Font: **Inter** (ships with Figma)
-- Offline validation: **ALL 21 CLEAN, FULLY OFFLINE ✓** (run `node validate.js` to re-check)
+- Offline validation: **ALL 27 CLEAN, FULLY OFFLINE ✓** (run `node validate.js` to re-check)
 
 > **No client patch needed.** Icon colours use hex values (not `var:token`), so the
 > `<Icon>`/`/`-in-colour parser bug does not apply — you do **not** need a patched
@@ -56,7 +56,7 @@ Get-ChildItem .\*.jsx | Sort-Object Name | ForEach-Object { figma-cli render (Ge
 ```powershell
 figma-cli run .\link-medra.js
 ```
-This does two things: (a) **arranges all 21 frames into grouped section rows** —
+This does two things: (a) **arranges all 27 frames into grouped section rows** —
 Brand · Identity · Foundations · Components · Expression — so the canvas reads top-to-bottom
 by section instead of one long line; and (b) wires navigation. It returns
 `{ linked, framesFound, missingHotspots }`. **If `missingHotspots` is non-empty**, that frame
@@ -69,7 +69,7 @@ set to **00 Cover**.
 ---
 
 ## Preview without Figma
-`preview.html` is a self-contained browser preview of all 21 frames (approximate — the real
+`preview.html` is a self-contained browser preview of all 27 frames (approximate — the real
 render is Figma). Open it in any browser. `medra-ds-overview.png` is the contact sheet.
 
 ## Notes

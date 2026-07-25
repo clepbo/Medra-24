@@ -49,6 +49,11 @@ all icons + images resolve).
 - **Canvas layout:** `link-medra.js` now **arranges the 21 frames into grouped section rows**
   (Brand · Identity · Foundations · Components · Expression) instead of one horizontal line.
 
+## v1.3 — User journeys in Figma
+- Added six **User Journey frames** (J0 Platform Overview + one per persona) that embed the
+  rendered flowcharts, with a "User Journeys" row in the canvas arrangement, a Contents index
+  link, and Back/Next navigation. Bundle is now **27 frames**.
+
 ## v1.2 — Official logos + Variables & Styles
 - All logo art swapped to the **official Medra SVG set** (Gradient, Navy, Teal, White,
   Inverse, Stroke) across cover, logo pages, variations + lockups, contact and sidebar;
