@@ -1,23 +1,33 @@
 {
   "Entry": [
-    "E1-splash-d.jsx",
-    "E1-splash-m.jsx",
-    "E2-role-d.jsx",
-    "E2-role-m.jsx"
+    "E1-onb1-d.jsx",
+    "E1-onb1-m.jsx",
+    "E2-onb2-d.jsx",
+    "E2-onb2-m.jsx",
+    "E3-onb3-d.jsx",
+    "E3-onb3-m.jsx",
+    "E4-welcome-d.jsx",
+    "E4-welcome-m.jsx",
+    "E5-role-d.jsx",
+    "E5-role-m.jsx"
   ],
   "Patient": [
     "P1-create-d.jsx",
     "P1-create-m.jsx",
     "P2-otp-d.jsx",
     "P2-otp-m.jsx",
-    "P3-onboard-d.jsx",
-    "P3-onboard-m.jsx",
-    "P4-login-d.jsx",
-    "P4-login-m.jsx",
-    "P5-help-d.jsx",
-    "P5-help-m.jsx",
-    "P6-success-d.jsx",
-    "P6-success-m.jsx"
+    "P3-name-d.jsx",
+    "P3-name-m.jsx",
+    "P4-about-d.jsx",
+    "P4-about-m.jsx",
+    "P5-health-d.jsx",
+    "P5-health-m.jsx",
+    "P6-login-d.jsx",
+    "P6-login-m.jsx",
+    "P7-help-d.jsx",
+    "P7-help-m.jsx",
+    "P8-success-d.jsx",
+    "P8-success-m.jsx"
   ],
   "Doctor": [
     "D1-create-d.jsx",

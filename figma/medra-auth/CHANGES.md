@@ -1,15 +1,21 @@
 # CHANGES — Medra Auth
 
+## v2.0 — "Soft Clinical" redesign + real photography
+Rebuilt away from the generic split-panel/white-form pattern after design review.
+
+**Visual language.** Real licensed photography (Unsplash, chosen for Nigerian/African
+representation) with a subtle brand grade and baked text scrims; soft mesh-gradient grounds;
+floating white cards at 28–32px radius; gradient CTA pills; glass circular controls; the
+**ECG pulse** as a signature device; and **highlight-chip headlines** ("Every doctor `verified`").
+Mobile frames carry a real device status bar and a photographic hero.
+
+**Onboarding, reworked.** A proper 3-slide photographic intro story (verified doctors → book
+before you leave home → your history follows you) → welcome → role selection. Patient profile
+setup became **three friendly steps** with tap-chips instead of dropdowns, and now captures
+**health basics** — blood group, allergies, current medicines, emergency contact — closing the
+clinical-safety gap flagged in the PRD.
+
+**66 frames · 33 screens · 4 pages · 262 prototype links · ALL 66 CLEAN, FULLY OFFLINE ✓**
+
 ## v1.0 — Authentication module (Editorial Light+)
-56 frames across 4 pages (Entry, Patient, Doctor, Institution), each screen in **Desktop
-1440×900** and **Mobile 390×844**. Persona-tinted brand panels, real inclusive copy, steppers,
-full state coverage (focus, error, filled, success, pending), and a 176-link clickable prototype
-with **no dead ends** — every screen has a forward path, a back path, and an exit.
-
-Screens: Entry (splash, role selection) · Patient (create, OTP, onboarding, login, can't-get-code,
-success) · Doctor (create+MDCN, OTP, password, verification pending, profile, login, 2-factor,
-forgot, reset, success) · Institution (register, document upload, plan, OTP, password, application
-pending, facility-admin login, forgot, reset, success).
-
-Imagery: on-brand generated placeholders (stock hosts blocked in build env) — swap `assets/img/*`
-for licensed Nigerian-healthcare photography later.
+Initial 56-frame build across Entry, Patient, Doctor and Institution pages.

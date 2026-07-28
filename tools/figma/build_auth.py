@@ -1,600 +1,814 @@
 #!/usr/bin/env python3
-"""Medra — Authentication module screens (Editorial Light+). Desktop 1440x900 + Mobile 390x844.
-One .jsx = one Figma frame. Organised by persona (rendered onto separate pages)."""
-import os, re
+"""Medra — Authentication screens. Distinctive "Soft Clinical" language:
+real photography, soft mesh grounds, floating white cards, ECG-pulse motif,
+highlight-chip headlines. Desktop 1440x900 + Mobile 390x844. One .jsx = one frame."""
+import os, re, json
 OUT = "/home/user/Medra-24/figma/medra-auth"
 os.makedirs(OUT, exist_ok=True)
 
-# icon colours use hex (avoids the /-in-token Icon parser bug)
-IC_MUTED="#7E8F9D"; IC_NAVY="#1B3A5B"; IC_TEAL="#39B0CF"; IC_ACCENT="#2F8BAC"; IC_WHITE="#FFFFFF"
-IC_OK="#2FA36B"; IC_WARN="#E0A32E"; IC_ERR="#D14343"
+W_IC="#FFFFFF"; N_IC="#1B3A5B"; T_IC="#39B0CF"; M_IC="#7E8F9D"; A_IC="#2F8BAC"
+OK_IC="#2FA36B"; WARN_IC="#E0A32E"; ERR_IC="#D14343"
 
-# ---------------- shared components ----------------
-def T(size, weight, color, txt, w=None, align=None):
+def T(size,weight,color,txt,w=None,align=None):
     a=f' align="{align}"' if align else ''
     ww=f' w={{{w}}}' if isinstance(w,int) else (' w="fill"' if w=="fill" else '')
     return f'<Text font="Inter" size={{{size}}} weight="{weight}" color="{color}"{ww}{a}>{txt}</Text>'
+def I(n,s=18,c=M_IC): return f'<Icon name="lucide:{n}" size={{{s}}} color="{c}" />'
+def SP(h): return f'<Frame h={{{h}}} />'
 
-def icon(n,size=18,color=IC_MUTED):
-    return f'<Icon name="lucide:{n}" size={{{size}}} color="{color}" />'
+def eyebrow(t,c="var:text/accent"): return T(12,"semibold",c,t.upper())
+def pulse(w=120,white=False): return f'<Image image="assets/img/pulse-{"white" if white else "teal"}.png" w={{{w}}} h={{{int(w*120/760)}}} />'
 
-def eyebrow(txt, color="var:text/accent"):
-    return T(12,"semibold",color,txt.upper())
+def head_chip(parts,size=30,color="var:text/strong"):
+    out=""
+    for txt,chip in parts:
+        out += (f'<Frame px={{12}} py={{2}} rounded={{12}} bg="var:brand/teal"><Text font="Inter" size={{{size}}} weight="bold" color="var:text/on-dark">{txt}</Text></Frame>'
+                if chip else T(size,"bold",color,txt))
+    return f'<Frame w="fill" flex="row" gap={{9}} items="center" wrap="wrap">{out}</Frame>'
 
-def hairline(w=64):
-    return (f'<Frame w="fill" flex="row" items="center" gap={{0}}>'
-            f'<Rect w={{{w}}} h={{3}} bg="var:brand/teal" rounded={{999}} />'
-            f'<Rect grow={{1}} h={{1}} bg="var:border/subtle" /></Frame>')
+def circle_btn(icon,name,dark=False):
+    bg='bg="var:bg/band-2"' if dark else 'bg="var:bg/base" stroke="var:border/subtle" strokeWidth={1}'
+    return (f'<Frame name="Btn {name}" w={{44}} h={{44}} rounded={{999}} {bg} flex="col" justify="center" items="center">'
+            f'{I(icon,19,W_IC if dark else N_IC)}</Frame>')
 
-def field(label, ic, value, placeholder=True, helper=None, error=None, focus=False, trailing=None, prefix=None):
-    border = "var:state/error" if error else ("var:border/accent" if focus else "var:border/default")
-    bw = 2 if (focus or error) else 1
-    valcol = "var:text/faint" if placeholder else "var:text/strong"
-    pre = (f'<Text font="Inter" size={{15}} weight="semibold" color="var:text/default">{prefix}</Text>'
-           f'<Rect w={{1}} h={{22}} bg="var:border/default" />') if prefix else ''
-    tr = (f'<Frame name="Btn {trailing[1]}" flex="row" items="center">{icon(trailing[0],18,IC_MUTED)}</Frame>') if trailing else ''
-    sub = ''
-    if error: sub = f'<Frame flex="row" gap={{6}} items="center">{icon("circle-alert",14,IC_ERR)}{T(12,"medium","var:state/error",error)}</Frame>'
-    elif helper: sub = T(12,"regular","var:text/muted",helper)
-    return (f'<Frame w="fill" flex="col" gap={{7}}>'
-            f'<Text font="Inter" size={{13}} weight="medium" color="var:text/default">{label}</Text>'
-            f'<Frame w="fill" flex="row" gap={{10}} items="center" px={{16}} py={{14}} rounded={{12}} bg="var:bg/base" stroke="{border}" strokeWidth={{{bw}}}>'
-            f'{icon(ic,18,IC_TEAL if focus else IC_MUTED)}{pre}'
-            f'<Text font="Inter" size={{15}} weight="regular" color="{valcol}" grow={{1}}>{value}</Text>{tr}</Frame>'
-            f'{sub}</Frame>')
+def stepper(i,n):
+    d=""
+    for k in range(n):
+        if k<i: d+='<Rect w={20} h={6} rounded={999} bg="var:brand/teal" />'
+        elif k==i: d+='<Rect w={30} h={6} rounded={999} bg="var:brand/navy" />'
+        else: d+='<Rect w={12} h={6} rounded={999} bg="var:neutral/200" />'
+    return f'<Frame flex="row" gap={{5}} items="center">{d}</Frame>'
 
-def select_field(label, ic, value, placeholder=True):
-    valcol="var:text/faint" if placeholder else "var:text/strong"
-    return (f'<Frame w="fill" flex="col" gap={{7}}>'
-            f'<Text font="Inter" size={{13}} weight="medium" color="var:text/default">{label}</Text>'
-            f'<Frame w="fill" flex="row" gap={{10}} items="center" px={{16}} py={{14}} rounded={{12}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>'
-            f'{icon(ic,18,IC_MUTED)}<Text font="Inter" size={{15}} weight="regular" color="{valcol}" grow={{1}}>{value}</Text>{icon("chevron-down",18,IC_MUTED)}</Frame></Frame>')
+def field(label,ic,value,ph=True,helper=None,error=None,focus=False,prefix=None,trailing=None):
+    bd="var:state/error" if error else ("var:border/accent" if focus else "var:border/subtle")
+    bw=2 if (focus or error) else 1
+    col="var:text/faint" if ph else "var:text/strong"
+    pre=(f'{T(15,"semibold","var:text/default",prefix)}<Rect w={{1}} h={{20}} bg="var:border/default" />') if prefix else ''
+    tr=f'<Frame name="Btn {trailing[1]}" flex="row">{I(trailing[0],18,M_IC)}</Frame>' if trailing else ''
+    sub=''
+    if error: sub=f'<Frame flex="row" gap={{6}} items="center">{I("circle-alert",14,ERR_IC)}{T(12,"medium","var:state/error",error)}</Frame>'
+    elif helper: sub=T(12,"regular","var:text/muted",helper)
+    return (f'<Frame w="fill" flex="col" gap={{7}}>{T(13,"medium","var:text/default",label)}'
+            f'<Frame w="fill" flex="row" gap={{10}} items="center" px={{16}} py={{15}} rounded={{16}} bg="var:neutral/50" stroke="{bd}" strokeWidth={{{bw}}}>'
+            f'{I(ic,18,T_IC if focus else M_IC)}{pre}{T(15,"regular",col,value,w="fill")}{tr}</Frame>{sub}</Frame>')
 
-def otp(n=6, filled="", error=False):
-    boxes=""
+def otp(filled="",n=6,err=False):
+    b=""
     for i in range(n):
-        f = i < len(filled)
-        active = i == len(filled)
-        col = "var:state/error" if error else ("var:border/accent" if active else ("var:brand/navy" if f else "var:border/default"))
-        bw = 2 if (active or error or f) else 1
-        ch = filled[i] if f else ""
-        boxes += (f'<Frame grow={{1}} h={{60}} flex="col" justify="center" items="center" rounded={{12}} bg="var:bg/base" stroke="{col}" strokeWidth={{{bw}}}>'
-                  f'{T(24,"bold","var:text/strong",ch) if ch else ""}</Frame>')
-    return f'<Frame w="fill" flex="row" gap={{10}}>{boxes}</Frame>'
+        f=i<len(filled); act=i==len(filled)
+        c="var:state/error" if err else ("var:border/accent" if act else ("var:brand/navy" if f else "var:border/subtle"))
+        bw=2 if (act or err or f) else 1
+        b+=(f'<Frame grow={{1}} h={{64}} flex="col" justify="center" items="center" rounded={{18}} bg="var:bg/base" stroke="{c}" strokeWidth={{{bw}}}>'
+            f'{T(26,"bold","var:text/strong",filled[i]) if f else ""}</Frame>')
+    return f'<Frame w="fill" flex="row" gap={{9}}>{b}</Frame>'
 
-def button(label, kind="primary", ic=None, block=True, name=None, trailing=None):
-    styles={"primary":'bg="var:brand/navy"',"teal":'bg="var:brand/teal"',
-            "secondary":'bg="var:bg/base" stroke="var:border/strong" strokeWidth={1}',
-            "ghost":'bg="var:bg/subtle"',"disabled":'bg="var:neutral/200"'}
-    txt={"primary":"var:text/on-dark","teal":"var:text/on-dark","secondary":"var:text/default",
-         "ghost":"var:text/default","disabled":"var:text/faint"}[kind]
-    icol=IC_WHITE if kind in ("primary","teal") else IC_NAVY
-    lead=icon(ic,18,icol) if ic else ''
-    trail=icon(trailing,18,icol) if trailing else ''
-    nm=f' name="Btn {name or label}"'
-    grow=' w="fill"' if block else ''
-    return (f'<Frame{nm}{grow} flex="row" gap={{8}} items="center" justify="center" px={{22}} py={{15}} rounded={{12}} {styles[kind]}>'
-            f'{lead}<Text font="Inter" size={{15}} weight="semibold" color="{txt}">{label}</Text>{trail}</Frame>')
+def cta(label,name,icon="arrow-right",img="btn-teal.jpg"):
+    return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{10}} justify="center" items="center" px={{24}} py={{17}} '
+            f'rounded={{999}} image="assets/img/{img}" overflow="hidden">{T(16,"semibold","var:text/on-dark",label)}'
+            f'{I(icon,18,W_IC) if icon else ""}</Frame>')
 
-def linkrow(pre, link, name):
-    return (f'<Frame w="fill" flex="row" gap={{6}} justify="center" items="center">'
-            f'{T(14,"regular","var:text/muted",pre)}'
-            f'<Frame name="Btn {name}" flex="row"><Text font="Inter" size={{14}} weight="semibold" color="var:text/accent">{link}</Text></Frame></Frame>')
+def ghost(label,name,icon=None):
+    return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{9}} justify="center" items="center" px={{22}} py={{16}} '
+            f'rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>'
+            f'{I(icon,18,N_IC) if icon else ""}{T(15,"semibold","var:text/default",label)}</Frame>')
 
-def stepper(i,total):
-    dots=""
-    for k in range(total):
-        if k<i: dots+=f'<Rect w={{22}} h={{6}} rounded={{999}} bg="var:brand/teal" />'
-        elif k==i: dots+=f'<Rect w={{28}} h={{6}} rounded={{999}} bg="var:brand/navy" />'
-        else: dots+=f'<Rect w={{14}} h={{6}} rounded={{999}} bg="var:neutral/200" />'
-    return f'<Frame flex="row" gap={{6}} items="center">{dots}</Frame>'
+def link(pre,lk,name,center=True):
+    j=' justify="center"' if center else ''
+    return (f'<Frame w="fill" flex="row" gap={{6}}{j} items="center">{T(14,"regular","var:text/muted",pre) if pre else ""}'
+            f'<Frame name="Btn {name}" flex="row">{T(14,"semibold","var:text/accent",lk)}</Frame></Frame>')
 
-def note(ic, txt, tone="info"):
+def note(ic,txt,tone="info"):
     bg={"info":"var:state/info-bg","ok":"var:state/success-bg","warn":"var:state/warning-bg"}[tone]
-    col={"info":IC_ACCENT,"ok":IC_OK,"warn":IC_WARN}[tone]
-    return (f'<Frame w="fill" flex="row" gap={{10}} items="start" p={{14}} rounded={{12}} bg="{bg}">'
-            f'{icon(ic,17,col)}<Text font="Inter" size={{13}} weight="regular" color="var:text/default" grow={{1}}>{txt}</Text></Frame>')
+    c={"info":A_IC,"ok":OK_IC,"warn":WARN_IC}[tone]
+    return (f'<Frame w="fill" flex="row" gap={{10}} items="start" p={{14}} rounded={{16}} bg="{bg}">{I(ic,17,c)}'
+            f'{T(13,"regular","var:text/default",txt,w="fill")}</Frame>')
 
-def checkbox(label, checked=True, name="consent"):
-    box=(f'<Frame w={{22}} h={{22}} rounded={{6}} bg="var:brand/teal" flex="col" justify="center" items="center">{icon("check",14,IC_WHITE)}</Frame>'
-         if checked else f'<Rect w={{22}} h={{22}} rounded={{6}} bg="var:bg/base" stroke="var:border/strong" strokeWidth={{1}} />')
-    return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{10}} items="start">{box}'
-            f'<Text font="Inter" size={{13}} weight="regular" color="var:text/muted" grow={{1}}>{label}</Text></Frame>')
+def checkbox(label,name,checked=True):
+    b=(f'<Frame w={{22}} h={{22}} rounded={{7}} bg="var:brand/teal" flex="col" justify="center" items="center">{I("check",14,W_IC)}</Frame>'
+       if checked else '<Rect w={22} h={22} rounded={7} bg="var:bg/base" stroke="var:border/strong" strokeWidth={1} />')
+    return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{11}} items="start">{b}'
+            f'{T(13,"regular","var:text/muted",label,w="fill")}</Frame>')
 
-def choice_card(ic, title, desc, name):
-    return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{16}} items="center" p={{20}} rounded={{16}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>'
-            f'<Frame w={{52}} h={{52}} rounded={{14}} bg="var:bg/muted" flex="col" justify="center" items="center">{icon(ic,24,IC_ACCENT)}</Frame>'
-            f'<Frame grow={{1}} flex="col" gap={{3}}>{T(17,"semibold","var:text/strong",title)}{T(13,"regular","var:text/muted",desc,w="fill")}</Frame>'
-            f'{icon("chevron-right",20,IC_TEAL)}</Frame>')
+def chips(options,sel=0,name="chip"):
+    out=""
+    for i,o in enumerate(options):
+        s=i==sel
+        st='image="assets/img/btn-navy.jpg" overflow="hidden"' if s else 'bg="var:bg/base" stroke="var:border/default" strokeWidth={1}'
+        out+=(f'<Frame name="Btn {name} {o}" flex="row" px={{16}} py={{11}} rounded={{999}} {st}>'
+              f'{T(14,"medium","var:text/on-dark" if s else "var:text/default",o)}</Frame>')
+    return f'<Frame w="fill" flex="row" gap={{9}} wrap="wrap">{out}</Frame>'
 
-def plan_card(title, price, sub, selected=False):
-    bd="var:border/accent" if selected else "var:border/default"; bw=2 if selected else 1
-    tick=(f'<Frame w={{22}} h={{22}} rounded={{999}} bg="var:brand/teal" flex="col" justify="center" items="center">{icon("check",13,IC_WHITE)}</Frame>'
-          if selected else f'<Rect w={{22}} h={{22}} rounded={{999}} stroke="var:border/strong" strokeWidth={{1}} bg="var:bg/base" />')
-    return (f'<Frame grow={{1}} flex="col" gap={{10}} p={{20}} rounded={{16}} bg="var:bg/base" stroke="{bd}" strokeWidth={{{bw}}}>'
-            f'<Frame w="fill" flex="row" justify="between" items="center">{T(15,"semibold","var:text/strong",title)}{tick}</Frame>'
-            f'<Frame flex="row" gap={{4}} items="end">{T(26,"bold","var:text/strong",price)}{T(13,"regular","var:text/muted","/mo")}</Frame>'
-            f'{T(12,"regular","var:text/muted",sub,w="fill")}</Frame>')
+def field_chips(label,options,sel=0,name="chip"):
+    return f'<Frame w="fill" flex="col" gap={{9}}>{T(13,"medium","var:text/default",label)}{chips(options,sel,name)}</Frame>'
 
-def upload_box(name="licence", done=False):
+def choice(ic,title,desc,name,sel=False):
+    bd="var:border/accent" if sel else "var:border/subtle"; bw=2 if sel else 1
+    return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{15}} items="center" p={{18}} rounded={{22}} bg="var:bg/base" stroke="{bd}" strokeWidth={{{bw}}}>'
+            f'<Frame w={{50}} h={{50}} rounded={{16}} bg="var:bg/muted" flex="col" justify="center" items="center">{I(ic,23,A_IC)}</Frame>'
+            f'<Frame grow={{1}} flex="col" gap={{2}}>{T(16,"semibold","var:text/strong",title)}{T(13,"regular","var:text/muted",desc,w="fill")}</Frame>'
+            f'{I("chevron-right",20,T_IC)}</Frame>')
+
+def proof(ic,label,dark=True):
+    bg='bg="var:bg/band-2"' if dark else 'bg="var:bg/base" stroke="var:border/subtle" strokeWidth={1}'
+    return (f'<Frame flex="row" gap={{8}} items="center" px={{14}} py={{9}} rounded={{999}} {bg}>{I(ic,15,T_IC)}'
+            f'{T(12,"medium","var:text/on-dark" if dark else "var:text/default",label)}</Frame>')
+
+def stat_row(items):
+    cells="".join(f'<Frame grow={{1}} flex="col" gap={{1}} items="center">{T(20,"bold","var:text/on-dark",v)}'
+                  f'{T(11,"regular","var:text/on-dark-muted",l)}</Frame>' for v,l in items)
+    return f'<Frame w="fill" flex="row" gap={{6}} items="center" px={{16}} py={{14}} rounded={{20}} bg="var:bg/band-2">{cells}</Frame>'
+
+def plan(title,price,sub,sel=False):
+    bd="var:border/accent" if sel else "var:border/subtle"; bw=2 if sel else 1
+    tick=(f'<Frame w={{22}} h={{22}} rounded={{999}} bg="var:brand/teal" flex="col" justify="center" items="center">{I("check",13,W_IC)}</Frame>'
+          if sel else '<Rect w={22} h={22} rounded={999} bg="var:bg/base" stroke="var:border/strong" strokeWidth={1} />')
+    return (f'<Frame name="Btn Plan {title}" w="fill" flex="row" gap={{14}} items="center" p={{18}} rounded={{22}} bg="var:bg/base" stroke="{bd}" strokeWidth={{{bw}}}>'
+            f'<Frame grow={{1}} flex="col" gap={{3}}>{T(15,"semibold","var:text/strong",title)}'
+            f'<Frame flex="row" gap={{4}} items="center">{T(22,"bold","var:text/strong",price)}{T(12,"regular","var:text/muted","/month")}</Frame>'
+            f'{T(12,"regular","var:text/muted",sub,w="fill")}</Frame>{tick}</Frame>')
+
+def upload(name,done=False,label="Practice licence"):
     if done:
-        return (f'<Frame w="fill" flex="row" gap={{12}} items="center" p={{16}} rounded={{14}} bg="var:state/success-bg" stroke="var:border/subtle" strokeWidth={{1}}>'
-                f'{icon("file-check",22,IC_OK)}<Frame grow={{1}} flex="col" gap={{1}}>{T(14,"semibold","var:text/strong","practice-licence.pdf")}{T(12,"regular","var:text/muted","1.2 MB · uploaded")}</Frame>'
-                f'<Frame name="Btn Remove licence" flex="row">{icon("x",18,IC_MUTED)}</Frame></Frame>')
-    return (f'<Frame name="Btn Upload {name}" w="fill" flex="col" gap={{8}} items="center" py={{28}} px={{20}} rounded={{14}} bg="var:bg/subtle" stroke="var:border/accent" strokeWidth={{1}}>'
-            f'{icon("upload",26,IC_ACCENT)}'
-            f'{T(14,"semibold","var:text/default","Tap to upload or drag &amp; drop")}'
+        return (f'<Frame w="fill" flex="row" gap={{12}} items="center" p={{15}} rounded={{18}} bg="var:state/success-bg">{I("file-check",22,OK_IC)}'
+                f'<Frame grow={{1}} flex="col" gap={{1}}>{T(14,"semibold","var:text/strong","practice-licence.pdf")}'
+                f'{T(12,"regular","var:text/muted","1.2 MB · uploaded")}</Frame>'
+                f'<Frame name="Btn Remove doc" flex="row">{I("x",18,M_IC)}</Frame></Frame>')
+    return (f'<Frame name="Btn {name}" w="fill" flex="col" gap={{7}} items="center" py={{26}} px={{18}} rounded={{18}} bg="var:state/info-bg" stroke="var:border/accent" strokeWidth={{1}}>'
+            f'{I("upload",25,A_IC)}{T(14,"semibold","var:text/default",label)}'
             f'{T(12,"regular","var:text/muted","PDF, JPG or PNG · up to 10 MB")}'
-            f'<Frame flex="row" gap={{8}} pt={{4}}>'
-            f'<Frame flex="row" gap={{6}} items="center" px={{12}} py={{7}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>{icon("camera",14,IC_NAVY)}{T(12,"medium","var:text/default","Camera")}</Frame>'
-            f'<Frame flex="row" gap={{6}} items="center" px={{12}} py={{7}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>{icon("file-text",14,IC_NAVY)}{T(12,"medium","var:text/default","Files")}</Frame>'
+            f'<Frame flex="row" gap={{8}} pt={{3}}>'
+            f'<Frame flex="row" gap={{6}} items="center" px={{12}} py={{7}} rounded={{999}} bg="var:bg/base">{I("camera",14,N_IC)}{T(12,"medium","var:text/default","Camera")}</Frame>'
+            f'<Frame flex="row" gap={{6}} items="center" px={{12}} py={{7}} rounded={{999}} bg="var:bg/base">{I("file-text",14,N_IC)}{T(12,"medium","var:text/default","Files")}</Frame>'
             f'</Frame></Frame>')
 
-def back_link(name="Back"):
-    return (f'<Frame name="Btn {name}" flex="row" gap={{6}} items="center">{icon("arrow-left",18,IC_NAVY)}'
-            f'{T(14,"semibold","var:text/default","Back")}</Frame>')
+def big_icon(ic,tone="ok",size=96):
+    bg={"ok":"var:state/success-bg","warn":"var:state/warning-bg","info":"var:state/info-bg"}[tone]
+    c={"ok":OK_IC,"warn":WARN_IC,"info":A_IC}[tone]
+    return f'<Frame w={{{size}}} h={{{size}}} rounded={{999}} bg="{bg}" flex="col" justify="center" items="center">{I(ic,int(size*0.45),c)}</Frame>'
 
-# ---------------- shells ----------------
-PANEL_H = {"patient":"panel-patient.png","doctor":"panel-doctor.png","institution":"panel-institution.png","entry":"panel-patient.png"}
-BAND = {"patient":"band-patient.png","doctor":"band-doctor.png","institution":"band-institution.png","entry":"band-patient.png"}
-PLABEL = {"patient":"For patients","doctor":"For doctors","institution":"For institutions","entry":"Welcome to Medra"}
+# ---------- mobile chrome ----------
+def statusbar(dark=False):
+    c="var:text/on-dark" if dark else "var:text/strong"
+    hexc="#FFFFFF" if dark else "#1B3A5B"
+    bars="".join(f'<Rect w={{3}} h={{{h}}} rounded={{2}} bg="{hexc}" />' for h in (5,7,9,11))
+    return (f'<Frame w="fill" flex="row" justify="between" items="center" px={{24}} pt={{14}} pb={{2}}>'
+            f'{T(13,"semibold",c,"9:41")}'
+            f'<Frame flex="row" gap={{6}} items="center"><Frame flex="row" gap={{2}} items="end">{bars}</Frame>'
+            f'{I("globe",13,hexc)}'
+            f'<Frame w={{22}} h={{11}} rounded={{3}} stroke="{hexc}" strokeWidth={{1}} flex="col" justify="center" px={{2}}>'
+            f'<Rect w={{13}} h={{6}} rounded={{1}} bg="{hexc}" /></Frame></Frame></Frame>')
 
-def desktop(name, persona, head, sub, body, primary, secondaries=(), footer=None, eb=None, back=False, step=None, panel_head=None, panel_sub=None, panel_img=None):
-    img = panel_img or PANEL_H[persona]
-    sec = "".join(secondaries)
-    steprow = f'{stepper(step[0],step[1])}' if step else ''
-    ebrow = eyebrow(eb) if eb else ''
-    backrow = back_link() if back else ''
-    footrow = footer or ''
-    panelH = panel_head or "Your health, in one place."
-    panelS = panel_sub or "Find verified care, book before you leave home, and carry your history everywhere."
-    return (f'<Frame name="{name}" w={{1440}} minH={{900}} flex="row" bg="var:bg/base">'
-      f'<Frame w={{548}} h="fill" image="assets/img/{img}" overflow="hidden" flex="col" justify="between" p={{48}}>'
-        f'<Image image="assets/logo/logo-white.png" w={{128}} h={{95}} />'
-        f'<Frame flex="col" gap={{16}} w="fill">'
-          f'{eyebrow(PLABEL[persona], color="var:text/on-dark-muted")}'
-          f'{T(40,"bold","var:text/on-dark",panelH,w="fill")}'
-          f'{T(17,"regular","var:text/on-dark-muted",panelS,w="fill")}'
-        f'</Frame>'
-        f'<Frame flex="row" gap={{10}} items="center" px={{16}} py={{12}} rounded={{999}} bg="var:bg/band-2">'
-          f'{icon("shield-check",18,IC_TEAL)}{T(13,"medium","var:text/on-dark","NDPR-aligned · your data is encrypted")}</Frame>'
-      f'</Frame>'
-      f'<Frame grow={{1}} h="fill" flex="col" justify="center" items="center" px={{48}} py={{48}}>'
-        f'<Frame w={{440}} flex="col" gap={{22}}>'
-          f'<Frame w="fill" flex="row" justify="between" items="center">{backrow}{steprow}</Frame>'
-          f'<Frame flex="col" gap={{10}}>{ebrow}{T(34,"bold","var:text/strong",head)}{T(16,"regular","var:text/muted",sub,w="fill")}</Frame>'
-          f'{body}'
-          f'<Frame w="fill" flex="col" gap={{12}}>{primary}{sec}</Frame>'
-          f'{footrow}'
-        f'</Frame>'
-      f'</Frame>'
-    f'</Frame>')
+def mob_form(name, eyebrow_t, head_parts, sub, body, primary, extras=(), step=None, back=True, help_btn=True):
+    hdr=(f'<Frame w="fill" flex="row" justify="between" items="center" px={{22}} pt={{10}} pb={{6}}>'
+         f'{circle_btn("arrow-left","Back") if back else "<Frame w={44} />"}'
+         f'{stepper(*step) if step else "<Frame />"}'
+         f'{circle_btn("circle-help","Help") if help_btn else "<Frame w={44} />"}</Frame>')
+    return (f'<Frame name="{name}" w={{390}} minH={{844}} flex="col" image="assets/img/surface-mobile.jpg" overflow="hidden">'
+            f'{statusbar()}{hdr}'
+            f'<Frame grow={{1}} w="fill" flex="col" gap={{18}} px={{22}} pt={{10}} pb={{26}}>'
+            f'<Frame w="fill" flex="col" gap={{9}}>{eyebrow(eyebrow_t)}{head_chip(head_parts,28)}'
+            f'{T(15,"regular","var:text/muted",sub,w="fill")}</Frame>'
+            f'{body}<Frame grow={{1}} />'
+            f'<Frame w="fill" flex="col" gap={{11}}>{primary}{"".join(extras)}</Frame></Frame></Frame>')
 
-def mobile(name, persona, head, sub, body, primary, secondaries=(), footer=None, eb=None, back=False, step=None, hero=False, header_right=None):
-    sec="".join(secondaries)
-    steprow=f'{stepper(step[0],step[1])}' if step else '<Frame />'
-    left = back_link() if back else f'<Image image="assets/logo/appicon.png" w={{34}} h={{34}} rounded={{8}} />'
-    right = header_right or '<Frame w={34} />'
-    herorow = (f'<Frame w="fill" h={{150}} image="assets/img/{BAND[persona]}" overflow="hidden" />') if hero else ''
-    ebrow=eyebrow(eb) if eb else ''
-    footrow=footer or ''
-    return (f'<Frame name="{name}" w={{390}} minH={{844}} flex="col" bg="var:bg/base">'
-      f'<Frame w="fill" flex="row" justify="between" items="center" px={{20}} pt={{22}} pb={{10}}>{left}{steprow}{right}</Frame>'
-      f'{herorow}'
-      f'<Frame grow={{1}} w="fill" flex="col" gap={{18}} px={{24}} pt={{16}} pb={{28}}>'
-        f'<Frame flex="col" gap={{8}}>{ebrow}{T(26,"bold","var:text/strong",head)}{T(15,"regular","var:text/muted",sub,w="fill")}</Frame>'
-        f'{body}'
-        f'<Frame grow={{1}} />'
-        f'<Frame w="fill" flex="col" gap={{12}}>{primary}{sec}{footrow}</Frame>'
-      f'</Frame>'
-    f'</Frame>')
+def mob_hero(name, img, eyebrow_t, head_parts, sub, primary, extras=(), dots=None, skip=True, proofs=None, hero_h=566):
+    skipbtn=(f'<Frame name="Btn Skip" flex="row" px={{14}} py={{8}} rounded={{999}} bg="var:bg/band-2">'
+             f'{T(13,"semibold","var:text/on-dark","Skip")}</Frame>') if skip else '<Frame />'
+    proofrow=f'<Frame w="fill" flex="row" gap={{8}} wrap="wrap">{"".join(proofs)}</Frame>' if proofs else ''
+    hero=(f'<Frame w="fill" h={{{hero_h}}} image="assets/img/{img}" overflow="hidden" flex="col" justify="between" pb={{24}}>'
+          f'{statusbar(dark=True)}'
+          f'<Frame w="fill" flex="row" justify="between" items="center" px={{22}} pt={{6}}>'
+          f'<Image image="assets/logo/logo-white.png" w={{74}} h={{55}} />{skipbtn}</Frame>'
+          f'<Frame grow={{1}} />'
+          f'<Frame w="fill" flex="col" gap={{10}} px={{24}}>{eyebrow(eyebrow_t,"var:brand/teal")}'
+          f'{head_chip(head_parts,29,"var:text/on-dark")}{T(15,"regular","var:text/on-dark-muted",sub,w="fill")}{proofrow}</Frame></Frame>')
+    sheet=(f'<Frame grow={{1}} w="fill" flex="col" gap={{16}} px={{24}} pt={{22}} pb={{28}}>'
+           f'{dots or ""}<Frame grow={{1}} />{primary}{"".join(extras)}</Frame>')
+    return (f'<Frame name="{name}" w={{390}} minH={{844}} flex="col" image="assets/img/surface-mobile.jpg" overflow="hidden">'
+            f'{hero}{sheet}</Frame>')
 
-frames=[]  # (page, filename, jsx)
-NAMES={}   # fid -> (desktop_name, mobile_name)
-PAGEOF={}  # fid -> persona page key
-ORDER={}   # page key -> [fid,...] in flow order
-def add(page, fid, desktop_jsx, mobile_jsx):
-    frames.append((page, f"{fid}-d.jsx", desktop_jsx))
-    frames.append((page, f"{fid}-m.jsx", mobile_jsx))
-    dn=re.search(r'name="([^"]+)"', desktop_jsx).group(1)
-    mn=re.search(r'name="([^"]+)"', mobile_jsx).group(1)
-    NAMES[fid]=(dn,mn); PAGEOF[fid]=page
+# ---------- desktop chrome ----------
+def desk_topbar():
+    return (f'<Frame w="fill" flex="row" justify="between" items="center" px={{56}} pt={{28}}>'
+            f'<Image image="assets/logo/logo-gradient.png" w={{104}} h={{77}} />'
+            f'<Frame flex="row" gap={{10}} items="center">'
+            f'<Frame name="Btn Language" flex="row" gap={{8}} items="center" px={{15}} py={{10}} rounded={{999}} bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>{I("globe",16,N_IC)}{T(13,"medium","var:text/default","English")}{I("chevron-down",15,M_IC)}</Frame>'
+            f'<Frame name="Btn Help" flex="row" gap={{8}} items="center" px={{15}} py={{10}} rounded={{999}} bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>{I("circle-help",16,N_IC)}{T(13,"medium","var:text/default","Need help?")}</Frame>'
+            f'</Frame></Frame>')
+
+def desk_panel(img, eyebrow_t, head_parts, sub, proofs=None, stats=None, h=664, w=560):
+    pr=f'<Frame w="fill" flex="row" gap={{8}} wrap="wrap">{"".join(proofs)}</Frame>' if proofs else ''
+    st=stat_row(stats) if stats else ''
+    return (f'<Frame w={{{w}}} h={{{h}}} rounded={{32}} image="assets/img/{img}" overflow="hidden" flex="col" justify="end" gap={{14}} p={{30}}>'
+            f'{eyebrow(eyebrow_t,"var:brand/teal")}{head_chip(head_parts,30,"var:text/on-dark")}'
+            f'{T(15,"regular","var:text/on-dark-muted",sub,w="fill")}{pr}{st}</Frame>')
+
+def desk(name, panel, form_children, form_w=500):
+    return (f'<Frame name="{name}" w={{1440}} minH={{900}} flex="col" image="assets/img/surface-desktop.jpg" overflow="hidden">'
+            f'{desk_topbar()}'
+            f'<Frame grow={{1}} w="fill" flex="row" justify="center" items="center" gap={{48}} px={{56}} py={{28}}>'
+            f'{panel}'
+            f'<Frame w={{{form_w}}} flex="col" gap={{18}} p={{38}} rounded={{32}} bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>'
+            f'{form_children}</Frame></Frame></Frame>')
+
+def desk_form(name, panel, eyebrow_t, head_parts, sub, body, primary, extras=(), step=None, back=True):
+    backbtn=(f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",18,N_IC)}'
+             f'{T(14,"semibold","var:text/default","Back")}</Frame>') if back else '<Frame />'
+    hdr=f'<Frame w="fill" flex="row" justify="between" items="center">{backbtn}{stepper(*step) if step else "<Frame />"}</Frame>'
+    return desk(name, panel,
+        f'{hdr}<Frame w="fill" flex="col" gap={{9}}>{eyebrow(eyebrow_t)}{head_chip(head_parts,32)}'
+        f'{T(15,"regular","var:text/muted",sub,w="fill")}</Frame>{body}'
+        f'<Frame w="fill" flex="col" gap={{11}}>{primary}{"".join(extras)}</Frame>')
+
+frames=[]; NAMES={}; ORDER={}
+def add(page,fid,d,m):
+    frames.append((page,f"{fid}-d.jsx",d)); frames.append((page,f"{fid}-m.jsx",m))
+    NAMES[fid]=(re.search(r'name="([^"]+)"',d).group(1), re.search(r'name="([^"]+)"',m).group(1))
     ORDER.setdefault(page,[]).append(fid)
 
-# ============================================================ ENTRY
-# E1 Splash / get started
-e1_body = ('<Frame w="fill" flex="col" gap={14} items="center" py={8}>'
-           '<Image image="assets/logo/logo-gradient.png" w={200} h={148} />'
-           + T(15,"regular","var:text/muted","Find verified care. Book before you leave home. Carry your medical history everywhere.",w="fill",align="center") + '</Frame>')
-e1_primary = button("Create an account","teal",name="Create account · Entry")
-add("Entry","E1-splash",
-    desktop("Auth · Entry — E1 Get Started","entry","Welcome to Medra","One account for booking, records and care — wherever you are.",
-            e1_body, e1_primary, [linkrow("Already have an account?","Log in","Login · Entry"),
-            note("globe","Available in English, Hausa, Yoruba, Igbo & Pidgin.","info")],
-            panel_head="Healthcare that follows you.", panel_sub="Verified doctors, real availability, and a medical history that travels with you."),
-    mobile("Auth · Entry — E1 Get Started · Mobile","entry","Welcome to Medra","One account for booking, records and care.",
-           e1_body, e1_primary, [linkrow("Already have an account?","Log in","Login · Entry")], hero=True))
+# ============================================================ ENTRY / ONBOARDING
+ONB=[("E1-onb1","onb-1.jpg","m-hero-doctor.jpg","Find care you can trust",
+      [("Every doctor",False),("verified",True)],
+      "We check every doctor's MDCN licence ourselves — so the person you book is the professional they say they are.",
+      [("shield-check","MDCN verified"),("badge-check","Licence checked")]),
+     ("E2-onb2","onb-2.jpg","onb-2.jpg","Book before you leave home",
+      [("See real",False),("availability",True)],
+      "No more wasted trips. See a doctor's genuinely open slots and book in-person or by video, from your phone.",
+      [("calendar-check","Real-time slots"),("video","In-person or video")]),
+     ("E3-onb3","onb-3.jpg","onb-3.jpg","Your history follows you",
+      [("One record,",False),("everywhere",True)],
+      "Diagnoses, prescriptions and results stay with you — so any doctor you see can care for you safely.",
+      [("clipboard-list","Portable records"),("lock","NDPR secure")])]
+for i,(fid,dimg,mimg,eb,hp,sub,pf) in enumerate(ONB):
+    prs=[proof(a,b) for a,b in pf]; dots=stepper(i,3)
+    add("Entry",fid,
+        desk(f"Auth · Entry — {fid[:2]} Onboarding {i+1}",
+             desk_panel(dimg,"Welcome to Medra",hp,sub,proofs=prs),
+             f'{eyebrow("Getting started")}{head_chip([(eb,False)],32)}'
+             f'{T(16,"regular","var:text/muted",sub,w="fill")}{SP(2)}{dots}{SP(6)}'
+             f'{cta("Next","Next "+fid)}{ghost("Skip introduction","Skip "+fid)}'),
+        mob_hero(f"Auth · Entry — {fid[:2]} Onboarding {i+1} · Mobile",mimg,"Welcome to Medra",hp,sub,
+                 cta("Next","Next "+fid),[link("","Skip introduction","Skip "+fid)],dots=dots,proofs=prs))
 
-# E2 Role selection
-e2_body=('<Frame w="fill" flex="col" gap={12}>'
-         + choice_card("user","I'm a patient","Book doctors and keep my records","Role Patient")
-         + choice_card("stethoscope","I'm a doctor","See patients and write consultation notes","Role Doctor")
-         + choice_card("building-2","I represent an institution","Register a clinic or hospital","Role Institution")
-         + '</Frame>')
-add("Entry","E2-role",
-    desktop("Auth · Entry — E2 Role Selection","entry","How will you use Medra?","Choose the option that fits you. You can only pick one — it sets up the right experience.",
-            e2_body, button("Continue","primary",trailing="arrow-right",name="Continue · Role"),
-            [linkrow("Not sure?","See how Medra works","Help · Role")], back=True,
-            panel_head="Built for everyone in care.", panel_sub="Patients, doctors and institutions — each with a tailored, secure experience."),
-    mobile("Auth · Entry — E2 Role Selection · Mobile","entry","How will you use Medra?","Choose the option that fits you.",
-           e2_body, button("Continue","primary",trailing="arrow-right",name="Continue · Role"), back=True))
+add("Entry","E4-welcome",
+    desk("Auth · Entry — E4 Welcome",
+         desk_panel("d-panel-patient.jpg","Medra",[("Healthcare that",False),("follows you",True)],
+                    "Verified doctors, real availability, and a medical history that travels with you.",
+                    stats=[("2,400+","Patients"),("180+","Doctors"),("4.9","Rating")]),
+         f'{eyebrow("Welcome")}{head_chip([("Let’s get you",False),("started",True)],32)}'
+         f'{T(16,"regular","var:text/muted","One account for booking, records and care — wherever you are in Nigeria.",w="fill")}'
+         f'{SP(2)}{pulse(140)}{SP(2)}'
+         f'{cta("Create an account","Create account")}{ghost("I already have an account","Login entry","log-in")}'
+         f'{note("shield-check","Your health data is encrypted and protected under the NDPR.","info")}'),
+    mob_hero("Auth · Entry — E4 Welcome · Mobile","m-hero-patient.jpg","Welcome to Medra",
+             [("Healthcare that",False),("follows you",True)],
+             "Verified doctors, real availability, and records that travel with you.",
+             cta("Create an account","Create account"),
+             [ghost("I already have an account","Login entry","log-in")],skip=False,
+             proofs=[proof("shield-check","NDPR secure"),proof("badge-check","MDCN verified")]))
+
+ROLE=(f'<Frame w="fill" flex="col" gap={{11}}>{choice("user","I am a patient","Book doctors and keep my records","Role Patient",sel=True)}'
+      f'{choice("stethoscope","I am a doctor","See patients and write consultation notes","Role Doctor")}'
+      f'{choice("building-2","I represent an institution","Register a clinic or hospital","Role Institution")}</Frame>')
+add("Entry","E5-role",
+    desk_form("Auth · Entry — E5 Role Selection",
+        desk_panel("d-panel-institution.jpg","Built for everyone in care",[("Care is a",False),("team",True)],
+                   "Patients, doctors and institutions — each gets an experience shaped around how they work.",
+                   proofs=[proof("users","5 roles"),proof("lock","Role-based access")]),
+        "Choose your role",[("How will you use",False),("Medra?",True)],
+        "Pick the one that fits you — it sets up the right experience. You can add another role later from Settings.",
+        ROLE,cta("Continue","Continue role"),[link("Not sure?","See how Medra works","Help role")]),
+    mob_form("Auth · Entry — E5 Role Selection · Mobile","Choose your role",
+        [("How will you use",False),("Medra?",True)],"Pick the one that fits you — you can add another later.",
+        ROLE,cta("Continue","Continue role"),[link("Not sure?","See how Medra works","Help role")]))
 
 # ============================================================ PATIENT
-P="patient"; PN="Patient"
-add(PN,"P1-create",
-    desktop("Auth · Patient — P1 Create Account",P,"Create your account","Enter your phone number — we'll text you a 6-digit code to confirm it.",
-            field("Phone number","phone","801 234 5678",prefix="🇳🇬 +234",helper="Standard SMS rates may apply.") + '<Frame h={4}/>' + checkbox("I agree to Medra's Terms of Service and Privacy Policy, and consent to my health data being processed under the NDPR."),
-            button("Send my code","teal",trailing="arrow-right",name="Send code · P1"),
-            [linkrow("Already have an account?","Log in","Login · P")], eb="Step 1 of 3", step=(0,3), back=True,
-            panel_head="Your health, in one place.", panel_sub="No paper to carry, no history to lose."),
-    mobile("Auth · Patient — P1 Create Account · Mobile",P,"Create your account","We'll text a 6-digit code to confirm your number.",
-           field("Phone number","phone","801 234 5678",prefix="+234") + '<Frame h={2}/>' + checkbox("I agree to the Terms &amp; Privacy Policy and NDPR data processing."),
-           button("Send my code","teal",trailing="arrow-right",name="Send code · P1"),
-           [linkrow("Already have an account?","Log in","Login · P")], step=(0,3), back=True))
+PP=lambda **kw: desk_panel("d-panel-patient.jpg",**kw)
+add("Patient","P1-create",
+    desk_form("Auth · Patient — P1 Create Account",
+        PP(eyebrow_t="For patients",head_parts=[("Your health,",False),("in one place",True)],
+           sub="No paper to carry. No history to lose. Just care that knows you.",
+           proofs=[proof("shield-check","NDPR secure"),proof("badge-check","Verified doctors")]),
+        "Step 1 of 5",[("Create your",False),("account",True)],
+        "Enter your phone number — we'll text you a 6-digit code to confirm it. No password needed, ever.",
+        f'<Frame w="fill" flex="col" gap={{16}}>{field("Phone number","phone","801 234 5678",prefix="+234",helper="Standard SMS rates may apply.")}'
+        f'{checkbox("I agree to Medra’s Terms of Service and Privacy Policy, and consent to my health data being processed under the NDPR.","Consent")}</Frame>',
+        cta("Send my code","Send code P1"),[link("Already have an account?","Log in","Login P")],step=(0,5)),
+    mob_form("Auth · Patient — P1 Create Account · Mobile","Step 1 of 5",
+        [("Create your",False),("account",True)],"We'll text a 6-digit code to confirm your number. No password needed.",
+        f'<Frame w="fill" flex="col" gap={{16}}>{field("Phone number","phone","801 234 5678",prefix="+234")}'
+        f'{checkbox("I agree to the Terms &amp; Privacy Policy and NDPR data processing.","Consent")}</Frame>',
+        cta("Send my code","Send code P1"),[link("Already have an account?","Log in","Login P")],step=(0,5)))
 
-add(PN,"P2-otp",
-    desktop("Auth · Patient — P2 Verify Code",P,"Enter the 6-digit code","We sent it to +234 801 234 5678.",
-            otp(6,"3907") + '<Frame w="fill" flex="row" gap={6} justify="center" items="center">' + T(13,"regular","var:text/muted","Didn't get it?") + '<Frame name="Btn Resend · P2" flex="row"><Text font="Inter" size={13} weight="semibold" color="var:text/faint">Resend in 0:24</Text></Frame></Frame>',
-            button("Verify","teal",name="Verify · P2"),
-            [linkrow("Wrong number?","Change it","Change number · P2"), linkrow("Code not arriving?","Get help","Help code · P2")],
-            eb="Step 2 of 3", step=(1,3), back=True,
-            panel_head="Almost there.", panel_sub="Confirming your number keeps your records secure and yours alone."),
-    mobile("Auth · Patient — P2 Verify Code · Mobile",P,"Enter the 6-digit code","Sent to +234 801 234 5678.",
-           otp(6,"3907") + linkrow("Didn't get it?","Resend in 0:24","Resend · P2"),
-           button("Verify","teal",name="Verify · P2"),
-           [linkrow("Wrong number?","Change it","Change number · P2")], step=(1,3), back=True))
+OTP_P=f'<Frame w="fill" flex="col" gap={{14}}>{otp("3907")}{link("Didn’t get it?","Resend in 0:24","Resend P2")}</Frame>'
+add("Patient","P2-otp",
+    desk_form("Auth · Patient — P2 Verify Code",
+        PP(eyebrow_t="For patients",head_parts=[("Almost",False),("there",True)],
+           sub="Confirming your number keeps your records secure and yours alone.",
+           proofs=[proof("lock","Encrypted"),proof("smartphone","One-time code")]),
+        "Step 2 of 5",[("Enter the",False),("6-digit code",True)],"We sent it to +234 801 234 5678 by SMS.",
+        OTP_P,cta("Verify and continue","Verify P2"),
+        [link("Wrong number?","Change it","Change number P2"),link("Code not arriving?","Get help another way","Help code P2")],step=(1,5)),
+    mob_form("Auth · Patient — P2 Verify Code · Mobile","Step 2 of 5",
+        [("Enter the",False),("6-digit code",True)],"Sent to +234 801 234 5678.",
+        OTP_P,cta("Verify and continue","Verify P2"),
+        [link("Wrong number?","Change it","Change number P2"),link("","Get help another way","Help code P2")],step=(1,5)))
 
-p3_body=(select_field("Full name","user","Amara Okeke",placeholder=False)
-        + select_field("Date of birth","calendar","12 March 1994",placeholder=False)
-        + select_field("Gender","users","Select — Female · Male · Non-binary · Prefer not to say")
-        + select_field("Preferred language","globe","English"))
-add(PN,"P3-onboard",
-    desktop("Auth · Patient — P3 Onboarding",P,"Tell us about you","This helps doctors care for you safely. You can change any of it later.",
-            p3_body + note("accessibility","Need larger text or screen-reader support? Turn on Accessibility mode in Settings anytime.","info"),
-            button("Continue","teal",trailing="arrow-right",name="Continue · P3"),
-            [linkrow("","Skip for now","Skip · P3")], eb="Step 3 of 3", step=(2,3), back=True,
-            panel_head="Care that knows you.", panel_sub="Your details stay private and are shared only with doctors you book."),
-    mobile("Auth · Patient — P3 Onboarding · Mobile",P,"Tell us about you","You can change any of this later.",
-           p3_body, button("Continue","teal",trailing="arrow-right",name="Continue · P3"),
-           [linkrow("","Skip for now","Skip · P3")], step=(2,3), back=True))
+NAME_B=(f'<Frame w="fill" flex="col" gap={{18}}>'
+        f'<Frame w="fill" flex="row" gap={{15}} items="center">'
+        f'<Frame w={{74}} h={{74}} rounded={{999}} bg="var:bg/muted" flex="col" justify="center" items="center">{I("camera",25,A_IC)}</Frame>'
+        f'<Frame name="Btn Add photo" flex="row" gap={{8}} items="center" px={{16}} py={{11}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>'
+        f'{I("upload",16,N_IC)}{T(13,"semibold","var:text/default","Add a photo (optional)")}</Frame></Frame>'
+        f'{field("Full name","user","Amara Okeke",ph=False)}'
+        f'{field("Date of birth","calendar-days","12 March 1994",ph=False,helper="Helps your doctor prescribe safely.")}</Frame>')
+add("Patient","P3-name",
+    desk_form("Auth · Patient — P3 Your Name",
+        PP(eyebrow_t="For patients",head_parts=[("Care that",False),("knows you",True)],
+           sub="Your details stay private and are shared only with doctors you choose to book.",
+           proofs=[proof("lock","Private by default")]),
+        "Step 3 of 5",[("What should we",False),("call you?",True)],
+        "This is the name your doctor will see on your records.",
+        NAME_B,cta("Continue","Continue P3"),[link("","Skip for now","Skip P3")],step=(2,5)),
+    mob_form("Auth · Patient — P3 Your Name · Mobile","Step 3 of 5",
+        [("What should we",False),("call you?",True)],"This is the name your doctor will see.",
+        NAME_B,cta("Continue","Continue P3"),[link("","Skip for now","Skip P3")],step=(2,5)))
 
-add(PN,"P4-login",
-    desktop("Auth · Patient — P4 Log In",P,"Welcome back","Enter your phone number and we'll text you a code to log in.",
-            field("Phone number","phone","801 234 5678",prefix="🇳🇬 +234"),
-            button("Send my code","teal",trailing="arrow-right",name="Send code · P4"),
-            [linkrow("New to Medra?","Create an account","Create · P4"), linkrow("Can't access your number?","Get help","Help · P4")], back=True,
-            panel_head="Good to see you again.", panel_sub="Your appointments and records are right where you left them."),
-    mobile("Auth · Patient — P4 Log In · Mobile",P,"Welcome back","We'll text you a code to log in.",
-           field("Phone number","phone","801 234 5678",prefix="+234"),
-           button("Send my code","teal",trailing="arrow-right",name="Send code · P4"),
-           [linkrow("New to Medra?","Create an account","Create · P4")], back=True))
+ABOUT_B=(f'<Frame w="fill" flex="col" gap={{18}}>'
+         f'{field_chips("Gender",["Female","Male","Non-binary","Prefer not to say"],0,"Gender")}'
+         f'{field_chips("Preferred language",["English","Hausa","Yoruba","Igbo","Pidgin"],0,"Language")}'
+         f'{field_chips("Text size",["Standard","Large","Extra large"],0,"Textsize")}</Frame>')
+add("Patient","P4-about",
+    desk_form("Auth · Patient — P4 About You",
+        PP(eyebrow_t="For patients",head_parts=[("Made for",False),("everyone",True)],
+           sub="Medra works in your language, at your pace, however you need to use it.",
+           proofs=[proof("globe","5 languages"),proof("accessibility","Accessible")]),
+        "Step 4 of 5",[("A few things",False),("about you",True)],
+        "Tap to choose. You can change any of this later in Settings.",
+        ABOUT_B,cta("Continue","Continue P4"),[link("","Skip for now","Skip P4")],step=(3,5)),
+    mob_form("Auth · Patient — P4 About You · Mobile","Step 4 of 5",
+        [("A few things",False),("about you",True)],"Tap to choose — change any of it later.",
+        ABOUT_B,cta("Continue","Continue P4"),[link("","Skip for now","Skip P4")],step=(3,5)))
 
-p5_body=('<Frame w="fill" flex="col" gap={12}>'
-         + choice_card("refresh-cw","Resend the code","Text the 6-digit code again","Resend · P5")
-         + choice_card("phone","Call me instead","Get the code by an automated call","Call · P5")
-         + choice_card("pencil","Change my number","I entered the wrong number","Change · P5")
-         + choice_card("message-square-text","Message support","Chat with the Medra team","Support · P5") + '</Frame>')
-add(PN,"P5-help",
-    desktop("Auth · Patient — P5 Can't Get Code",P,"Trouble getting your code?","Pick an option below — we'll get you in.",
-            p5_body, button("Back to verification","secondary",ic="arrow-left",name="Back to OTP · P5"),
-            [], back=True, panel_head="We've got you.", panel_sub="There's always a way in — no one gets stuck."),
-    mobile("Auth · Patient — P5 Can't Get Code · Mobile",P,"Trouble getting your code?","Pick an option — we'll get you in.",
-           p5_body, button("Back to verification","secondary",ic="arrow-left",name="Back to OTP · P5"), back=True))
+HEALTH_B=(f'<Frame w="fill" flex="col" gap={{16}}>'
+          f'{field_chips("Blood group",["A+","A-","B+","B-","O+","O-","AB+","Not sure"],4,"Blood")}'
+          f'{field("Allergies","triangle-alert","e.g. penicillin, peanuts")}'
+          f'{field("Medicines you take now","pill","e.g. metformin 500mg")}'
+          f'{field("Emergency contact","phone-call","802 000 0000",prefix="+234")}</Frame>')
+add("Patient","P5-health",
+    desk_form("Auth · Patient — P5 Health Basics",
+        PP(eyebrow_t="For patients",head_parts=[("Safer",False),("prescriptions",True)],
+           sub="Knowing your allergies and current medicines helps any doctor avoid a dangerous clash.",
+           proofs=[proof("heart-pulse","Clinical safety"),proof("pill","Drug-clash aware")]),
+        "Step 5 of 5",[("Your",False),("health basics",True)],
+        "Optional, but it helps doctors keep you safe. You can add more anytime.",
+        HEALTH_B,cta("Finish and go to my home","Finish P5"),[link("","I’ll do this later","Skip P5")],step=(4,5)),
+    mob_form("Auth · Patient — P5 Health Basics · Mobile","Step 5 of 5",
+        [("Your",False),("health basics",True)],"Optional — but it helps doctors keep you safe.",
+        HEALTH_B,cta("Finish","Finish P5"),[link("","I’ll do this later","Skip P5")],step=(4,5)))
 
-p6_body=('<Frame w="fill" flex="col" gap={16} items="center" py={8}>'
-         '<Frame w={92} h={92} rounded={999} bg="var:state/success-bg" flex="col" justify="center" items="center">'+icon("circle-check",44,IC_OK)+'</Frame>'
-         + T(15,"regular","var:text/muted","Your account is ready. Taking you to your home to find care and view appointments.",w="fill",align="center")
-         + note("info","Redirecting you to your patient home…","info") + '</Frame>')
-add(PN,"P6-success",
-    desktop("Auth · Patient — P6 Success",P,"You're all set, Amara","Welcome to Medra.",
-            p6_body, button("Go to my home","teal",trailing="arrow-right",name="Go home · P6"),
-            [linkrow("","Explore doctors near me","Explore · P6")],
-            panel_head="Welcome to Medra.", panel_sub="Care that follows you — everywhere."),
-    mobile("Auth · Patient — P6 Success · Mobile",P,"You're all set, Amara","Welcome to Medra.",
-           p6_body, button("Go to my home","teal",trailing="arrow-right",name="Go home · P6"),
-           [linkrow("","Explore doctors near me","Explore · P6")]))
+add("Patient","P6-login",
+    desk_form("Auth · Patient — P6 Log In",
+        PP(eyebrow_t="Welcome back",head_parts=[("Good to see you",False),("again",True)],
+           sub="Your appointments and records are exactly where you left them.",
+           proofs=[proof("calendar-check","2 upcoming visits")]),
+        "Log in",[("Welcome",False),("back",True)],
+        "Enter your phone number and we'll text you a code. No password to remember.",
+        field("Phone number","phone","801 234 5678",prefix="+234",focus=True),
+        cta("Send my code","Send code P6"),
+        [link("New to Medra?","Create an account","Create P6"),link("Can't access your number?","Get help","Help P6")]),
+    mob_form("Auth · Patient — P6 Log In · Mobile","Log in",[("Welcome",False),("back",True)],
+        "We'll text you a code — no password to remember.",
+        field("Phone number","phone","801 234 5678",prefix="+234",focus=True),
+        cta("Send my code","Send code P6"),
+        [link("New to Medra?","Create an account","Create P6"),link("","Can't access your number?","Help P6")]))
+
+HELPC=(f'<Frame w="fill" flex="col" gap={{11}}>'
+       f'{choice("refresh-cw","Resend the code","Text the 6-digit code again","Resend help")}'
+       f'{choice("phone-call","Call me instead","Get the code by automated call","Call help")}'
+       f'{choice("pencil","Change my number","I entered the wrong number","Change help")}'
+       f'{choice("message-square-text","Message support","Chat with the Medra team","Support help")}</Frame>')
+add("Patient","P7-help",
+    desk_form("Auth · Patient — P7 Cannot Get Code",
+        PP(eyebrow_t="We've got you",head_parts=[("No one gets",False),("stuck",True)],
+           sub="There is always another way in. If none of these work, our team will help you personally.",
+           proofs=[proof("helping-hand","Human support")]),
+        "Trouble signing in",[("Didn't get your",False),("code?",True)],
+        "Pick an option below — we'll get you in.",HELPC,
+        ghost("Back to verification","Back to OTP","arrow-left"),[]),
+    mob_form("Auth · Patient — P7 Cannot Get Code · Mobile","Trouble signing in",
+        [("Didn't get your",False),("code?",True)],"Pick an option — we'll get you in.",HELPC,
+        ghost("Back to verification","Back to OTP","arrow-left")))
+
+SUC_P=(f'<Frame w="fill" flex="col" gap={{16}} items="center">{big_icon("circle-check","ok")}'
+       f'{T(15,"regular","var:text/muted","Your account is ready. Next: find a verified doctor near you and book your first visit.",w="fill",align="center")}'
+       f'{note("info","Taking you to your patient home…","info")}</Frame>')
+add("Patient","P8-success",
+    desk("Auth · Patient — P8 Success",
+        desk_panel("success.jpg","You're in",[("Welcome to",False),("Medra",True)],
+                   "Care that follows you — everywhere in Nigeria.",
+                   stats=[("180+","Verified doctors"),("24/7","Booking"),("4.9","Patient rating")]),
+        f'{eyebrow("All set")}{head_chip([("You’re all set,",False),("Amara",True)],32)}{SUC_P}'
+        f'{cta("Go to my home","Go home P8","house")}{ghost("Explore doctors near me","Explore P8","search")}'),
+    mob_hero("Auth · Patient — P8 Success · Mobile","success.jpg","All set",
+        [("You're all set,",False),("Amara",True)],"Your account is ready — let's find you care.",
+        cta("Go to my home","Go home P8","house"),[ghost("Explore doctors near me","Explore P8","search")],skip=False,
+        proofs=[proof("circle-check","Account verified")]))
 
 # ============================================================ DOCTOR
-D="doctor"; DN="Doctor"
-d1_body=(field("Phone number","phone","803 555 0110",prefix="🇳🇬 +234")
-        + field("MDCN number","id-card","MDCN/45201",placeholder=True,helper="Your Medical & Dental Council of Nigeria licence number.")
-        + select_field("Specialisation","stethoscope","Select your specialty"))
-add(DN,"D1-create",
-    desktop("Auth · Doctor — D1 Create Account",D,"Join Medra as a doctor","We verify every doctor's MDCN licence before your profile goes live.",
-            d1_body, button("Continue","primary",trailing="arrow-right",name="Continue · D1"),
-            [linkrow("Already registered?","Log in","Login · D")], eb="Step 1 of 4", step=(0,4), back=True,
-            panel_head="Your practice, amplified.", panel_sub="Reach patients who need you, with a schedule that respects your time."),
-    mobile("Auth · Doctor — D1 Create Account · Mobile",D,"Join as a doctor","We verify your MDCN licence before you go live.",
-           d1_body, button("Continue","primary",trailing="arrow-right",name="Continue · D1"),
-           [linkrow("Already registered?","Log in","Login · D")], step=(0,4), back=True))
+DP=lambda **kw: desk_panel("d-panel-doctor.jpg",**kw)
+D1B=(f'<Frame w="fill" flex="col" gap={{16}}>{field("Phone number","phone","803 555 0110",prefix="+234")}'
+     f'{field("MDCN number","id-card","MDCN/45201",helper="Your Medical &amp; Dental Council of Nigeria licence number.")}'
+     f'{field_chips("Specialisation",["Cardiology","General practice","Paediatrics","Other"],1,"Specialty")}</Frame>')
+add("Doctor","D1-create",
+    desk_form("Auth · Doctor — D1 Create Account",
+        DP(eyebrow_t="For doctors",head_parts=[("Your practice,",False),("amplified",True)],
+           sub="Reach the patients who need you, with a schedule that respects your time.",
+           proofs=[proof("badge-check","MDCN verified"),proof("calendar-days","You set your hours")],
+           stats=[("180+","Doctors"),("2,400+","Patients"),("48h","To verify")]),
+        "Step 1 of 4",[("Join Medra as a",False),("doctor",True)],
+        "We verify every doctor's MDCN licence before your profile goes live — that's why patients trust Medra.",
+        D1B,cta("Continue","Continue D1","arrow-right","btn-navy.jpg"),
+        [link("Already registered?","Log in","Login D")],step=(0,4)),
+    mob_form("Auth · Doctor — D1 Create Account · Mobile","Step 1 of 4",
+        [("Join as a",False),("doctor",True)],"We verify your MDCN licence before your profile goes live.",
+        D1B,cta("Continue","Continue D1","arrow-right","btn-navy.jpg"),
+        [link("Already registered?","Log in","Login D")],step=(0,4)))
 
-add(DN,"D2-otp",
-    desktop("Auth · Doctor — D2 Verify Code",D,"Verify your phone","Enter the 6-digit code sent to +234 803 555 0110.",
-            otp(6,"58") + linkrow("Didn't get it?","Resend in 0:20","Resend · D2"),
-            button("Verify","primary",name="Verify · D2"),
-            [linkrow("Wrong number?","Change it","Change number · D2")], eb="Step 2 of 4", step=(1,4), back=True,
-            panel_head="Security first.", panel_sub="Two steps keep your patients' records protected."),
-    mobile("Auth · Doctor — D2 Verify Code · Mobile",D,"Verify your phone","Code sent to +234 803 555 0110.",
-           otp(6,"58") + linkrow("Didn't get it?","Resend in 0:20","Resend · D2"),
-           button("Verify","primary",name="Verify · D2"), [], eb="Step 2 of 4", step=(1,4), back=True))
+OTP_D=f'<Frame w="fill" flex="col" gap={{14}}>{otp("58")}{link("Didn’t get it?","Resend in 0:20","Resend D2")}</Frame>'
+add("Doctor","D2-otp",
+    desk_form("Auth · Doctor — D2 Verify Code",
+        DP(eyebrow_t="For doctors",head_parts=[("Security",False),("first",True)],
+           sub="Two steps keep your patients' records protected — every single time.",
+           proofs=[proof("lock","Encrypted"),proof("shield-check","NDPR aligned")]),
+        "Step 2 of 4",[("Verify your",False),("phone",True)],
+        "Enter the 6-digit code we sent to +234 803 555 0110.",
+        OTP_D,cta("Verify","Verify D2","arrow-right","btn-navy.jpg"),
+        [link("Wrong number?","Change it","Change number D2")],step=(1,4)),
+    mob_form("Auth · Doctor — D2 Verify Code · Mobile","Step 2 of 4",[("Verify your",False),("phone",True)],
+        "Code sent to +234 803 555 0110.",OTP_D,
+        cta("Verify","Verify D2","arrow-right","btn-navy.jpg"),
+        [link("Wrong number?","Change it","Change number D2")],step=(1,4)))
 
-d3_body=(field("Create password","lock","••••••••",placeholder=False,trailing=("eye","Show password · D3"),helper="At least 8 characters, with a number and a symbol.")
-        + '<Frame w="fill" flex="row" gap={6}><Rect grow={1} h={5} rounded={999} bg="var:state/success" /><Rect grow={1} h={5} rounded={999} bg="var:state/success" /><Rect grow={1} h={5} rounded={999} bg="var:state/success" /><Rect grow={1} h={5} rounded={999} bg="var:neutral/200" /></Frame>'
-        + T(12,"medium","var:state/success","Strong password")
-        + field("Confirm password","lock","••••••••",placeholder=False,trailing=("eye","Show confirm · D3")))
-add(DN,"D3-password",
-    desktop("Auth · Doctor — D3 Set Password",D,"Secure your account","You'll use this with your phone each time you log in.",
-            d3_body, button("Continue","primary",trailing="arrow-right",name="Continue · D3"),
-            [], eb="Step 3 of 4", step=(2,4), back=True,
-            panel_head="Only you get in.", panel_sub="A password plus your phone — proper protection for clinical data."),
-    mobile("Auth · Doctor — D3 Set Password · Mobile",D,"Secure your account","Used with your phone each login.",
-           d3_body, button("Continue","primary",trailing="arrow-right",name="Continue · D3"), [], step=(2,4), back=True))
+PWD=(f'<Frame w="fill" flex="col" gap={{16}}>'
+     f'{field("Create password","lock","••••••••",ph=False,trailing=("eye","Show password"),helper="At least 8 characters, with a number and a symbol.")}'
+     f'<Frame w="fill" flex="row" gap={{6}}><Rect grow={{1}} h={{5}} rounded={{999}} bg="var:state/success" />'
+     f'<Rect grow={{1}} h={{5}} rounded={{999}} bg="var:state/success" /><Rect grow={{1}} h={{5}} rounded={{999}} bg="var:state/success" />'
+     f'<Rect grow={{1}} h={{5}} rounded={{999}} bg="var:neutral/200" /></Frame>'
+     f'{T(12,"medium","var:state/success","Strong password")}'
+     f'{field("Confirm password","lock","••••••••",ph=False,trailing=("eye","Show confirm"))}</Frame>')
+add("Doctor","D3-password",
+    desk_form("Auth · Doctor — D3 Set Password",
+        DP(eyebrow_t="For doctors",head_parts=[("Only you",False),("get in",True)],
+           sub="A password plus your phone — proper protection for clinical data.",
+           proofs=[proof("fingerprint","Two-factor login")]),
+        "Step 3 of 4",[("Secure your",False),("account",True)],
+        "You'll use this together with your phone each time you log in.",
+        PWD,cta("Continue","Continue D3","arrow-right","btn-navy.jpg"),[],step=(2,4)),
+    mob_form("Auth · Doctor — D3 Set Password · Mobile","Step 3 of 4",[("Secure your",False),("account",True)],
+        "Used with your phone at each login.",PWD,
+        cta("Continue","Continue D3","arrow-right","btn-navy.jpg"),[],step=(2,4)))
 
-d4_body=('<Frame w="fill" flex="col" gap={16} items="center" py={8}>'
-         '<Frame w={92} h={92} rounded={999} bg="var:state/warning-bg" flex="col" justify="center" items="center">'+icon("badge-check",44,IC_WARN)+'</Frame>'
-         + T(15,"regular","var:text/muted","Thanks, Dr. Okafor. Our team is verifying your MDCN licence — this usually takes 24–48 hours.",w="fill",align="center")
-         + note("clock","We'll text and email you the moment you're approved. Your profile stays hidden until then.","warn") + '</Frame>')
-add(DN,"D4-pending",
-    desktop("Auth · Doctor — D4 Verification Pending",D,"We're verifying your licence","You're almost in. Here's what happens next.",
-            d4_body, button("Explore Medra while you wait","primary",trailing="arrow-right",name="Explore · D4"),
-            [linkrow("Entered the wrong MDCN?","Update it","Update MDCN · D4"), linkrow("Questions?","Contact support","Support · D4")], eb="Step 4 of 4", step=(3,4),
-            panel_head="Trust, verified.", panel_sub="Every doctor on Medra is a real, licensed professional — patients count on it."),
-    mobile("Auth · Doctor — D4 Verification Pending · Mobile",D,"Verifying your licence","Here's what happens next.",
-           d4_body, button("Explore while you wait","primary",trailing="arrow-right",name="Explore · D4"),
-           [linkrow("Questions?","Contact support","Support · D4")], step=(3,4)))
+PEND_D=(f'<Frame w="fill" flex="col" gap={{16}} items="center">{big_icon("badge-check","warn")}'
+        f'{T(15,"regular","var:text/muted","Thanks, Dr. Okafor. Our team is checking your MDCN licence against the council register — usually within 24–48 hours.",w="fill",align="center")}'
+        f'{note("clock","We’ll text and email you the moment you’re approved. Your profile stays hidden until then.","warn")}</Frame>')
+add("Doctor","D4-pending",
+    desk_form("Auth · Doctor — D4 Verification Pending",
+        DP(eyebrow_t="For doctors",head_parts=[("Trust,",False),("verified",True)],
+           sub="Every doctor on Medra is a real, licensed professional. Patients count on it — so we check properly.",
+           proofs=[proof("shield-check","Manual licence check")]),
+        "Step 4 of 4",[("We're verifying",False),("your licence",True)],
+        "You're almost in. Here's exactly what happens next.",
+        PEND_D,cta("Set up my profile while I wait","Explore D4","arrow-right","btn-navy.jpg"),
+        [link("Entered the wrong MDCN?","Update it","Update MDCN D4"),link("Questions?","Contact support","Support D4")],
+        step=(3,4),back=False),
+    mob_form("Auth · Doctor — D4 Verification Pending · Mobile","Step 4 of 4",
+        [("Verifying your",False),("licence",True)],"Here's what happens next.",PEND_D,
+        cta("Set up my profile","Explore D4","arrow-right","btn-navy.jpg"),
+        [link("Questions?","Contact support","Support D4")],step=(3,4),back=False))
 
-d5_body=('<Frame w="fill" flex="row" gap={16} items="center"><Frame w={72} h={72} rounded={999} bg="var:bg/muted" flex="col" justify="center" items="center">'+icon("camera",26,IC_ACCENT)+'</Frame>'
-         + '<Frame name="Btn Add photo · D5" flex="row" gap={8} items="center" px={16} py={10} rounded={999} bg="var:bg/subtle" stroke="var:border/default" strokeWidth={1}>'+icon("upload",16,IC_NAVY)+T(13,"semibold","var:text/default","Add profile photo")+'</Frame></Frame>'
-         + select_field("Short bio","file-text","Tell patients about your experience…")
-         + field("Consultation fee","credit-card","15,000",prefix="₦",helper="You can change this anytime."))
-add(DN,"D5-profile",
-    desktop("Auth · Doctor — D5 Profile Setup",D,"Set up your public profile","This is what patients see before they book you.",
-            d5_body, button("Finish &amp; go to dashboard","primary",trailing="arrow-right",name="Finish · D5"),
-            [linkrow("","Do this later","Later · D5")], back=True,
-            panel_head="Make a strong first impression.", panel_sub="A clear photo and bio help patients choose you with confidence."),
-    mobile("Auth · Doctor — D5 Profile Setup · Mobile",D,"Set up your profile","What patients see before booking.",
-           d5_body, button("Finish","primary",trailing="arrow-right",name="Finish · D5"),
-           [linkrow("","Do this later","Later · D5")], back=True))
+PROF_D=(f'<Frame w="fill" flex="col" gap={{18}}>'
+        f'<Frame w="fill" flex="row" gap={{15}} items="center">'
+        f'<Image image="assets/img/avatar-1.jpg" w={{74}} h={{74}} rounded={{999}} />'
+        f'<Frame name="Btn Change photo" flex="row" gap={{8}} items="center" px={{16}} py={{11}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>'
+        f'{I("camera",16,N_IC)}{T(13,"semibold","var:text/default","Change photo")}</Frame></Frame>'
+        f'{field("Short bio","file-text","Cardiologist with 12 years experience…",ph=False)}'
+        f'{field("Consultation fee","credit-card","15,000",prefix="₦",helper="You can change this anytime.")}'
+        f'{field_chips("Consultation types",["In-person","Virtual","Both"],2,"Ctype")}</Frame>')
+add("Doctor","D5-profile",
+    desk_form("Auth · Doctor — D5 Profile Setup",
+        DP(eyebrow_t="For doctors",head_parts=[("A strong first",False),("impression",True)],
+           sub="A clear photo, a short bio and an honest fee help patients choose you with confidence.",
+           proofs=[proof("star","Profile completeness 80%")]),
+        "Your public profile",[("This is what",False),("patients see",True)],
+        "You can edit all of this later from your dashboard.",
+        PROF_D,cta("Finish and go to dashboard","Finish D5","arrow-right","btn-navy.jpg"),
+        [link("","Do this later","Later D5")]),
+    mob_form("Auth · Doctor — D5 Profile Setup · Mobile","Your public profile",
+        [("What patients",False),("see",True)],"Editable later from your dashboard.",PROF_D,
+        cta("Finish","Finish D5","arrow-right","btn-navy.jpg"),[link("","Do this later","Later D5")]))
 
-add(DN,"D6-login",
-    desktop("Auth · Doctor — D6 Log In",D,"Welcome back, doctor","Log in to see today's schedule and your patients.",
-            field("Phone or email","user","dr.okafor@clinic.ng",placeholder=False) + field("Password","lock","••••••••",placeholder=False,trailing=("eye","Show · D6")) + '<Frame w="fill" flex="row" justify="end"><Frame name="Btn Forgot · D6" flex="row"><Text font="Inter" size={13} weight="semibold" color="var:text/accent">Forgot password?</Text></Frame></Frame>',
-            button("Log in","primary",trailing="arrow-right",name="Login submit · D6"),
-            [linkrow("New to Medra?","Register as a doctor","Register · D6")], back=True,
-            panel_head="Your day, ready.", panel_sub="Today's queue, patient histories and notes — one login away."),
-    mobile("Auth · Doctor — D6 Log In · Mobile",D,"Welcome back, doctor","See today's schedule and patients.",
-           field("Phone or email","user","dr.okafor@clinic.ng",placeholder=False) + field("Password","lock","••••••••",placeholder=False,trailing=("eye","Show · D6")),
-           button("Log in","primary",trailing="arrow-right",name="Login submit · D6"),
-           [linkrow("Forgot password?","Reset it","Forgot · D6"), linkrow("New?","Register as a doctor","Register · D6")], back=True))
+D6B=(f'<Frame w="fill" flex="col" gap={{16}}>{field("Phone or email","user","dr.okafor@clinic.ng",ph=False)}'
+     f'{field("Password","lock","••••••••",ph=False,trailing=("eye","Show password"))}'
+     f'<Frame w="fill" flex="row" justify="end">{link("","Forgot password?","Forgot D6",center=False)}</Frame></Frame>')
+add("Doctor","D6-login",
+    desk_form("Auth · Doctor — D6 Log In",
+        DP(eyebrow_t="Welcome back",head_parts=[("Your day,",False),("ready",True)],
+           sub="Today's queue, patient histories and notes — one secure login away.",
+           proofs=[proof("calendar-check","8 appointments today")]),
+        "Doctor log in",[("Welcome back,",False),("doctor",True)],
+        "Log in to see today's schedule and your patients.",
+        D6B,cta("Log in","Login submit D6","arrow-right","btn-navy.jpg"),
+        [link("New to Medra?","Register as a doctor","Register D6")]),
+    mob_form("Auth · Doctor — D6 Log In · Mobile","Doctor log in",[("Welcome back,",False),("doctor",True)],
+        "See today's schedule and patients.",
+        f'<Frame w="fill" flex="col" gap={{16}}>{field("Phone or email","user","dr.okafor@clinic.ng",ph=False)}'
+        f'{field("Password","lock","••••••••",ph=False,trailing=("eye","Show password"))}</Frame>',
+        cta("Log in","Login submit D6","arrow-right","btn-navy.jpg"),
+        [link("Forgot password?","Reset it","Forgot D6"),link("New?","Register as a doctor","Register D6")]))
 
-add(DN,"D7-2fa",
-    desktop("Auth · Doctor — D7 Two-Factor",D,"Confirm it's you","We texted a 6-digit code to +234 803 555 0110 to protect patient data.",
-            otp(6,"41") + linkrow("Didn't get it?","Resend in 0:22","Resend · D7"),
-            button("Log in","primary",name="2FA verify · D7"),
-            [linkrow("Lost access to your phone?","Get help","Help · D7")], back=True,
-            panel_head="Two steps, total trust.", panel_sub="Extra protection every time you open a patient's record."),
-    mobile("Auth · Doctor — D7 Two-Factor · Mobile",D,"Confirm it's you","Code sent to +234 803 555 0110.",
-           otp(6,"41") + linkrow("Didn't get it?","Resend in 0:22","Resend · D7"),
-           button("Log in","primary",name="2FA verify · D7"), [linkrow("Lost your phone?","Get help","Help · D7")], back=True))
+OTP_2FA=f'<Frame w="fill" flex="col" gap={{14}}>{otp("41")}{link("Didn’t get it?","Resend in 0:22","Resend D7")}</Frame>'
+add("Doctor","D7-2fa",
+    desk_form("Auth · Doctor — D7 Two-Factor",
+        DP(eyebrow_t="Two-factor",head_parts=[("Two steps,",False),("total trust",True)],
+           sub="Extra protection every time you open a patient's record.",
+           proofs=[proof("fingerprint","2FA enabled")]),
+        "Security check",[("Confirm",False),("it's you",True)],
+        "We texted a 6-digit code to +234 803 555 0110 to protect patient data.",
+        OTP_2FA,cta("Log in","2FA verify D7","arrow-right","btn-navy.jpg"),
+        [link("Lost access to your phone?","Get help","Help D7")]),
+    mob_form("Auth · Doctor — D7 Two-Factor · Mobile","Security check",[("Confirm",False),("it's you",True)],
+        "Code sent to +234 803 555 0110.",OTP_2FA,
+        cta("Log in","2FA verify D7","arrow-right","btn-navy.jpg"),
+        [link("Lost your phone?","Get help","Help D7")]))
 
-d8_body=(field("Phone or email","user","dr.okafor@clinic.ng",placeholder=False,helper="We'll send a 6-digit reset code here."))
-add(DN,"D8-forgot",
-    desktop("Auth · Doctor — D8 Forgot Password",D,"Reset your password","Enter your phone or email and we'll send a code to reset it.",
-            d8_body, button("Send reset code","primary",trailing="arrow-right",name="Send reset · D8"),
-            [linkrow("Remembered it?","Back to log in","Back login · D8")], back=True,
-            panel_head="Locked out? No problem.", panel_sub="A quick code and you're back to your patients."),
-    mobile("Auth · Doctor — D8 Forgot Password · Mobile",D,"Reset your password","We'll send a code to reset it.",
-           d8_body, button("Send reset code","primary",trailing="arrow-right",name="Send reset · D8"),
-           [linkrow("Remembered it?","Back to log in","Back login · D8")], back=True))
+add("Doctor","D8-forgot",
+    desk_form("Auth · Doctor — D8 Forgot Password",
+        DP(eyebrow_t="Account recovery",head_parts=[("Locked out?",False),("No problem",True)],
+           sub="A quick code and you're back with your patients."),
+        "Reset password",[("Reset your",False),("password",True)],
+        "Enter your phone or email and we'll send a 6-digit reset code.",
+        field("Phone or email","user","dr.okafor@clinic.ng",ph=False,helper="We'll send the reset code here."),
+        cta("Send reset code","Send reset D8","arrow-right","btn-navy.jpg"),
+        [link("Remembered it?","Back to log in","Back login D8")]),
+    mob_form("Auth · Doctor — D8 Forgot Password · Mobile","Reset password",[("Reset your",False),("password",True)],
+        "We'll send a 6-digit reset code.",
+        field("Phone or email","user","dr.okafor@clinic.ng",ph=False),
+        cta("Send reset code","Send reset D8","arrow-right","btn-navy.jpg"),
+        [link("Remembered it?","Back to log in","Back login D8")]))
 
-d9_body=(field("New password","lock","••••••••",placeholder=False,trailing=("eye","Show · D9"),helper="At least 8 characters, with a number and a symbol.")
-        + field("Confirm new password","lock","••••••••",placeholder=False,trailing=("eye","Show confirm · D9")))
-add(DN,"D9-reset",
-    desktop("Auth · Doctor — D9 New Password",D,"Choose a new password","Make it strong — it protects your patients' records.",
-            d9_body, button("Save &amp; log in","primary",trailing="arrow-right",name="Save password · D9"),
-            [], back=True, panel_head="Back in safe hands.", panel_sub="New password set — let's get you to work."),
-    mobile("Auth · Doctor — D9 New Password · Mobile",D,"Choose a new password","It protects your patients' records.",
-           d9_body, button("Save &amp; log in","primary",trailing="arrow-right",name="Save password · D9"), [], back=True))
+NEWPWD=(f'<Frame w="fill" flex="col" gap={{16}}>'
+        f'{field("New password","lock","••••••••",ph=False,trailing=("eye","Show password"),helper="At least 8 characters, with a number and a symbol.")}'
+        f'{field("Confirm new password","lock","••••••••",ph=False,trailing=("eye","Show confirm"))}</Frame>')
+add("Doctor","D9-reset",
+    desk_form("Auth · Doctor — D9 New Password",
+        DP(eyebrow_t="Account recovery",head_parts=[("Back in",False),("safe hands",True)],
+           sub="New password set — let's get you back to work."),
+        "New password",[("Choose a new",False),("password",True)],
+        "Make it strong — it protects your patients' records.",
+        NEWPWD,cta("Save and log in","Save password D9","arrow-right","btn-navy.jpg"),[]),
+    mob_form("Auth · Doctor — D9 New Password · Mobile","New password",[("Choose a new",False),("password",True)],
+        "It protects your patients' records.",NEWPWD,
+        cta("Save and log in","Save password D9","arrow-right","btn-navy.jpg"),[]))
 
-d10_body=('<Frame w="fill" flex="col" gap={16} items="center" py={8}>'
-          '<Frame w={92} h={92} rounded={999} bg="var:state/success-bg" flex="col" justify="center" items="center">'+icon("circle-check",44,IC_OK)+'</Frame>'
-          + T(15,"regular","var:text/muted","You're verified and logged in. Taking you to your dashboard and today's schedule.",w="fill",align="center")
-          + note("info","Redirecting you to your doctor dashboard…","info") + '</Frame>')
-add(DN,"D10-success",
-    desktop("Auth · Doctor — D10 Success",D,"Welcome aboard, Dr. Okafor","Your profile is live and patients can book you.",
-            d10_body, button("Go to dashboard","primary",trailing="arrow-right",name="Go dashboard · D10"), [],
-            panel_head="You're live on Medra.", panel_sub="Verified, visible and ready to see patients."),
-    mobile("Auth · Doctor — D10 Success · Mobile",D,"Welcome aboard","Your profile is live.",
-           d10_body, button("Go to dashboard","primary",trailing="arrow-right",name="Go dashboard · D10"), []))
+SUC_D=(f'<Frame w="fill" flex="col" gap={{16}} items="center">{big_icon("circle-check","ok")}'
+       f'{T(15,"regular","var:text/muted","You’re verified and live. Patients in Abuja can now find and book you.",w="fill",align="center")}'
+       f'{note("info","Taking you to your dashboard and today’s schedule…","info")}</Frame>')
+add("Doctor","D10-success",
+    desk("Auth · Doctor — D10 Success",
+        desk_panel("d-panel-doctor.jpg","You're live",[("Verified on",False),("Medra",True)],
+                   "Visible, bookable and ready to see patients.",
+                   stats=[("Live","Profile"),("0","Pending tasks"),("48h","Verified in")]),
+        f'{eyebrow("All set")}{head_chip([("Welcome aboard,",False),("Dr. Okafor",True)],32)}{SUC_D}'
+        f'{cta("Go to my dashboard","Go dashboard D10","layout-dashboard","btn-navy.jpg")}'
+        f'{ghost("Set my weekly availability","Availability D10","calendar-days")}'),
+    mob_hero("Auth · Doctor — D10 Success · Mobile","m-hero-doctor.jpg","All set",
+        [("Welcome aboard,",False),("doctor",True)],"You're verified — patients can book you now.",
+        cta("Go to my dashboard","Go dashboard D10","layout-dashboard","btn-navy.jpg"),
+        [ghost("Set my availability","Availability D10","calendar-days")],skip=False,
+        proofs=[proof("badge-check","MDCN verified")]))
 
 # ============================================================ INSTITUTION
-IN="institution"; INN="Institution"
-i1_body=(field("Institution name","hospital","Garki Medical Centre",placeholder=False)
-        + select_field("Type","building-2","Private hospital")
-        + field("Admin full name","user","Yusuf Bello",placeholder=False)
-        + field("Work email","mail","admin@garkimedical.ng",placeholder=False)
-        + field("Admin phone","phone","802 111 2233",prefix="+234"))
-add(INN,"I1-register",
-    desktop("Auth · Institution — I1 Register",IN,"Register your institution","Set up your clinic or hospital. You'll be the facility admin.",
-            i1_body, button("Continue","primary",trailing="arrow-right",name="Continue · I1"),
-            [linkrow("Institution already on Medra?","Admin log in","Admin login · I")], eb="Step 1 of 5", step=(0,5), back=True,
-            panel_head="Run your facility, digitally.", panel_sub="Bookings, staff, records and billing — one system for the whole institution."),
-    mobile("Auth · Institution — I1 Register · Mobile",IN,"Register your institution","You'll be the facility admin.",
-           i1_body, button("Continue","primary",trailing="arrow-right",name="Continue · I1"),
-           [linkrow("Already on Medra?","Admin log in","Admin login · I")], step=(0,5), back=True))
+IP=lambda **kw: desk_panel("d-panel-institution.jpg",**kw)
+I1B=(f'<Frame w="fill" flex="col" gap={{16}}>{field("Institution name","hospital","Garki Medical Centre",ph=False)}'
+     f'{field_chips("Type",["Private hospital","Clinic","Diagnostic centre"],0,"Itype")}'
+     f'{field("Admin full name","user","Yusuf Bello",ph=False)}'
+     f'{field("Work email","mail","admin@garkimedical.ng",ph=False)}'
+     f'{field("Admin phone","phone","802 111 2233",prefix="+234")}</Frame>')
+add("Institution","I1-register",
+    desk_form("Auth · Institution — I1 Register",
+        IP(eyebrow_t="For institutions",head_parts=[("Run your facility,",False),("digitally",True)],
+           sub="Bookings, staff, records and billing — one system for the whole institution.",
+           proofs=[proof("building-2","Multi-branch ready"),proof("sparkles","30-day free trial")],
+           stats=[("30","Day trial"),("1-2","Days to verify"),("Free","To start")]),
+        "Step 1 of 5",[("Register your",False),("institution",True)],
+        "Set up your clinic or hospital on Medra. You'll be the facility admin.",
+        I1B,cta("Continue","Continue I1","arrow-right","btn-navy.jpg"),
+        [link("Institution already on Medra?","Admin log in","Admin login I")],step=(0,5)),
+    mob_form("Auth · Institution — I1 Register · Mobile","Step 1 of 5",
+        [("Register your",False),("institution",True)],"You'll be the facility admin.",
+        I1B,cta("Continue","Continue I1","arrow-right","btn-navy.jpg"),
+        [link("Already on Medra?","Admin log in","Admin login I")],step=(0,5)))
 
-i2_body=(upload_box("licence",done=True) + upload_box("cac",done=False)
-        + note("shield-check","Documents are encrypted and used only to verify your institution.","info"))
-add(INN,"I2-documents",
-    desktop("Auth · Institution — I2 Verify Documents",IN,"Upload your documents","We verify every institution before it goes live. Add your practice licence and CAC certificate.",
-            i2_body, button("Continue","primary",trailing="arrow-right",name="Continue · I2"),
-            [linkrow("Don't have them handy?","Save &amp; finish later","Save later · I2")], eb="Step 2 of 5", step=(1,5), back=True,
-            panel_head="Verified institutions only.", panel_sub="Patients trust Medra because every provider is checked."),
-    mobile("Auth · Institution — I2 Verify Documents · Mobile",IN,"Upload your documents","Practice licence + CAC certificate.",
-           i2_body, button("Continue","primary",trailing="arrow-right",name="Continue · I2"),
-           [linkrow("","Save &amp; finish later","Save later · I2")], step=(1,5), back=True))
+DOCS=(f'<Frame w="fill" flex="col" gap={{13}}>{upload("Upload licence",done=True)}'
+      f'{upload("Upload cac",done=False,label="CAC certificate")}'
+      f'{note("shield-check","Documents are encrypted and used only to verify your institution.","info")}</Frame>')
+add("Institution","I2-documents",
+    desk_form("Auth · Institution — I2 Verify Documents",
+        IP(eyebrow_t="For institutions",head_parts=[("Verified",False),("institutions only",True)],
+           sub="Patients trust Medra because every provider on it has been checked by a human.",
+           proofs=[proof("file-check","Licence + CAC")]),
+        "Step 2 of 5",[("Upload your",False),("documents",True)],
+        "We verify every institution before it goes live. Add your practice licence and CAC certificate.",
+        DOCS,cta("Continue","Continue I2","arrow-right","btn-navy.jpg"),
+        [link("Don't have them handy?","Save and finish later","Save later I2")],step=(1,5)),
+    mob_form("Auth · Institution — I2 Verify Documents · Mobile","Step 2 of 5",
+        [("Upload your",False),("documents",True)],"Practice licence and CAC certificate.",DOCS,
+        cta("Continue","Continue I2","arrow-right","btn-navy.jpg"),
+        [link("","Save and finish later","Save later I2")],step=(1,5)))
 
-i3_body=('<Frame w="fill" flex="col" gap={12}>'
-         + plan_card("Single practice","₦___","1 doctor · core booking &amp; records",selected=False)
-         + plan_card("Multi-doctor","₦___","Up to 15 doctors · staff roles &amp; allocation",selected=True)
-         + plan_card("Multi-branch","Custom","Enterprise · branches billed as one",selected=False)
-         + note("sparkles","Every plan starts with a 30-day free trial — no card required.","ok") + '</Frame>')
-add(INN,"I3-plan",
-    desktop("Auth · Institution — I3 Choose Plan",IN,"Pick a plan","Choose the size that fits today — you can upgrade anytime. Pricing is confirmed with our team.",
-            i3_body, button("Start free trial","teal",trailing="arrow-right",name="Start trial · I3"),
-            [linkrow("Not sure which fits?","Talk to sales","Sales · I3")], eb="Step 3 of 5", step=(2,5), back=True,
-            panel_head="Priced to your size.", panel_sub="From a single practice to a multi-branch group — pay for what you need."),
-    mobile("Auth · Institution — I3 Choose Plan · Mobile",IN,"Pick a plan","Upgrade anytime. 30-day free trial.",
-           i3_body, button("Start free trial","teal",trailing="arrow-right",name="Start trial · I3"),
-           [linkrow("Not sure?","Talk to sales","Sales · I3")], step=(2,5), back=True))
+PLANS=(f'<Frame w="fill" flex="col" gap={{11}}>'
+       f'{plan("Single practice","₦___","One doctor · core booking and records")}'
+       f'{plan("Multi-doctor","₦___","Up to 15 doctors · staff roles and allocation",sel=True)}'
+       f'{plan("Multi-branch","Custom","Enterprise · every branch billed as one")}'
+       f'{note("sparkles","Every plan starts with a 30-day free trial — no card required.","ok")}</Frame>')
+add("Institution","I3-plan",
+    desk_form("Auth · Institution — I3 Choose Plan",
+        IP(eyebrow_t="For institutions",head_parts=[("Priced to",False),("your size",True)],
+           sub="From a single practice to a multi-branch group — pay only for what you need.",
+           proofs=[proof("credit-card","Paystack billing")]),
+        "Step 3 of 5",[("Pick a",False),("plan",True)],
+        "Choose the size that fits today — you can upgrade anytime. Final pricing is confirmed with our team.",
+        PLANS,cta("Start my free trial","Start trial I3"),
+        [link("Not sure which fits?","Talk to our team","Sales I3")],step=(2,5)),
+    mob_form("Auth · Institution — I3 Choose Plan · Mobile","Step 3 of 5",[("Pick a",False),("plan",True)],
+        "Upgrade anytime. Every plan starts with a 30-day trial.",PLANS,
+        cta("Start my free trial","Start trial I3"),[link("Not sure?","Talk to our team","Sales I3")],step=(2,5)))
 
-add(INN,"I4-otp",
-    desktop("Auth · Institution — I4 Verify Admin",IN,"Verify the admin phone","Enter the 6-digit code sent to +234 802 111 2233.",
-            otp(6,"77") + linkrow("Didn't get it?","Resend in 0:25","Resend · I4"),
-            button("Verify","primary",name="Verify · I4"),
-            [linkrow("Wrong number?","Change it","Change number · I4")], eb="Step 4 of 5", step=(3,5), back=True,
-            panel_head="Secure the admin account.", panel_sub="The facility admin controls staff and billing — so we protect it well."),
-    mobile("Auth · Institution — I4 Verify Admin · Mobile",IN,"Verify the admin phone","Code sent to +234 802 111 2233.",
-           otp(6,"77") + linkrow("Didn't get it?","Resend in 0:25","Resend · I4"),
-           button("Verify","primary",name="Verify · I4"), [], eb="Step 4 of 5", step=(3,5), back=True))
+OTP_I=f'<Frame w="fill" flex="col" gap={{14}}>{otp("77")}{link("Didn’t get it?","Resend in 0:25","Resend I4")}</Frame>'
+add("Institution","I4-otp",
+    desk_form("Auth · Institution — I4 Verify Admin",
+        IP(eyebrow_t="For institutions",head_parts=[("Secure the",False),("admin account",True)],
+           sub="The facility admin controls staff and billing — so we protect it properly.",
+           proofs=[proof("lock","Encrypted")]),
+        "Step 4 of 5",[("Verify the",False),("admin phone",True)],
+        "Enter the 6-digit code sent to +234 802 111 2233.",
+        OTP_I,cta("Verify","Verify I4","arrow-right","btn-navy.jpg"),
+        [link("Wrong number?","Change it","Change number I4")],step=(3,5)),
+    mob_form("Auth · Institution — I4 Verify Admin · Mobile","Step 4 of 5",
+        [("Verify the",False),("admin phone",True)],"Code sent to +234 802 111 2233.",OTP_I,
+        cta("Verify","Verify I4","arrow-right","btn-navy.jpg"),
+        [link("Wrong number?","Change it","Change number I4")],step=(3,5)))
 
-i5_body=(field("Create admin password","lock","••••••••",placeholder=False,trailing=("eye","Show · I5"),helper="At least 8 characters, with a number and a symbol.")
-        + field("Confirm password","lock","••••••••",placeholder=False,trailing=("eye","Show confirm · I5")))
-add(INN,"I5-password",
-    desktop("Auth · Institution — I5 Set Password",IN,"Secure the admin account","You'll use this with the admin phone to log in.",
-            i5_body, button("Create account","primary",trailing="arrow-right",name="Create · I5"),
-            [], eb="Step 5 of 5", step=(4,5), back=True,
-            panel_head="One key-holder.", panel_sub="Strong protection for the account that runs your facility."),
-    mobile("Auth · Institution — I5 Set Password · Mobile",IN,"Secure the admin account","Used with the admin phone to log in.",
-           i5_body, button("Create account","primary",trailing="arrow-right",name="Create · I5"), [], step=(4,5), back=True))
+PWD_I=PWD.replace("Create password","Create admin password")
+add("Institution","I5-password",
+    desk_form("Auth · Institution — I5 Set Password",
+        IP(eyebrow_t="For institutions",head_parts=[("One",False),("key-holder",True)],
+           sub="Strong protection for the account that runs your facility."),
+        "Step 5 of 5",[("Secure the",False),("admin account",True)],
+        "You'll use this together with the admin phone to log in.",
+        PWD_I,cta("Create account","Create I5","arrow-right","btn-navy.jpg"),[],step=(4,5)),
+    mob_form("Auth · Institution — I5 Set Password · Mobile","Step 5 of 5",
+        [("Secure the",False),("admin account",True)],"Used with the admin phone to log in.",
+        PWD_I,cta("Create account","Create I5","arrow-right","btn-navy.jpg"),[],step=(4,5)))
 
-i6_body=('<Frame w="fill" flex="col" gap={16} items="center" py={8}>'
-         '<Frame w={92} h={92} rounded={999} bg="var:state/warning-bg" flex="col" justify="center" items="center">'+icon("badge-check",44,IC_WARN)+'</Frame>'
-         + T(15,"regular","var:text/muted","Thanks, Mr. Bello. We're reviewing Garki Medical Centre's documents — usually within 1–2 business days.",w="fill",align="center")
-         + note("clock","We'll email you the moment you're approved. Meanwhile, you can start inviting staff.","warn") + '</Frame>')
-add(INN,"I6-pending",
-    desktop("Auth · Institution — I6 Application Submitted",IN,"Application submitted","Your 30-day trial has started. Here's what happens next.",
-            i6_body, button("Go to admin portal","primary",trailing="arrow-right",name="Go portal · I6"),
-            [linkrow("Need to add a document?","Manage application","Manage · I6")],
-            panel_head="Welcome to Medra for Business.", panel_sub="Your facility's new operating system starts now."),
-    mobile("Auth · Institution — I6 Application Submitted · Mobile",IN,"Application submitted","Your 30-day trial has started.",
-           i6_body, button("Go to admin portal","primary",trailing="arrow-right",name="Go portal · I6"),
-           [linkrow("","Manage application","Manage · I6")]))
+PEND_I=(f'<Frame w="fill" flex="col" gap={{16}} items="center">{big_icon("badge-check","warn")}'
+        f'{T(15,"regular","var:text/muted","Thanks, Mr. Bello. We’re reviewing Garki Medical Centre’s documents — usually within 1–2 business days.",w="fill",align="center")}'
+        f'{note("clock","We’ll email you the moment you’re approved. Meanwhile you can add staff and set up your rooms.","warn")}</Frame>')
+add("Institution","I6-pending",
+    desk_form("Auth · Institution — I6 Application Submitted",
+        IP(eyebrow_t="Welcome to Medra for Business",head_parts=[("Your facility's new",False),("operating system",True)],
+           sub="Your 30-day trial starts today — set things up while we verify.",
+           proofs=[proof("sparkles","Trial active · 30 days left")]),
+        "Submitted",[("Application",False),("submitted",True)],"Here's exactly what happens next.",
+        PEND_I,cta("Go to admin portal","Go portal I6","layout-dashboard","btn-navy.jpg"),
+        [link("Need to add a document?","Manage application","Manage I6")],back=False),
+    mob_form("Auth · Institution — I6 Application Submitted · Mobile","Submitted",
+        [("Application",False),("submitted",True)],"Your 30-day trial has started.",PEND_I,
+        cta("Go to admin portal","Go portal I6","layout-dashboard","btn-navy.jpg"),
+        [link("","Manage application","Manage I6")],back=False))
 
-add(INN,"I7-admin-login",
-    desktop("Auth · Institution — I7 Facility Admin Log In",IN,"Facility admin log in","Sign in to manage bookings, staff and billing.",
-            field("Work email","mail","admin@garkimedical.ng",placeholder=False) + field("Password","lock","••••••••",placeholder=False,trailing=("eye","Show · I7")) + '<Frame w="fill" flex="row" justify="end"><Frame name="Btn Forgot · I7" flex="row"><Text font="Inter" size={13} weight="semibold" color="var:text/accent">Forgot password?</Text></Frame></Frame>',
-            button("Log in","primary",trailing="arrow-right",name="Login submit · I7"),
-            [linkrow("Registering a new institution?","Start here","Register · I7")], back=True,
-            panel_head="Your facility, in control.", panel_sub="Everything that runs your clinic, one secure login away."),
-    mobile("Auth · Institution — I7 Facility Admin Log In · Mobile",IN,"Facility admin log in","Manage bookings, staff and billing.",
-           field("Work email","mail","admin@garkimedical.ng",placeholder=False) + field("Password","lock","••••••••",placeholder=False,trailing=("eye","Show · I7")),
-           button("Log in","primary",trailing="arrow-right",name="Login submit · I7"),
-           [linkrow("Forgot password?","Reset it","Forgot · I7"), linkrow("New institution?","Start here","Register · I7")], back=True))
+I7B=(f'<Frame w="fill" flex="col" gap={{16}}>{field("Work email","mail","admin@garkimedical.ng",ph=False)}'
+     f'{field("Password","lock","••••••••",ph=False,trailing=("eye","Show password"))}'
+     f'<Frame w="fill" flex="row" justify="end">{link("","Forgot password?","Forgot I7",center=False)}</Frame></Frame>')
+add("Institution","I7-admin-login",
+    desk_form("Auth · Institution — I7 Facility Admin Log In",
+        IP(eyebrow_t="Welcome back",head_parts=[("Your facility,",False),("in control",True)],
+           sub="Everything that runs your clinic, one secure login away.",
+           proofs=[proof("calendar-check","12 bookings today")]),
+        "Facility admin",[("Facility admin",False),("log in",True)],
+        "Sign in to manage bookings, staff and billing.",
+        I7B,cta("Log in","Login submit I7","arrow-right","btn-navy.jpg"),
+        [link("Registering a new institution?","Start here","Register I7")]),
+    mob_form("Auth · Institution — I7 Facility Admin Log In · Mobile","Facility admin",
+        [("Facility admin",False),("log in",True)],"Manage bookings, staff and billing.",
+        f'<Frame w="fill" flex="col" gap={{16}}>{field("Work email","mail","admin@garkimedical.ng",ph=False)}'
+        f'{field("Password","lock","••••••••",ph=False,trailing=("eye","Show password"))}</Frame>',
+        cta("Log in","Login submit I7","arrow-right","btn-navy.jpg"),
+        [link("Forgot password?","Reset it","Forgot I7"),link("New institution?","Start here","Register I7")]))
 
-i8_body=(field("Work email","mail","admin@garkimedical.ng",placeholder=False,helper="We'll send a 6-digit reset code here."))
-add(INN,"I8-forgot",
-    desktop("Auth · Institution — I8 Forgot Password",IN,"Reset admin password","Enter the admin email and we'll send a reset code.",
-            i8_body, button("Send reset code","primary",trailing="arrow-right",name="Send reset · I8"),
-            [linkrow("Remembered it?","Back to log in","Back login · I8")], back=True,
-            panel_head="Locked out? We'll fix that.", panel_sub="A quick code and your facility is back online."),
-    mobile("Auth · Institution — I8 Forgot Password · Mobile",IN,"Reset admin password","We'll send a reset code.",
-           i8_body, button("Send reset code","primary",trailing="arrow-right",name="Send reset · I8"),
-           [linkrow("Remembered it?","Back to log in","Back login · I8")], back=True))
+add("Institution","I8-forgot",
+    desk_form("Auth · Institution — I8 Forgot Password",
+        IP(eyebrow_t="Account recovery",head_parts=[("Locked out?",False),("We'll fix that",True)],
+           sub="A quick code and your facility is back online."),
+        "Reset password",[("Reset admin",False),("password",True)],
+        "Enter the admin email and we'll send a reset code.",
+        field("Work email","mail","admin@garkimedical.ng",ph=False,helper="We'll send the reset code here."),
+        cta("Send reset code","Send reset I8","arrow-right","btn-navy.jpg"),
+        [link("Remembered it?","Back to log in","Back login I8")]),
+    mob_form("Auth · Institution — I8 Forgot Password · Mobile","Reset password",
+        [("Reset admin",False),("password",True)],"We'll send a reset code.",
+        field("Work email","mail","admin@garkimedical.ng",ph=False),
+        cta("Send reset code","Send reset I8","arrow-right","btn-navy.jpg"),
+        [link("Remembered it?","Back to log in","Back login I8")]))
 
-add(INN,"I9-reset",
-    desktop("Auth · Institution — I9 New Password",IN,"Choose a new password","Make it strong — it controls your whole facility.",
-            i5_body.replace("Create admin password","New password").replace("Show · I5","Show · I9").replace("Show confirm · I5","Show confirm · I9"),
-            button("Save &amp; log in","primary",trailing="arrow-right",name="Save password · I9"), [], back=True,
-            panel_head="Back in control.", panel_sub="New password set — your facility awaits."),
-    mobile("Auth · Institution — I9 New Password · Mobile",IN,"Choose a new password","It controls your whole facility.",
-           i5_body.replace("Create admin password","New password").replace("Show · I5","Show · I9").replace("Show confirm · I5","Show confirm · I9"),
-           button("Save &amp; log in","primary",trailing="arrow-right",name="Save password · I9"), [], back=True))
+add("Institution","I9-reset",
+    desk_form("Auth · Institution — I9 New Password",
+        IP(eyebrow_t="Account recovery",head_parts=[("Back in",False),("control",True)],
+           sub="New password set — your facility awaits."),
+        "New password",[("Choose a new",False),("password",True)],
+        "Make it strong — it controls your whole facility.",
+        NEWPWD,cta("Save and log in","Save password I9","arrow-right","btn-navy.jpg"),[]),
+    mob_form("Auth · Institution — I9 New Password · Mobile","New password",
+        [("Choose a new",False),("password",True)],"It controls your whole facility.",NEWPWD,
+        cta("Save and log in","Save password I9","arrow-right","btn-navy.jpg"),[]))
 
-i10_body=('<Frame w="fill" flex="col" gap={16} items="center" py={8}>'
-          '<Frame w={92} h={92} rounded={999} bg="var:state/success-bg" flex="col" justify="center" items="center">'+icon("circle-check",44,IC_OK)+'</Frame>'
-          + T(15,"regular","var:text/muted","Garki Medical Centre is approved and live. Taking you to your admin portal.",w="fill",align="center")
-          + note("info","Redirecting you to your admin portal…","info") + '</Frame>')
-add(INN,"I10-success",
-    desktop("Auth · Institution — I10 Success",IN,"You're live, Mr. Bello","Garki Medical Centre is verified and on Medra.",
-            i10_body, button("Go to admin portal","primary",trailing="arrow-right",name="Go portal · I10"), [],
-            panel_head="Your facility is on Medra.", panel_sub="Start adding doctors and taking bookings today."),
-    mobile("Auth · Institution — I10 Success · Mobile",IN,"You're live, Mr. Bello","Your facility is verified.",
-           i10_body, button("Go to admin portal","primary",trailing="arrow-right",name="Go portal · I10"), []))
+SUC_I=(f'<Frame w="fill" flex="col" gap={{16}} items="center">{big_icon("circle-check","ok")}'
+       f'{T(15,"regular","var:text/muted","Garki Medical Centre is approved and live on Medra. Patients in Abuja can book your doctors now.",w="fill",align="center")}'
+       f'{note("info","Taking you to your admin portal…","info")}</Frame>')
+add("Institution","I10-success",
+    desk("Auth · Institution — I10 Success",
+        desk_panel("d-panel-institution.jpg","You're live",[("Your facility is",False),("on Medra",True)],
+                   "Start adding doctors and taking bookings today.",
+                   stats=[("Live","Status"),("30","Trial days left"),("0","Doctors added")]),
+        f'{eyebrow("Approved")}{head_chip([("You’re live,",False),("Mr. Bello",True)],32)}{SUC_I}'
+        f'{cta("Go to admin portal","Go portal I10","layout-dashboard","btn-navy.jpg")}'
+        f'{ghost("Invite my doctors","Invite I10","user-plus")}'),
+    mob_hero("Auth · Institution — I10 Success · Mobile","m-hero-institution.jpg","Approved",
+        [("You're live,",False),("Mr. Bello",True)],"Your facility is verified and taking bookings.",
+        cta("Go to admin portal","Go portal I10","layout-dashboard","btn-navy.jpg"),
+        [ghost("Invite my doctors","Invite I10","user-plus")],skip=False,
+        proofs=[proof("circle-check","Approved")]))
 
 # ---------------- write ----------------
-def sanitize(s):
-    return re.sub(r'&(?!amp;|lt;|gt;|quot;|#\d+;|#x[0-9A-Fa-f]+;)', '&amp;', s)
+def sanitize(s): return re.sub(r'&(?!amp;|lt;|gt;|quot;|#\d+;|#x[0-9A-Fa-f]+;)','&amp;',s)
 manifest={}
-for page, fn, jsx in frames:
-    open(os.path.join(OUT, fn), "w").write(sanitize(jsx))
-    manifest.setdefault(page, []).append(fn)
-import json
-open(os.path.join(OUT,"pages.json"),"w").write(json.dumps(manifest, indent=2))
+for page,fn,jsx in frames:
+    open(os.path.join(OUT,fn),"w").write(sanitize(jsx))
+    manifest.setdefault(page,[]).append(fn)
+open(os.path.join(OUT,"pages.json"),"w").write(json.dumps(manifest,indent=2))
 
-# ---------------- prototype flow (no dead ends) ----------------
 PAGE_FIGMA={"Entry":"Medra Auth — Entry","Patient":"Medra Auth — Patient",
             "Doctor":"Medra Auth — Doctor","Institution":"Medra Auth — Institution"}
 TRN=[
- ("E1-splash","Btn Create account · Entry","E2-role"),("E1-splash","Btn Login · Entry","P4-login"),
- ("E2-role","Btn Role Patient","P1-create"),("E2-role","Btn Role Doctor","D1-create"),
- ("E2-role","Btn Role Institution","I1-register"),("E2-role","Btn Continue · Role","P1-create"),
- ("E2-role","Btn Back","E1-splash"),("E2-role","Btn Help · Role","E1-splash"),
- # patient
- ("P1-create","Btn Send code · P1","P2-otp"),("P1-create","Btn Login · P","P4-login"),("P1-create","Btn Back","E2-role"),
- ("P2-otp","Btn Verify · P2","P3-onboard"),("P2-otp","Btn Change number · P2","P1-create"),
- ("P2-otp","Btn Help code · P2","P5-help"),("P2-otp","Btn Resend · P2","P2-otp"),("P2-otp","Btn Back","P1-create"),
- ("P3-onboard","Btn Continue · P3","P6-success"),("P3-onboard","Btn Skip · P3","P6-success"),("P3-onboard","Btn Back","P2-otp"),
- ("P4-login","Btn Send code · P4","P6-success"),("P4-login","Btn Create · P4","P1-create"),
- ("P4-login","Btn Help · P4","P5-help"),("P4-login","Btn Back","E1-splash"),
- ("P5-help","Btn Back to OTP · P5","P2-otp"),("P5-help","Btn Resend · P5","P2-otp"),("P5-help","Btn Call · P5","P2-otp"),
- ("P5-help","Btn Change · P5","P1-create"),("P5-help","Btn Support · P5","P5-help"),("P5-help","Btn Back","P2-otp"),
- ("P6-success","Btn Go home · P6","E1-splash"),("P6-success","Btn Explore · P6","E1-splash"),
- # doctor
- ("D1-create","Btn Continue · D1","D2-otp"),("D1-create","Btn Login · D","D6-login"),("D1-create","Btn Back","E2-role"),
- ("D2-otp","Btn Verify · D2","D3-password"),("D2-otp","Btn Change number · D2","D1-create"),
- ("D2-otp","Btn Resend · D2","D2-otp"),("D2-otp","Btn Back","D1-create"),
- ("D3-password","Btn Continue · D3","D4-pending"),("D3-password","Btn Back","D2-otp"),
- ("D4-pending","Btn Explore · D4","D5-profile"),("D4-pending","Btn Update MDCN · D4","D1-create"),("D4-pending","Btn Support · D4","D4-pending"),
- ("D5-profile","Btn Finish · D5","D10-success"),("D5-profile","Btn Later · D5","D10-success"),("D5-profile","Btn Back","D4-pending"),
- ("D6-login","Btn Login submit · D6","D7-2fa"),("D6-login","Btn Forgot · D6","D8-forgot"),
- ("D6-login","Btn Register · D6","D1-create"),("D6-login","Btn Back","E1-splash"),
- ("D7-2fa","Btn 2FA verify · D7","D10-success"),("D7-2fa","Btn Resend · D7","D7-2fa"),
- ("D7-2fa","Btn Help · D7","D8-forgot"),("D7-2fa","Btn Back","D6-login"),
- ("D8-forgot","Btn Send reset · D8","D9-reset"),("D8-forgot","Btn Back login · D8","D6-login"),("D8-forgot","Btn Back","D6-login"),
- ("D9-reset","Btn Save password · D9","D6-login"),("D9-reset","Btn Back","D8-forgot"),
- ("D10-success","Btn Go dashboard · D10","E1-splash"),
- # institution
- ("I1-register","Btn Continue · I1","I2-documents"),("I1-register","Btn Admin login · I","I7-admin-login"),("I1-register","Btn Back","E2-role"),
- ("I2-documents","Btn Continue · I2","I3-plan"),("I2-documents","Btn Save later · I2","I3-plan"),
- ("I2-documents","Btn Upload cac","I2-documents"),("I2-documents","Btn Back","I1-register"),
- ("I3-plan","Btn Start trial · I3","I4-otp"),("I3-plan","Btn Sales · I3","I3-plan"),("I3-plan","Btn Back","I2-documents"),
- ("I4-otp","Btn Verify · I4","I5-password"),("I4-otp","Btn Change number · I4","I1-register"),
- ("I4-otp","Btn Resend · I4","I4-otp"),("I4-otp","Btn Back","I3-plan"),
- ("I5-password","Btn Create · I5","I6-pending"),("I5-password","Btn Back","I4-otp"),
- ("I6-pending","Btn Go portal · I6","I10-success"),("I6-pending","Btn Manage · I6","I2-documents"),
- ("I7-admin-login","Btn Login submit · I7","I10-success"),("I7-admin-login","Btn Forgot · I7","I8-forgot"),
- ("I7-admin-login","Btn Register · I7","I1-register"),("I7-admin-login","Btn Back","E1-splash"),
- ("I8-forgot","Btn Send reset · I8","I9-reset"),("I8-forgot","Btn Back login · I8","I7-admin-login"),("I8-forgot","Btn Back","I7-admin-login"),
- ("I9-reset","Btn Save password · I9","I7-admin-login"),("I9-reset","Btn Back","I8-forgot"),
- ("I10-success","Btn Go portal · I10","E1-splash"),
+ ("E1-onb1","Btn Next E1-onb1","E2-onb2"),("E1-onb1","Btn Skip E1-onb1","E4-welcome"),("E1-onb1","Btn Skip","E4-welcome"),
+ ("E2-onb2","Btn Next E2-onb2","E3-onb3"),("E2-onb2","Btn Skip E2-onb2","E4-welcome"),("E2-onb2","Btn Skip","E4-welcome"),
+ ("E3-onb3","Btn Next E3-onb3","E4-welcome"),("E3-onb3","Btn Skip E3-onb3","E4-welcome"),("E3-onb3","Btn Skip","E4-welcome"),
+ ("E4-welcome","Btn Create account","E5-role"),("E4-welcome","Btn Login entry","P6-login"),
+ ("E5-role","Btn Role Patient","P1-create"),("E5-role","Btn Role Doctor","D1-create"),
+ ("E5-role","Btn Role Institution","I1-register"),("E5-role","Btn Continue role","P1-create"),
+ ("E5-role","Btn Back","E4-welcome"),("E5-role","Btn Help role","E1-onb1"),("E5-role","Btn Help","P7-help"),
+ ("P1-create","Btn Send code P1","P2-otp"),("P1-create","Btn Login P","P6-login"),("P1-create","Btn Back","E5-role"),("P1-create","Btn Help","P7-help"),
+ ("P2-otp","Btn Verify P2","P3-name"),("P2-otp","Btn Change number P2","P1-create"),
+ ("P2-otp","Btn Help code P2","P7-help"),("P2-otp","Btn Resend P2","P2-otp"),("P2-otp","Btn Back","P1-create"),("P2-otp","Btn Help","P7-help"),
+ ("P3-name","Btn Continue P3","P4-about"),("P3-name","Btn Skip P3","P4-about"),("P3-name","Btn Back","P2-otp"),("P3-name","Btn Help","P7-help"),
+ ("P4-about","Btn Continue P4","P5-health"),("P4-about","Btn Skip P4","P5-health"),("P4-about","Btn Back","P3-name"),("P4-about","Btn Help","P7-help"),
+ ("P5-health","Btn Finish P5","P8-success"),("P5-health","Btn Skip P5","P8-success"),("P5-health","Btn Back","P4-about"),("P5-health","Btn Help","P7-help"),
+ ("P6-login","Btn Send code P6","P2-otp"),("P6-login","Btn Create P6","P1-create"),
+ ("P6-login","Btn Help P6","P7-help"),("P6-login","Btn Back","E4-welcome"),("P6-login","Btn Help","P7-help"),
+ ("P7-help","Btn Back to OTP","P2-otp"),("P7-help","Btn Resend help","P2-otp"),("P7-help","Btn Call help","P2-otp"),
+ ("P7-help","Btn Change help","P1-create"),("P7-help","Btn Support help","P7-help"),("P7-help","Btn Back","P2-otp"),("P7-help","Btn Help","P7-help"),
+ ("P8-success","Btn Go home P8","E4-welcome"),("P8-success","Btn Explore P8","E4-welcome"),
+ ("D1-create","Btn Continue D1","D2-otp"),("D1-create","Btn Login D","D6-login"),("D1-create","Btn Back","E5-role"),("D1-create","Btn Help","P7-help"),
+ ("D2-otp","Btn Verify D2","D3-password"),("D2-otp","Btn Change number D2","D1-create"),
+ ("D2-otp","Btn Resend D2","D2-otp"),("D2-otp","Btn Back","D1-create"),("D2-otp","Btn Help","P7-help"),
+ ("D3-password","Btn Continue D3","D4-pending"),("D3-password","Btn Back","D2-otp"),("D3-password","Btn Help","P7-help"),
+ ("D4-pending","Btn Explore D4","D5-profile"),("D4-pending","Btn Update MDCN D4","D1-create"),("D4-pending","Btn Support D4","P7-help"),("D4-pending","Btn Help","P7-help"),
+ ("D5-profile","Btn Finish D5","D10-success"),("D5-profile","Btn Later D5","D10-success"),("D5-profile","Btn Back","D4-pending"),("D5-profile","Btn Help","P7-help"),
+ ("D6-login","Btn Login submit D6","D7-2fa"),("D6-login","Btn Forgot D6","D8-forgot"),
+ ("D6-login","Btn Register D6","D1-create"),("D6-login","Btn Back","E4-welcome"),("D6-login","Btn Help","P7-help"),
+ ("D7-2fa","Btn 2FA verify D7","D10-success"),("D7-2fa","Btn Resend D7","D7-2fa"),
+ ("D7-2fa","Btn Help D7","D8-forgot"),("D7-2fa","Btn Back","D6-login"),("D7-2fa","Btn Help","P7-help"),
+ ("D8-forgot","Btn Send reset D8","D9-reset"),("D8-forgot","Btn Back login D8","D6-login"),("D8-forgot","Btn Back","D6-login"),("D8-forgot","Btn Help","P7-help"),
+ ("D9-reset","Btn Save password D9","D6-login"),("D9-reset","Btn Back","D8-forgot"),("D9-reset","Btn Help","P7-help"),
+ ("D10-success","Btn Go dashboard D10","E4-welcome"),("D10-success","Btn Availability D10","E4-welcome"),
+ ("I1-register","Btn Continue I1","I2-documents"),("I1-register","Btn Admin login I","I7-admin-login"),("I1-register","Btn Back","E5-role"),("I1-register","Btn Help","P7-help"),
+ ("I2-documents","Btn Continue I2","I3-plan"),("I2-documents","Btn Save later I2","I3-plan"),
+ ("I2-documents","Btn Upload cac","I2-documents"),("I2-documents","Btn Back","I1-register"),("I2-documents","Btn Help","P7-help"),
+ ("I3-plan","Btn Start trial I3","I4-otp"),("I3-plan","Btn Sales I3","I3-plan"),("I3-plan","Btn Back","I2-documents"),("I3-plan","Btn Help","P7-help"),
+ ("I4-otp","Btn Verify I4","I5-password"),("I4-otp","Btn Change number I4","I1-register"),
+ ("I4-otp","Btn Resend I4","I4-otp"),("I4-otp","Btn Back","I3-plan"),("I4-otp","Btn Help","P7-help"),
+ ("I5-password","Btn Create I5","I6-pending"),("I5-password","Btn Back","I4-otp"),("I5-password","Btn Help","P7-help"),
+ ("I6-pending","Btn Go portal I6","I10-success"),("I6-pending","Btn Manage I6","I2-documents"),("I6-pending","Btn Help","P7-help"),
+ ("I7-admin-login","Btn Login submit I7","I10-success"),("I7-admin-login","Btn Forgot I7","I8-forgot"),
+ ("I7-admin-login","Btn Register I7","I1-register"),("I7-admin-login","Btn Back","E4-welcome"),("I7-admin-login","Btn Help","P7-help"),
+ ("I8-forgot","Btn Send reset I8","I9-reset"),("I8-forgot","Btn Back login I8","I7-admin-login"),("I8-forgot","Btn Back","I7-admin-login"),("I8-forgot","Btn Help","P7-help"),
+ ("I9-reset","Btn Save password I9","I7-admin-login"),("I9-reset","Btn Back","I8-forgot"),("I9-reset","Btn Help","P7-help"),
+ ("I10-success","Btn Go portal I10","E4-welcome"),("I10-success","Btn Invite I10","E4-welcome"),
 ]
-# resolve transitions for both platforms
 resolved=[]
 for a,hot,b in TRN:
-    if a not in NAMES or b not in NAMES: continue
-    resolved.append([NAMES[a][0], hot, NAMES[b][0]])  # desktop
-    resolved.append([NAMES[a][1], hot, NAMES[b][1]])  # mobile
+    if a in NAMES and b in NAMES:
+        resolved.append([NAMES[a][0],hot,NAMES[b][0]]); resolved.append([NAMES[a][1],hot,NAMES[b][1]])
 order_js={PAGE_FIGMA[p]:[[NAMES[f][0],NAMES[f][1]] for f in fids] for p,fids in ORDER.items()}
 starts_js={PAGE_FIGMA[p]:NAMES[fids[0]][0] for p,fids in ORDER.items()}
 
@@ -604,15 +818,17 @@ linker=("(async () => {\n"
  "  const pages = figma.root.children.filter(n => n.type==='PAGE');\n"
  "  const byName = {}; for (const pg of pages) for (const f of pg.children) if (f.type==='FRAME') byName[norm(f.name)] = f;\n"
  "  const F = n => byName[norm(n)];\n"
- "  const findNamed = (root,t) => { let hit=null; const target=norm(t); const w=n=>{ if(hit)return; if(n.name&&norm(n.name)===target){hit=n;return;} if('children'in n)n.children.forEach(w); }; w(root); return hit; };\n"
+ "  const findAll = (root,t) => { const out=[]; const target=norm(t); const w=n=>{ if(n.name&&norm(n.name)===target) out.push(n); if('children'in n) n.children.forEach(w); }; w(root); return out; };\n"
  "  const transition = { type:'SMART_ANIMATE', easing:{type:'EASE_OUT'}, duration:0.25 };\n"
  f"  const TRN = {json.dumps(resolved)};\n"
  f"  const ORDER = {json.dumps(order_js)};\n"
  f"  const STARTS = {json.dumps(starts_js)};\n"
  "  const jobs=[], missing=[];\n"
- "  for (const [fromN,hot,toN] of TRN){ const fr=F(fromN), to=F(toN); if(!fr||!to) continue; const node=findNamed(fr,hot); if(!node){ missing.push(fromN+' → '+hot); continue; } jobs.push([node,to]); }\n"
- "  let linked=0; for (const [node,to] of jobs){ await node.setReactionsAsync([{ trigger:{type:'ON_CLICK'}, actions:[{ type:'NODE', destinationId:to.id, navigation:'NAVIGATE', transition }] }]); linked++; }\n"
- "  const GX=160, GY=140;\n"
+ "  for (const [fromN,hot,toN] of TRN){ const fr=F(fromN), to=F(toN); if(!fr||!to) continue;\n"
+ "    const nodes=findAll(fr,hot); if(!nodes.length){ missing.push(fromN+' -> '+hot); continue; }\n"
+ "    for (const nd of nodes) jobs.push([nd,to]); }\n"
+ "  let linked=0; for (const [nd,to] of jobs){ await nd.setReactionsAsync([{ trigger:{type:'ON_CLICK'}, actions:[{ type:'NODE', destinationId:to.id, navigation:'NAVIGATE', transition }] }]); linked++; }\n"
+ "  const GX=170, GY=150;\n"
  "  for (const pg of pages){ const ord=ORDER[pg.name]; if(!ord) continue; let x=0, rowH=0;\n"
  "    for (const [dn,mn] of ord){ const df=F(dn); if(df){ df.x=x; df.y=0; x+=df.width+GX; rowH=Math.max(rowH,df.height);} }\n"
  "    let mx=0; for (const [dn,mn] of ord){ const mf=F(mn); if(mf){ mf.x=mx; mf.y=rowH+GY; mx+=mf.width+GX; } } }\n"
@@ -621,22 +837,19 @@ linker=("(async () => {\n"
  "})();\n")
 open(os.path.join(OUT,"link-auth.js"),"w").write(linker)
 
-# ---------------- per-page render script ----------------
 ps=["# Medra Auth — render each persona onto its own Figma page (Figma Desktop open + connected).",
-    "# Run from inside this folder. Installs client cache first (once per machine).",
     'New-Item -ItemType Directory -Force "$HOME\\.figma-ds-cli\\icon-cache" | Out-Null',
     'Copy-Item .\\assets\\icon-cache\\*.svg "$HOME\\.figma-ds-cli\\icon-cache\\" -Force',
     "figma-cli tokens import-design-md .\\DESIGN.md",""]
-for p, fids in ORDER.items():
-    pg=PAGE_FIGMA[p]
-    ps.append(f'# ---- {pg} ----')
-    ps.append(f'figma-cli eval "(async()=>{{const t=\'{pg}\';let p=figma.root.children.find(n=>n.name===t);if(!p){{p=figma.createPage();p.name=t;}}await figma.setCurrentPageAsync(p);return p.name;}})()"')
-    files=" ".join(sorted(f"{fid}-d.jsx" for fid in fids)+ [f"{fid}-m.jsx" for fid in fids])
-    ps.append(f'foreach ($f in @({", ".join(chr(39)+f+chr(39) for fid in fids for f in (fid+"-d.jsx",fid+"-m.jsx"))})) {{ figma-cli render (Get-Content $f -Raw) }}')
+for p,fids in ORDER.items():
+    ps.append(f'# ---- {PAGE_FIGMA[p]} ----')
+    ps.append(f'figma-cli eval "(async()=>{{const t=’{PAGE_FIGMA[p]}’;let p=figma.root.children.find(n=>n.name===t);if(!p){{p=figma.createPage();p.name=t;}}await figma.setCurrentPageAsync(p);return p.name;}})()"')
+    lst=", ".join("'"+f+"'" for fid in fids for f in (fid+"-d.jsx",fid+"-m.jsx"))
+    ps.append(f'foreach ($f in @({lst})) {{ figma-cli render (Get-Content $f -Raw) }}')
     ps.append("")
 ps.append("# Wire the clickable prototype + arrange every page")
 ps.append("figma-cli run .\\link-auth.js")
 open(os.path.join(OUT,"render-auth.ps1"),"w").write("\n".join(ps))
 
-print(f"wrote {len(frames)} frames across {len(manifest)} pages, {len(resolved)} links")
-for p,fs in manifest.items(): print(f"  {p}: {len(fs)} frames")
+print(f"{len(frames)} frames · {len(manifest)} pages · {len(resolved)} links")
+for p,fs in manifest.items(): print(f"  {p}: {len(fs)}")
