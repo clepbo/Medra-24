@@ -60,7 +60,12 @@ for (const file of jsxFiles) {
     if (/^https?:/.test(p)) report(`remote image not allowed: ${p}`);
     else if (!fs.existsSync(path.join(ROOT, p))) report(`missing image: ${p}`);
   }
-  // 9. exactly one root <Frame> with a name
+  // 9. numeric props must keep their braces (a collapsed f-string emits w=390 not w={390})
+  for (const m of src.matchAll(/\b(w|h|minH|gap|rowGap|p|px|py|pt|pr|pb|pl|rounded|strokeWidth|grow|size)=(?!["{])([^\s>]+)/g)) {
+    report(`prop ${m[1]}=${m[2]} is missing braces — should be ${m[1]}={${m[2]}}`);
+  }
+
+  // 10. exactly one root <Frame> with a name
   const roots = src.match(/^<Frame\b[^>]*name="/);
   if (!roots) { console.log(`  ! ${file}: root frame has no name=`); warnings++; }
 }

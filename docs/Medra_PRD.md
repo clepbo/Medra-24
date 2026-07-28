@@ -92,7 +92,12 @@ Full video-calling UI, doctor analytics, patient ratings/reviews, multi-language
 
 ### 5.1 Personas
 
-**Patient — "Amara", 31, Abuja**
+> **Nomenclature:** people who use Medra for their own care are **members**, not "patients".
+> "Patient" is reserved for the *clinical* context — a doctor's patient list, a consultation note.
+> This keeps the product respectful of people who are simply managing their health, not sick.
+
+
+**Member ("patient" only in clinical context) — "Amara", 31, Abuja**
 Wants to see the right doctor without wasted trips, and to stop carrying paper results between doctors. Needs a simple phone-based sign-up, clear availability, and a readable history.
 
 **Institution Admin — "Mr. Bello", clinic administrator**
@@ -420,13 +425,34 @@ Screen groups expand into individual screens plus states (empty, loading, error,
 
 ## 18. Monetisation & Pricing Model
 
-- **Who pays:** Institutions and independent practitioners (subscription). **Patients: free**; they pay institutions directly for services rendered.
-- **Pricing basis:** by **institution size**; enterprise/**multi-branch billed as one institution**. Plans confirmed via a consultation with each institution (tailored to their needs, number of doctors, use case).
-- **Trial:** 30-day free trial, no card to start; countdown visible; auto-charge on conversion.
-- **Expired state:** staff/clinic dashboards lock; patient side continues to function.
-- **Future revenue:** paid add-ons (e.g., record-keeping premium features), employer-sponsored plans, automated telemedicine.
+- **Who pays:** Institutions and independent practitioners (subscription). **Members** (people
+  using Medra for their own care) use the platform **free**; they pay institutions directly for
+  services rendered.
+- **Sizing before pricing:** onboarding asks for **practitioners, branches, admin seats and
+  monthly patient volume**, then recommends a plan. Every input stays editable on the pricing
+  screen, and the price recalculates live.
 
----
+### 18.1 Plans (indicative — validate with pilot clinics)
+
+| Plan | Price / month | Includes |
+|---|---|---|
+| **Starter** | **₦45,000** | 1 practitioner · 1 branch · core booking & records |
+| **Practice** | **₦120,000** | Up to 10 practitioners · 1 branch · staff roles & allocation |
+| **Group** | **₦280,000** | Up to 30 practitioners · up to 3 branches · analytics |
+| **Enterprise** | **Custom** | Unlimited practitioners & branches · SSO · dedicated support |
+
+- **Add-ons:** +₦8,000 per extra practitioner/month · +₦25,000 per extra branch/month.
+- **Annual billing:** pay for 10 months, get 12 (**2 months free**).
+- **Trial:** 30-day free trial on every plan, **no card required**; countdown visible in the portal.
+- **Worked example:** 8 practitioners across 2 branches → Practice (₦120,000) + 1 extra branch
+  (₦25,000) = **₦145,000/month**.
+- **Expired state:** staff/clinic dashboards lock; the member side keeps working.
+- **Multi-branch** is billed as **one institution**, never per branch account.
+- **Future revenue:** paid add-ons, employer-sponsored plans, automated telemedicine.
+
+> Prices are a starting point for the Abuja pilot and should be tested against willingness-to-pay
+> before launch; the plan **structure** (size-based tiers + per-practitioner/branch add-ons) is the
+> durable decision.
 
 ## 19. Assumptions, Dependencies & Constraints
 

@@ -6,12 +6,13 @@ use; attribution is not required but is good practice, so it is recorded here.
 
 | File(s) | Unsplash photo ID | Subject |
 |---|---|---|
-| `d-panel-patient.jpg`, `m-hero-patient.jpg` | `photo-1531123897727-8f129e1688ce` | Woman portrait — patient |
+| `d-panel-member.jpg`, `m-hero-member.jpg` | `photo-1631815588090-d4bfec5b1ccb` | Practitioner taking a patient's blood pressure — care in action |
 | `d-panel-doctor.jpg`, `m-hero-doctor.jpg`, `onb-1.jpg`, `avatar-1.jpg` | `photo-1622253692010-333f2da6031d` | Doctor in scrubs with stethoscope |
 | `onb-2.jpg`, `proof-phone.jpg` | `photo-1576091160399-112ba8d25d1d` | Doctor booking on a phone |
 | `d-panel-institution.jpg`, `m-hero-institution.jpg` | `photo-1666214280557-f1b5022eb634` | Clinical team at work |
 | `onb-3.jpg`, `proof-lab.jpg` | `photo-1609188076864-c35269136b09` | Laboratory / diagnostics |
-| `success.jpg`, `avatar-2.jpg` | `photo-1573497019940-1c28c88b4f3e` | Professional portrait |
+| `success.jpg` | `photo-1651008376811-b90baee60c1f` | Seated doctor — bright, hopeful |
+| `avatar-2.jpg` | `photo-1573497019940-1c28c88b4f3e` | Professional portrait |
 | `avatar-3.jpg` | `photo-1594824476967-48c8b964273f` | Clinician in teal scrubs |
 
 View any photo at `https://unsplash.com/photos/<id>`.
@@ -20,6 +21,10 @@ View any photo at `https://unsplash.com/photos/<id>`.
 1. Cropped to the target aspect with face-aware cropping.
 2. Subtle cool **brand grade** so photography sits with the navy→teal palette.
 3. A baked **bottom-up scrim** so white headline/body text is always legible (WCAG-safe).
+
+## Brand marks
+`brand-google.png` and `brand-apple.png` are the official Google and Apple sign-in marks,
+used solely to label their respective sign-in buttons per each provider's branding guidelines.
 
 ## Generated (not photographic)
 `surface-mobile.jpg`, `surface-desktop.jpg` (soft mesh grounds), `btn-teal.jpg`,

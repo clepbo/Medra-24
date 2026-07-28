@@ -146,6 +146,44 @@ def big_icon(ic,tone="ok",size=96):
     c={"ok":OK_IC,"warn":WARN_IC,"info":A_IC}[tone]
     return f'<Frame w={{{size}}} h={{{size}}} rounded={{999}} bg="{bg}" flex="col" justify="center" items="center">{I(ic,int(size*0.45),c)}</Frame>'
 
+
+def segmented(options, sel=0, name="seg"):
+    out=""
+    for i,o in enumerate(options):
+        s=i==sel
+        st=('bg="var:bg/base" stroke="var:border/subtle" strokeWidth={1}' if s else 'bg="var:neutral/100"')
+        out+=(f'<Frame name="Btn {name} {o}" grow={{1}} flex="row" justify="center" px={{16}} py={{11}} rounded={{999}} {st}>'
+              f'{T(14,"semibold","var:text/strong" if s else "var:text/muted",o)}</Frame>')
+    return f'<Frame w="fill" flex="row" gap={{4}} p={{4}} rounded={{999}} bg="var:neutral/100">{out}</Frame>'
+
+def social_btn(brand,label,name):
+    img={"google":"brand-google.png","apple":"brand-apple.png"}[brand]
+    return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{10}} justify="center" items="center" px={{22}} py={{15}} '
+            f'rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>'
+            f'<Image image="assets/img/{img}" w={{20}} h={{20}} />{T(15,"semibold","var:text/default",label)}</Frame>')
+
+def divider_or(txt="or"):
+    return (f'<Frame w="fill" flex="row" gap={{12}} items="center"><Rect grow={{1}} h={{1}} bg="var:border/subtle" />'
+            f'{T(12,"medium","var:text/faint",txt)}<Rect grow={{1}} h={{1}} bg="var:border/subtle" /></Frame>')
+
+def stepper_ctl(label, value, name, helper=None):
+    sub=T(12,"regular","var:text/muted",helper) if helper else ""
+    return (f'<Frame w="fill" flex="col" gap={{7}}>{T(13,"medium","var:text/default",label)}'
+            f'<Frame w="fill" flex="row" gap={{12}} items="center" px={{12}} py={{9}} rounded={{16}} bg="var:neutral/50" stroke="var:border/subtle" strokeWidth={{1}}>'
+            f'<Frame name="Btn {name} minus" w={{36}} h={{36}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}} flex="col" justify="center" items="center">{I("minus",17,N_IC)}</Frame>'
+            f'<Frame grow={{1}} flex="col" items="center">{T(20,"bold","var:text/strong",str(value))}</Frame>'
+            f'<Frame name="Btn {name} plus" w={{36}} h={{36}} rounded={{999}} image="assets/img/btn-navy.jpg" overflow="hidden" flex="col" justify="center" items="center">{I("plus",17,W_IC)}</Frame>'
+            f'</Frame>{sub}</Frame>')
+
+def price_line(label, amount, strong=False):
+    return (f'<Frame w="fill" flex="row" justify="between" items="center">'
+            f'{T(14,"semibold" if strong else "regular","var:text/strong" if strong else "var:text/muted",label)}'
+            f'{T(16 if strong else 14,"bold" if strong else "medium","var:text/strong",amount)}</Frame>')
+
+def biometric_btn(name):
+    return (f'<Frame name="Btn {name}" w={{108}} h={{108}} rounded={{999}} image="assets/img/btn-teal.jpg" overflow="hidden" '
+            f'flex="col" justify="center" items="center">{I("fingerprint",46,W_IC)}</Frame>')
+
 # ---------- mobile chrome ----------
 def statusbar(dark=False):
     c="var:text/on-dark" if dark else "var:text/strong"
@@ -267,7 +305,7 @@ add("Entry","E4-welcome",
              [ghost("I already have an account","Login entry","log-in")],skip=False,
              proofs=[proof("shield-check","NDPR secure"),proof("badge-check","MDCN verified")]))
 
-ROLE=(f'<Frame w="fill" flex="col" gap={{11}}>{choice("user","I am a patient","Book doctors and keep my records","Role Patient",sel=True)}'
+ROLE=(f'<Frame w="fill" flex="col" gap={{11}}>{choice("user","I’m here for my own care","Book doctors and keep my records","Role Member",sel=True)}'
       f'{choice("stethoscope","I am a doctor","See patients and write consultation notes","Role Doctor")}'
       f'{choice("building-2","I represent an institution","Register a clinic or hospital","Role Institution")}</Frame>')
 add("Entry","E5-role",
@@ -282,37 +320,43 @@ add("Entry","E5-role",
         [("How will you use",False),("Medra?",True)],"Pick the one that fits you — you can add another later.",
         ROLE,cta("Continue","Continue role"),[link("Not sure?","See how Medra works","Help role")]))
 
-# ============================================================ PATIENT
-PP=lambda **kw: desk_panel("d-panel-patient.jpg",**kw)
-add("Patient","P1-create",
-    desk_form("Auth · Patient — P1 Create Account",
-        PP(eyebrow_t="For patients",head_parts=[("Your health,",False),("in one place",True)],
+# ============================================================ MEMBER (people using Medra for their own care)
+MP=lambda **kw: desk_panel("d-panel-member.jpg",**kw)
+SIGNUP_B=(f'<Frame w="fill" flex="col" gap={{16}}>'
+          f'{segmented(["Phone number","Email"],0,"Method")}'
+          f'{field("Phone number","phone","801 234 5678",prefix="+234",helper="We’ll text a 6-digit code once to confirm it.")}'
+          f'{checkbox("I agree to Medra’s Terms of Service and Privacy Policy, and consent to my health data being processed under the NDPR.","Consent")}</Frame>')
+SOCIALS=[divider_or("or continue with"), social_btn("google","Continue with Google","Google signup"),
+         social_btn("apple","Continue with Apple","Apple signup"),
+         link("Already have an account?","Log in","Login M")]
+add("Member","M1-create",
+    desk_form("Auth · Member — M1 Create Account",
+        MP(eyebrow_t="For members",head_parts=[("Your health,",False),("in one place",True)],
            sub="No paper to carry. No history to lose. Just care that knows you.",
            proofs=[proof("shield-check","NDPR secure"),proof("badge-check","Verified doctors")]),
         "Step 1 of 5",[("Create your",False),("account",True)],
-        "Enter your phone number — we'll text you a 6-digit code to confirm it. No password needed, ever.",
-        f'<Frame w="fill" flex="col" gap={{16}}>{field("Phone number","phone","801 234 5678",prefix="+234",helper="Standard SMS rates may apply.")}'
-        f'{checkbox("I agree to Medra’s Terms of Service and Privacy Policy, and consent to my health data being processed under the NDPR.","Consent")}</Frame>',
-        cta("Send my code","Send code P1"),[link("Already have an account?","Log in","Login P")],step=(0,5)),
-    mob_form("Auth · Patient — P1 Create Account · Mobile","Step 1 of 5",
-        [("Create your",False),("account",True)],"We'll text a 6-digit code to confirm your number. No password needed.",
-        f'<Frame w="fill" flex="col" gap={{16}}>{field("Phone number","phone","801 234 5678",prefix="+234")}'
-        f'{checkbox("I agree to the Terms &amp; Privacy Policy and NDPR data processing.","Consent")}</Frame>',
-        cta("Send my code","Send code P1"),[link("Already have an account?","Log in","Login P")],step=(0,5)))
+        "Choose how you’d like to sign up. You’ll only need to verify once — after that we remember your device.",
+        SIGNUP_B,cta("Continue","Send code M1"),SOCIALS,step=(0,5)),
+    mob_form("Auth · Member — M1 Create Account · Mobile","Step 1 of 5",
+        [("Create your",False),("account",True)],"Sign up your way — verify once, then we remember this device.",
+        SIGNUP_B,cta("Continue","Send code M1"),SOCIALS,step=(0,5)))
 
-OTP_P=f'<Frame w="fill" flex="col" gap={{14}}>{otp("3907")}{link("Didn’t get it?","Resend in 0:24","Resend P2")}</Frame>'
-add("Patient","P2-otp",
-    desk_form("Auth · Patient — P2 Verify Code",
-        PP(eyebrow_t="For patients",head_parts=[("Almost",False),("there",True)],
-           sub="Confirming your number keeps your records secure and yours alone.",
-           proofs=[proof("lock","Encrypted"),proof("smartphone","One-time code")]),
+OTP_M=(f'<Frame w="fill" flex="col" gap={{14}}>{otp("3907")}'
+       f'{link("Didn’t get it?","Resend in 0:24","Resend M2")}'
+       f'{checkbox("Keep me signed in on this device","Trust device")}'
+       f'{note("shield-check","We’ll remember this device for 30 days — no code needed next time. Always ask on a shared phone.","info")}</Frame>')
+add("Member","M2-otp",
+    desk_form("Auth · Member — M2 Verify Once",
+        MP(eyebrow_t="For members",head_parts=[("Verify once,",False),("not every time",True)],
+           sub="Confirming your number keeps your records yours alone — then we stay out of your way.",
+           proofs=[proof("lock","Encrypted"),proof("smartphone","Trusted device")]),
         "Step 2 of 5",[("Enter the",False),("6-digit code",True)],"We sent it to +234 801 234 5678 by SMS.",
-        OTP_P,cta("Verify and continue","Verify P2"),
-        [link("Wrong number?","Change it","Change number P2"),link("Code not arriving?","Get help another way","Help code P2")],step=(1,5)),
-    mob_form("Auth · Patient — P2 Verify Code · Mobile","Step 2 of 5",
+        OTP_M,cta("Verify and continue","Verify M2"),
+        [link("Wrong number?","Change it","Change number M2"),link("Code not arriving?","Get help another way","Help code M2")],step=(1,5)),
+    mob_form("Auth · Member — M2 Verify Once · Mobile","Step 2 of 5",
         [("Enter the",False),("6-digit code",True)],"Sent to +234 801 234 5678.",
-        OTP_P,cta("Verify and continue","Verify P2"),
-        [link("Wrong number?","Change it","Change number P2"),link("","Get help another way","Help code P2")],step=(1,5)))
+        OTP_M,cta("Verify and continue","Verify M2"),
+        [link("Wrong number?","Change it","Change number M2"),link("","Get help another way","Help code M2")],step=(1,5)))
 
 NAME_B=(f'<Frame w="fill" flex="col" gap={{18}}>'
         f'<Frame w="fill" flex="row" gap={{15}} items="center">'
@@ -321,103 +365,129 @@ NAME_B=(f'<Frame w="fill" flex="col" gap={{18}}>'
         f'{I("upload",16,N_IC)}{T(13,"semibold","var:text/default","Add a photo (optional)")}</Frame></Frame>'
         f'{field("Full name","user","Amara Okeke",ph=False)}'
         f'{field("Date of birth","calendar-days","12 March 1994",ph=False,helper="Helps your doctor prescribe safely.")}</Frame>')
-add("Patient","P3-name",
-    desk_form("Auth · Patient — P3 Your Name",
-        PP(eyebrow_t="For patients",head_parts=[("Care that",False),("knows you",True)],
+add("Member","M3-name",
+    desk_form("Auth · Member — M3 Your Name",
+        MP(eyebrow_t="For members",head_parts=[("Care that",False),("knows you",True)],
            sub="Your details stay private and are shared only with doctors you choose to book.",
            proofs=[proof("lock","Private by default")]),
         "Step 3 of 5",[("What should we",False),("call you?",True)],
         "This is the name your doctor will see on your records.",
-        NAME_B,cta("Continue","Continue P3"),[link("","Skip for now","Skip P3")],step=(2,5)),
-    mob_form("Auth · Patient — P3 Your Name · Mobile","Step 3 of 5",
+        NAME_B,cta("Continue","Continue M3"),[link("","Skip for now","Skip M3")],step=(2,5)),
+    mob_form("Auth · Member — M3 Your Name · Mobile","Step 3 of 5",
         [("What should we",False),("call you?",True)],"This is the name your doctor will see.",
-        NAME_B,cta("Continue","Continue P3"),[link("","Skip for now","Skip P3")],step=(2,5)))
+        NAME_B,cta("Continue","Continue M3"),[link("","Skip for now","Skip M3")],step=(2,5)))
 
 ABOUT_B=(f'<Frame w="fill" flex="col" gap={{18}}>'
          f'{field_chips("Gender",["Female","Male","Non-binary","Prefer not to say"],0,"Gender")}'
          f'{field_chips("Preferred language",["English","Hausa","Yoruba","Igbo","Pidgin"],0,"Language")}'
          f'{field_chips("Text size",["Standard","Large","Extra large"],0,"Textsize")}</Frame>')
-add("Patient","P4-about",
-    desk_form("Auth · Patient — P4 About You",
-        PP(eyebrow_t="For patients",head_parts=[("Made for",False),("everyone",True)],
+add("Member","M4-about",
+    desk_form("Auth · Member — M4 About You",
+        MP(eyebrow_t="For members",head_parts=[("Made for",False),("everyone",True)],
            sub="Medra works in your language, at your pace, however you need to use it.",
            proofs=[proof("globe","5 languages"),proof("accessibility","Accessible")]),
         "Step 4 of 5",[("A few things",False),("about you",True)],
         "Tap to choose. You can change any of this later in Settings.",
-        ABOUT_B,cta("Continue","Continue P4"),[link("","Skip for now","Skip P4")],step=(3,5)),
-    mob_form("Auth · Patient — P4 About You · Mobile","Step 4 of 5",
+        ABOUT_B,cta("Continue","Continue M4"),[link("","Skip for now","Skip M4")],step=(3,5)),
+    mob_form("Auth · Member — M4 About You · Mobile","Step 4 of 5",
         [("A few things",False),("about you",True)],"Tap to choose — change any of it later.",
-        ABOUT_B,cta("Continue","Continue P4"),[link("","Skip for now","Skip P4")],step=(3,5)))
+        ABOUT_B,cta("Continue","Continue M4"),[link("","Skip for now","Skip M4")],step=(3,5)))
 
 HEALTH_B=(f'<Frame w="fill" flex="col" gap={{16}}>'
           f'{field_chips("Blood group",["A+","A-","B+","B-","O+","O-","AB+","Not sure"],4,"Blood")}'
           f'{field("Allergies","triangle-alert","e.g. penicillin, peanuts")}'
           f'{field("Medicines you take now","pill","e.g. metformin 500mg")}'
           f'{field("Emergency contact","phone-call","802 000 0000",prefix="+234")}</Frame>')
-add("Patient","P5-health",
-    desk_form("Auth · Patient — P5 Health Basics",
-        PP(eyebrow_t="For patients",head_parts=[("Safer",False),("prescriptions",True)],
+add("Member","M5-health",
+    desk_form("Auth · Member — M5 Health Basics",
+        MP(eyebrow_t="For members",head_parts=[("Safer",False),("prescriptions",True)],
            sub="Knowing your allergies and current medicines helps any doctor avoid a dangerous clash.",
            proofs=[proof("heart-pulse","Clinical safety"),proof("pill","Drug-clash aware")]),
         "Step 5 of 5",[("Your",False),("health basics",True)],
         "Optional, but it helps doctors keep you safe. You can add more anytime.",
-        HEALTH_B,cta("Finish and go to my home","Finish P5"),[link("","I’ll do this later","Skip P5")],step=(4,5)),
-    mob_form("Auth · Patient — P5 Health Basics · Mobile","Step 5 of 5",
+        HEALTH_B,cta("Finish and go to my home","Finish M5"),[link("","I’ll do this later","Skip M5")],step=(4,5)),
+    mob_form("Auth · Member — M5 Health Basics · Mobile","Step 5 of 5",
         [("Your",False),("health basics",True)],"Optional — but it helps doctors keep you safe.",
-        HEALTH_B,cta("Finish","Finish P5"),[link("","I’ll do this later","Skip P5")],step=(4,5)))
+        HEALTH_B,cta("Finish","Finish M5"),[link("","I’ll do this later","Skip M5")],step=(4,5)))
 
-add("Patient","P6-login",
-    desk_form("Auth · Patient — P6 Log In",
-        PP(eyebrow_t="Welcome back",head_parts=[("Good to see you",False),("again",True)],
+LOGIN_B=(f'<Frame w="fill" flex="col" gap={{16}}>{segmented(["Phone number","Email"],0,"Login method")}'
+         f'{field("Phone number","phone","801 234 5678",prefix="+234",focus=True)}'
+         f'{checkbox("Keep me signed in on this device","Stay signed in")}</Frame>')
+LOGIN_X=[divider_or("or continue with"), social_btn("google","Continue with Google","Google login"),
+         social_btn("apple","Continue with Apple","Apple login"),
+         link("New to Medra?","Create an account","Create M6"),
+         link("Can’t access your number?","Get help","Help M6")]
+add("Member","M6-login",
+    desk_form("Auth · Member — M6 Log In",
+        MP(eyebrow_t="Welcome back",head_parts=[("Good to see you",False),("again",True)],
            sub="Your appointments and records are exactly where you left them.",
            proofs=[proof("calendar-check","2 upcoming visits")]),
         "Log in",[("Welcome",False),("back",True)],
-        "Enter your phone number and we'll text you a code. No password to remember.",
-        field("Phone number","phone","801 234 5678",prefix="+234",focus=True),
-        cta("Send my code","Send code P6"),
-        [link("New to Medra?","Create an account","Create P6"),link("Can't access your number?","Get help","Help P6")]),
-    mob_form("Auth · Patient — P6 Log In · Mobile","Log in",[("Welcome",False),("back",True)],
-        "We'll text you a code — no password to remember.",
-        field("Phone number","phone","801 234 5678",prefix="+234",focus=True),
-        cta("Send my code","Send code P6"),
-        [link("New to Medra?","Create an account","Create P6"),link("","Can't access your number?","Help P6")]))
+        "Use whichever is easiest — we only ask for a code on a new device.",
+        LOGIN_B,cta("Continue","Send code M6"),LOGIN_X),
+    mob_form("Auth · Member — M6 Log In · Mobile","Log in",[("Welcome",False),("back",True)],
+        "We only ask for a code on a new device.",
+        LOGIN_B,cta("Continue","Send code M6"),LOGIN_X))
+
+UNLOCK_B=(f'<Frame w="fill" flex="col" gap={{18}} items="center">'
+          f'<Image image="assets/img/avatar-2.jpg" w={{92}} h={{92}} rounded={{999}} />'
+          f'{T(20,"bold","var:text/strong","Amara Okeke")}'
+          f'{T(14,"regular","var:text/muted","+234 801 234 5678",align="center")}'
+          f'{SP(4)}{biometric_btn("Biometric unlock")}'
+          f'{T(14,"medium","var:text/default","Tap to unlock with fingerprint",align="center")}'
+          f'{note("shield-check","This device is trusted — no code needed. Trust expires after 30 days of not signing in.","ok")}</Frame>')
+add("Member","M7-unlock",
+    desk_form("Auth · Member — M7 Quick Unlock",
+        MP(eyebrow_t="Trusted device",head_parts=[("No codes,",False),("no waiting",True)],
+           sub="You verified this device already — from now on it’s one tap to get back in.",
+           proofs=[proof("fingerprint","Biometric unlock"),proof("clock","30-day trust")]),
+        "Quick unlock",[("Welcome back,",False),("Amara",True)],
+        "Unlock with your fingerprint or face — no code required on this device.",
+        UNLOCK_B,cta("Unlock","Unlock M7","fingerprint"),
+        [link("","Use a one-time code instead","Use code M7"),link("Not you?","Switch account","Switch M7")],back=False),
+    mob_form("Auth · Member — M7 Quick Unlock · Mobile","Quick unlock",
+        [("Welcome back,",False),("Amara",True)],"Unlock with your fingerprint — no code needed.",
+        UNLOCK_B,cta("Unlock","Unlock M7","fingerprint"),
+        [link("","Use a one-time code instead","Use code M7"),link("Not you?","Switch account","Switch M7")],back=False))
 
 HELPC=(f'<Frame w="fill" flex="col" gap={{11}}>'
        f'{choice("refresh-cw","Resend the code","Text the 6-digit code again","Resend help")}'
        f'{choice("phone-call","Call me instead","Get the code by automated call","Call help")}'
-       f'{choice("pencil","Change my number","I entered the wrong number","Change help")}'
+       f'{choice("mail","Use my email instead","Send the code to my email address","Email help")}'
        f'{choice("message-square-text","Message support","Chat with the Medra team","Support help")}</Frame>')
-add("Patient","P7-help",
-    desk_form("Auth · Patient — P7 Cannot Get Code",
-        PP(eyebrow_t="We've got you",head_parts=[("No one gets",False),("stuck",True)],
+add("Member","M8-help",
+    desk_form("Auth · Member — M8 Cannot Get Code",
+        MP(eyebrow_t="We’ve got you",head_parts=[("No one gets",False),("stuck",True)],
            sub="There is always another way in. If none of these work, our team will help you personally.",
            proofs=[proof("helping-hand","Human support")]),
-        "Trouble signing in",[("Didn't get your",False),("code?",True)],
-        "Pick an option below — we'll get you in.",HELPC,
+        "Trouble signing in",[("Didn’t get your",False),("code?",True)],
+        "Pick an option below — we’ll get you in.",HELPC,
         ghost("Back to verification","Back to OTP","arrow-left"),[]),
-    mob_form("Auth · Patient — P7 Cannot Get Code · Mobile","Trouble signing in",
-        [("Didn't get your",False),("code?",True)],"Pick an option — we'll get you in.",HELPC,
+    mob_form("Auth · Member — M8 Cannot Get Code · Mobile","Trouble signing in",
+        [("Didn’t get your",False),("code?",True)],"Pick an option — we’ll get you in.",HELPC,
         ghost("Back to verification","Back to OTP","arrow-left")))
 
-SUC_P=(f'<Frame w="fill" flex="col" gap={{16}} items="center">{big_icon("circle-check","ok")}'
-       f'{T(15,"regular","var:text/muted","Your account is ready. Next: find a verified doctor near you and book your first visit.",w="fill",align="center")}'
-       f'{note("info","Taking you to your patient home…","info")}</Frame>')
-add("Patient","P8-success",
-    desk("Auth · Patient — P8 Success",
-        desk_panel("success.jpg","You're in",[("Welcome to",False),("Medra",True)],
+SUC_M=(f'<Frame w="fill" flex="col" gap={{16}} items="center">{big_icon("circle-check","ok")}'
+       f'{T(15,"regular","var:text/muted","Your account is ready and this device is trusted — next time you’ll go straight in.",w="fill",align="center")}'
+       f'{note("info","Taking you to your home…","info")}</Frame>')
+add("Member","M9-success",
+    desk("Auth · Member — M9 Success",
+        desk_panel("success.jpg","You’re in",[("Welcome to",False),("Medra",True)],
                    "Care that follows you — everywhere in Nigeria.",
-                   stats=[("180+","Verified doctors"),("24/7","Booking"),("4.9","Patient rating")]),
-        f'{eyebrow("All set")}{head_chip([("You’re all set,",False),("Amara",True)],32)}{SUC_P}'
-        f'{cta("Go to my home","Go home P8","house")}{ghost("Explore doctors near me","Explore P8","search")}'),
-    mob_hero("Auth · Patient — P8 Success · Mobile","success.jpg","All set",
-        [("You're all set,",False),("Amara",True)],"Your account is ready — let's find you care.",
-        cta("Go to my home","Go home P8","house"),[ghost("Explore doctors near me","Explore P8","search")],skip=False,
-        proofs=[proof("circle-check","Account verified")]))
+                   stats=[("180+","Verified doctors"),("24/7","Booking"),("4.9","Member rating")]),
+        f'{eyebrow("All set")}{head_chip([("You’re all set,",False),("Amara",True)],32)}{SUC_M}'
+        f'{cta("Go to my home","Go home M9","house")}{ghost("Explore doctors near me","Explore M9","search")}'),
+    mob_hero("Auth · Member — M9 Success · Mobile","m-hero-member.jpg","All set",
+        [("You’re all set,",False),("Amara",True)],"Your account is ready — let’s find you care.",
+        cta("Go to my home","Go home M9","house"),[ghost("Explore doctors near me","Explore M9","search")],skip=False,
+        proofs=[proof("circle-check","Account verified"),proof("fingerprint","Device trusted")]))
 
 # ============================================================ DOCTOR
 DP=lambda **kw: desk_panel("d-panel-doctor.jpg",**kw)
-D1B=(f'<Frame w="fill" flex="col" gap={{16}}>{field("Phone number","phone","803 555 0110",prefix="+234")}'
-     f'{field("MDCN number","id-card","MDCN/45201",helper="Your Medical &amp; Dental Council of Nigeria licence number.")}'
+D1B=(f'<Frame w="fill" flex="col" gap={{16}}>{field("Full name","user","Dr. Ngozi Okafor",ph=False)}'
+     f'{field("Work email","mail","dr.okafor@clinic.ng",ph=False,helper="You can sign in with this, your phone or your MDCN number.")}'
+     f'{field("Phone number","phone","803 555 0110",prefix="+234")}'
+     f'{field("MDCN number","id-card","MDCN/45201",helper="Your Medical &amp; Dental Council of Nigeria registration number.")}'
      f'{field_chips("Specialisation",["Cardiology","General practice","Paediatrics","Other"],1,"Specialty")}</Frame>')
 add("Doctor","D1-create",
     desk_form("Auth · Doctor — D1 Create Account",
@@ -507,7 +577,7 @@ add("Doctor","D5-profile",
         [("What patients",False),("see",True)],"Editable later from your dashboard.",PROF_D,
         cta("Finish","Finish D5","arrow-right","btn-navy.jpg"),[link("","Do this later","Later D5")]))
 
-D6B=(f'<Frame w="fill" flex="col" gap={{16}}>{field("Phone or email","user","dr.okafor@clinic.ng",ph=False)}'
+D6B=(f'<Frame w="fill" flex="col" gap={{16}}>{field("Email, phone or MDCN number","id-card","MDCN/45201",ph=False,helper="Any of the three works.")}'
      f'{field("Password","lock","••••••••",ph=False,trailing=("eye","Show password"))}'
      f'<Frame w="fill" flex="row" justify="end">{link("","Forgot password?","Forgot D6",center=False)}</Frame></Frame>')
 add("Doctor","D6-login",
@@ -521,19 +591,21 @@ add("Doctor","D6-login",
         [link("New to Medra?","Register as a doctor","Register D6")]),
     mob_form("Auth · Doctor — D6 Log In · Mobile","Doctor log in",[("Welcome back,",False),("doctor",True)],
         "See today's schedule and patients.",
-        f'<Frame w="fill" flex="col" gap={{16}}>{field("Phone or email","user","dr.okafor@clinic.ng",ph=False)}'
-        f'{field("Password","lock","••••••••",ph=False,trailing=("eye","Show password"))}</Frame>',
+        f'<Frame w="fill" flex="col" gap={{16}}>{field("Email, phone or MDCN","id-card","MDCN/45201",ph=False)}'
+        f'{field("Password","lock","••••••••",ph=False,trailing=("eye","Show password"))}'
+        f'{checkbox("Keep me signed in for 30 days","Stay signed in D6")}</Frame>',
         cta("Log in","Login submit D6","arrow-right","btn-navy.jpg"),
         [link("Forgot password?","Reset it","Forgot D6"),link("New?","Register as a doctor","Register D6")]))
 
-OTP_2FA=f'<Frame w="fill" flex="col" gap={{14}}>{otp("41")}{link("Didn’t get it?","Resend in 0:22","Resend D7")}</Frame>'
+OTP_2FA=(f'<Frame w="fill" flex="col" gap={{14}}>{otp("41")}{link("Didn’t get it?","Resend in 0:22","Resend D7")}'
+         f'{checkbox("Trust this device for 30 days","Trust device D7")}</Frame>')
 add("Doctor","D7-2fa",
     desk_form("Auth · Doctor — D7 Two-Factor",
         DP(eyebrow_t="Two-factor",head_parts=[("Two steps,",False),("total trust",True)],
            sub="Extra protection every time you open a patient's record.",
            proofs=[proof("fingerprint","2FA enabled")]),
         "Security check",[("Confirm",False),("it's you",True)],
-        "We texted a 6-digit code to +234 803 555 0110 to protect patient data.",
+        "New device detected. We texted a 6-digit code to +234 803 555 0110 — you won’t need this on a device you trust.",
         OTP_2FA,cta("Log in","2FA verify D7","arrow-right","btn-navy.jpg"),
         [link("Lost access to your phone?","Get help","Help D7")]),
     mob_form("Auth · Doctor — D7 Two-Factor · Mobile","Security check",[("Confirm",False),("it's you",True)],
@@ -552,7 +624,7 @@ add("Doctor","D8-forgot",
         [link("Remembered it?","Back to log in","Back login D8")]),
     mob_form("Auth · Doctor — D8 Forgot Password · Mobile","Reset password",[("Reset your",False),("password",True)],
         "We'll send a 6-digit reset code.",
-        field("Phone or email","user","dr.okafor@clinic.ng",ph=False),
+        field("Email, phone or MDCN","id-card","dr.okafor@clinic.ng",ph=False),
         cta("Send reset code","Send reset D8","arrow-right","btn-navy.jpg"),
         [link("Remembered it?","Back to log in","Back login D8")]))
 
@@ -600,14 +672,14 @@ add("Institution","I1-register",
            sub="Bookings, staff, records and billing — one system for the whole institution.",
            proofs=[proof("building-2","Multi-branch ready"),proof("sparkles","30-day free trial")],
            stats=[("30","Day trial"),("1-2","Days to verify"),("Free","To start")]),
-        "Step 1 of 5",[("Register your",False),("institution",True)],
-        "Set up your clinic or hospital on Medra. You'll be the facility admin.",
+        "Step 1 of 6",[("Register your",False),("institution",True)],
+        "Set up your clinic or hospital on Medra. You’ll be the facility admin.",
         I1B,cta("Continue","Continue I1","arrow-right","btn-navy.jpg"),
-        [link("Institution already on Medra?","Admin log in","Admin login I")],step=(0,5)),
-    mob_form("Auth · Institution — I1 Register · Mobile","Step 1 of 5",
-        [("Register your",False),("institution",True)],"You'll be the facility admin.",
+        [link("Institution already on Medra?","Admin log in","Admin login I")],step=(0,6)),
+    mob_form("Auth · Institution — I1 Register · Mobile","Step 1 of 6",
+        [("Register your",False),("institution",True)],"You’ll be the facility admin.",
         I1B,cta("Continue","Continue I1","arrow-right","btn-navy.jpg"),
-        [link("Already on Medra?","Admin log in","Admin login I")],step=(0,5)))
+        [link("Already on Medra?","Admin log in","Admin login I")],step=(0,6)))
 
 DOCS=(f'<Frame w="fill" flex="col" gap={{13}}>{upload("Upload licence",done=True)}'
       f'{upload("Upload cac",done=False,label="CAC certificate")}'
@@ -617,136 +689,180 @@ add("Institution","I2-documents",
         IP(eyebrow_t="For institutions",head_parts=[("Verified",False),("institutions only",True)],
            sub="Patients trust Medra because every provider on it has been checked by a human.",
            proofs=[proof("file-check","Licence + CAC")]),
-        "Step 2 of 5",[("Upload your",False),("documents",True)],
+        "Step 2 of 6",[("Upload your",False),("documents",True)],
         "We verify every institution before it goes live. Add your practice licence and CAC certificate.",
         DOCS,cta("Continue","Continue I2","arrow-right","btn-navy.jpg"),
-        [link("Don't have them handy?","Save and finish later","Save later I2")],step=(1,5)),
-    mob_form("Auth · Institution — I2 Verify Documents · Mobile","Step 2 of 5",
+        [link("Don’t have them handy?","Save and finish later","Save later I2")],step=(1,6)),
+    mob_form("Auth · Institution — I2 Verify Documents · Mobile","Step 2 of 6",
         [("Upload your",False),("documents",True)],"Practice licence and CAC certificate.",DOCS,
         cta("Continue","Continue I2","arrow-right","btn-navy.jpg"),
-        [link("","Save and finish later","Save later I2")],step=(1,5)))
+        [link("","Save and finish later","Save later I2")],step=(1,6)))
 
-PLANS=(f'<Frame w="fill" flex="col" gap={{11}}>'
-       f'{plan("Single practice","₦___","One doctor · core booking and records")}'
-       f'{plan("Multi-doctor","₦___","Up to 15 doctors · staff roles and allocation",sel=True)}'
-       f'{plan("Multi-branch","Custom","Enterprise · every branch billed as one")}'
-       f'{note("sparkles","Every plan starts with a 30-day free trial — no card required.","ok")}</Frame>')
-add("Institution","I3-plan",
-    desk_form("Auth · Institution — I3 Choose Plan",
+SIZE_B=(f'<Frame w="fill" flex="col" gap={{17}}>'
+        f'{stepper_ctl("Doctors &amp; practitioners",8,"Practitioners","Everyone who will see patients on Medra.")}'
+        f'{stepper_ctl("Branches / locations",2,"Branches","Each physical site you operate.")}'
+        f'{stepper_ctl("Admin &amp; front-desk seats",4,"Seats","Staff who manage bookings but don’t consult.")}'
+        f'{field_chips("Patients seen each month",["Under 200","200 – 1,000","1,000 – 5,000","5,000+"],1,"Volume")}</Frame>')
+add("Institution","I3-orgsize",
+    desk_form("Auth · Institution — I3 Organisation Size",
+        IP(eyebrow_t="For institutions",head_parts=[("Pay for",False),("what you use",True)],
+           sub="Tell us your size and we’ll recommend the right plan — no guessing, no overpaying.",
+           proofs=[proof("users","Per-practitioner pricing"),proof("building","Per-branch pricing")]),
+        "Step 3 of 6",[("How big is your",False),("organisation?",True)],
+        "Adjust these numbers and we’ll work out your plan on the next screen. You can change them anytime.",
+        SIZE_B,cta("See my plan","See plan I3","arrow-right","btn-navy.jpg"),
+        [link("Not sure yet?","Skip and see all plans","Skip size I3")],step=(2,6)),
+    mob_form("Auth · Institution — I3 Organisation Size · Mobile","Step 3 of 6",
+        [("How big is your",False),("organisation?",True)],"We’ll work out the right plan from this.",
+        SIZE_B,cta("See my plan","See plan I3","arrow-right","btn-navy.jpg"),
+        [link("Not sure yet?","Skip and see all plans","Skip size I3")],step=(2,6)))
+
+RECOMMENDED=(f'<Frame w="fill" flex="col" gap={{13}} p={{20}} rounded={{22}} bg="var:state/info-bg" stroke="var:border/accent" strokeWidth={{2}}>'
+             f'<Frame w="fill" flex="row" justify="between" items="center">'
+             f'<Frame flex="row" gap={{8}} items="center">{I("sparkles",16,A_IC)}{T(12,"semibold","var:text/accent","RECOMMENDED FOR YOU")}</Frame>'
+             f'{T(12,"medium","var:text/muted","8 practitioners · 2 branches")}</Frame>'
+             f'{T(22,"bold","var:text/strong","Practice plan")}'
+             f'<Frame flex="row" gap={{5}} items="end">{T(34,"bold","var:text/strong","₦145,000")}{T(14,"regular","var:text/muted","/month")}</Frame>'
+             f'<Rect w="fill" h={{1}} bg="var:border/default" />'
+             f'{price_line("Practice plan · up to 10 practitioners","₦120,000")}'
+             f'{price_line("1 extra branch × ₦25,000","₦25,000")}'
+             f'{price_line("4 admin seats · included","₦0")}'
+             f'<Rect w="fill" h={{1}} bg="var:border/default" />'
+             f'{price_line("Total per month","₦145,000",strong=True)}'
+             f'{T(12,"regular","var:text/muted","Billed monthly after your 30-day free trial. Switch to annual and get 2 months free.")}</Frame>')
+ADJUST=(f'<Frame w="fill" flex="col" gap={{13}} p={{18}} rounded={{22}} bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>'
+        f'<Frame flex="row" gap={{8}} items="center">{I("sliders-horizontal",16,N_IC)}{T(14,"semibold","var:text/strong","Adjust your numbers")}</Frame>'
+        f'<Frame w="fill" flex="row" gap={{12}}>'
+        f'<Frame grow={{1}} flex="col">{stepper_ctl("Practitioners",8,"Adj practitioners")}</Frame>'
+        f'<Frame grow={{1}} flex="col">{stepper_ctl("Branches",2,"Adj branches")}</Frame></Frame>'
+        f'{T(12,"regular","var:text/muted","Your price updates instantly. Extra practitioner ₦8,000/mo · extra branch ₦25,000/mo.")}</Frame>')
+OTHER_PLANS=(f'<Frame w="fill" flex="col" gap={{11}}>'
+             f'{plan("Starter","₦45,000","1 practitioner · 1 branch · core booking &amp; records")}'
+             f'{plan("Group","₦280,000","Up to 30 practitioners · up to 3 branches · analytics")}'
+             f'{plan("Enterprise","Custom","Unlimited practitioners &amp; branches · SSO · dedicated support")}</Frame>')
+PLAN_B=(f'<Frame w="fill" flex="col" gap={{16}}>{segmented(["Monthly","Annual · 2 months free"],0,"Billing")}'
+        f'{RECOMMENDED}{ADJUST}'
+        f'{T(13,"semibold","var:text/default","Other plans")}{OTHER_PLANS}'
+        f'{note("sparkles","Every plan starts with a 30-day free trial — no card required.","ok")}</Frame>')
+add("Institution","I4-plan",
+    desk_form("Auth · Institution — I4 Your Plan",
         IP(eyebrow_t="For institutions",head_parts=[("Priced to",False),("your size",True)],
            sub="From a single practice to a multi-branch group — pay only for what you need.",
-           proofs=[proof("credit-card","Paystack billing")]),
-        "Step 3 of 5",[("Pick a",False),("plan",True)],
-        "Choose the size that fits today — you can upgrade anytime. Final pricing is confirmed with our team.",
-        PLANS,cta("Start my free trial","Start trial I3"),
-        [link("Not sure which fits?","Talk to our team","Sales I3")],step=(2,5)),
-    mob_form("Auth · Institution — I3 Choose Plan · Mobile","Step 3 of 5",[("Pick a",False),("plan",True)],
-        "Upgrade anytime. Every plan starts with a 30-day trial.",PLANS,
-        cta("Start my free trial","Start trial I3"),[link("Not sure?","Talk to our team","Sales I3")],step=(2,5)))
+           proofs=[proof("credit-card","Paystack billing"),proof("receipt","Cancel anytime")]),
+        "Step 4 of 6",[("Your recommended",False),("plan",True)],
+        "Based on 8 practitioners across 2 branches. Change anything below — the price updates as you go.",
+        PLAN_B,cta("Start my free trial","Start trial I4"),
+        [link("Need something custom?","Talk to our team","Sales I4")],step=(3,6)),
+    mob_form("Auth · Institution — I4 Your Plan · Mobile","Step 4 of 6",
+        [("Your recommended",False),("plan",True)],"Based on 8 practitioners across 2 branches.",
+        PLAN_B,cta("Start my free trial","Start trial I4"),
+        [link("Need something custom?","Talk to our team","Sales I4")],step=(3,6)))
 
-OTP_I=f'<Frame w="fill" flex="col" gap={{14}}>{otp("77")}{link("Didn’t get it?","Resend in 0:25","Resend I4")}</Frame>'
-add("Institution","I4-otp",
-    desk_form("Auth · Institution — I4 Verify Admin",
+OTP_I=(f'<Frame w="fill" flex="col" gap={{14}}>{otp("77")}{link("Didn’t get it?","Resend in 0:25","Resend I5")}'
+       f'{checkbox("Trust this device for 30 days","Trust device I5")}</Frame>')
+add("Institution","I5-otp",
+    desk_form("Auth · Institution — I5 Verify Admin",
         IP(eyebrow_t="For institutions",head_parts=[("Secure the",False),("admin account",True)],
            sub="The facility admin controls staff and billing — so we protect it properly.",
            proofs=[proof("lock","Encrypted")]),
-        "Step 4 of 5",[("Verify the",False),("admin phone",True)],
+        "Step 5 of 6",[("Verify the",False),("admin phone",True)],
         "Enter the 6-digit code sent to +234 802 111 2233.",
-        OTP_I,cta("Verify","Verify I4","arrow-right","btn-navy.jpg"),
-        [link("Wrong number?","Change it","Change number I4")],step=(3,5)),
-    mob_form("Auth · Institution — I4 Verify Admin · Mobile","Step 4 of 5",
+        OTP_I,cta("Verify","Verify I5","arrow-right","btn-navy.jpg"),
+        [link("Wrong number?","Change it","Change number I5")],step=(4,6)),
+    mob_form("Auth · Institution — I5 Verify Admin · Mobile","Step 5 of 6",
         [("Verify the",False),("admin phone",True)],"Code sent to +234 802 111 2233.",OTP_I,
-        cta("Verify","Verify I4","arrow-right","btn-navy.jpg"),
-        [link("Wrong number?","Change it","Change number I4")],step=(3,5)))
+        cta("Verify","Verify I5","arrow-right","btn-navy.jpg"),
+        [link("Wrong number?","Change it","Change number I5")],step=(4,6)))
 
 PWD_I=PWD.replace("Create password","Create admin password")
-add("Institution","I5-password",
-    desk_form("Auth · Institution — I5 Set Password",
+add("Institution","I6-password",
+    desk_form("Auth · Institution — I6 Set Password",
         IP(eyebrow_t="For institutions",head_parts=[("One",False),("key-holder",True)],
            sub="Strong protection for the account that runs your facility."),
-        "Step 5 of 5",[("Secure the",False),("admin account",True)],
-        "You'll use this together with the admin phone to log in.",
-        PWD_I,cta("Create account","Create I5","arrow-right","btn-navy.jpg"),[],step=(4,5)),
-    mob_form("Auth · Institution — I5 Set Password · Mobile","Step 5 of 5",
+        "Step 6 of 6",[("Secure the",False),("admin account",True)],
+        "You’ll use this together with the admin phone to log in.",
+        PWD_I,cta("Create account","Create I6","arrow-right","btn-navy.jpg"),[],step=(5,6)),
+    mob_form("Auth · Institution — I6 Set Password · Mobile","Step 6 of 6",
         [("Secure the",False),("admin account",True)],"Used with the admin phone to log in.",
-        PWD_I,cta("Create account","Create I5","arrow-right","btn-navy.jpg"),[],step=(4,5)))
+        PWD_I,cta("Create account","Create I6","arrow-right","btn-navy.jpg"),[],step=(5,6)))
 
 PEND_I=(f'<Frame w="fill" flex="col" gap={{16}} items="center">{big_icon("badge-check","warn")}'
         f'{T(15,"regular","var:text/muted","Thanks, Mr. Bello. We’re reviewing Garki Medical Centre’s documents — usually within 1–2 business days.",w="fill",align="center")}'
         f'{note("clock","We’ll email you the moment you’re approved. Meanwhile you can add staff and set up your rooms.","warn")}</Frame>')
-add("Institution","I6-pending",
-    desk_form("Auth · Institution — I6 Application Submitted",
-        IP(eyebrow_t="Welcome to Medra for Business",head_parts=[("Your facility's new",False),("operating system",True)],
+add("Institution","I7-pending",
+    desk_form("Auth · Institution — I7 Application Submitted",
+        IP(eyebrow_t="Welcome to Medra for Business",head_parts=[("Your facility’s new",False),("operating system",True)],
            sub="Your 30-day trial starts today — set things up while we verify.",
            proofs=[proof("sparkles","Trial active · 30 days left")]),
-        "Submitted",[("Application",False),("submitted",True)],"Here's exactly what happens next.",
-        PEND_I,cta("Go to admin portal","Go portal I6","layout-dashboard","btn-navy.jpg"),
-        [link("Need to add a document?","Manage application","Manage I6")],back=False),
-    mob_form("Auth · Institution — I6 Application Submitted · Mobile","Submitted",
+        "Submitted",[("Application",False),("submitted",True)],"Here’s exactly what happens next.",
+        PEND_I,cta("Go to admin portal","Go portal I7","layout-dashboard","btn-navy.jpg"),
+        [link("Need to add a document?","Manage application","Manage I7")],back=False),
+    mob_form("Auth · Institution — I7 Application Submitted · Mobile","Submitted",
         [("Application",False),("submitted",True)],"Your 30-day trial has started.",PEND_I,
-        cta("Go to admin portal","Go portal I6","layout-dashboard","btn-navy.jpg"),
-        [link("","Manage application","Manage I6")],back=False))
+        cta("Go to admin portal","Go portal I7","layout-dashboard","btn-navy.jpg"),
+        [link("","Manage application","Manage I7")],back=False))
 
-I7B=(f'<Frame w="fill" flex="col" gap={{16}}>{field("Work email","mail","admin@garkimedical.ng",ph=False)}'
+I8B=(f'<Frame w="fill" flex="col" gap={{16}}>{field("Work email","mail","admin@garkimedical.ng",ph=False)}'
      f'{field("Password","lock","••••••••",ph=False,trailing=("eye","Show password"))}'
-     f'<Frame w="fill" flex="row" justify="end">{link("","Forgot password?","Forgot I7",center=False)}</Frame></Frame>')
-add("Institution","I7-admin-login",
-    desk_form("Auth · Institution — I7 Facility Admin Log In",
+     f'{checkbox("Keep me signed in for 30 days","Stay signed in I8")}'
+     f'<Frame w="fill" flex="row" justify="end">{link("","Forgot password?","Forgot I8",center=False)}</Frame></Frame>')
+add("Institution","I8-admin-login",
+    desk_form("Auth · Institution — I8 Facility Admin Log In",
         IP(eyebrow_t="Welcome back",head_parts=[("Your facility,",False),("in control",True)],
            sub="Everything that runs your clinic, one secure login away.",
            proofs=[proof("calendar-check","12 bookings today")]),
         "Facility admin",[("Facility admin",False),("log in",True)],
         "Sign in to manage bookings, staff and billing.",
-        I7B,cta("Log in","Login submit I7","arrow-right","btn-navy.jpg"),
-        [link("Registering a new institution?","Start here","Register I7")]),
-    mob_form("Auth · Institution — I7 Facility Admin Log In · Mobile","Facility admin",
-        [("Facility admin",False),("log in",True)],"Manage bookings, staff and billing.",
-        f'<Frame w="fill" flex="col" gap={{16}}>{field("Work email","mail","admin@garkimedical.ng",ph=False)}'
-        f'{field("Password","lock","••••••••",ph=False,trailing=("eye","Show password"))}</Frame>',
-        cta("Log in","Login submit I7","arrow-right","btn-navy.jpg"),
-        [link("Forgot password?","Reset it","Forgot I7"),link("New institution?","Start here","Register I7")]))
+        I8B,cta("Log in","Login submit I8","arrow-right","btn-navy.jpg"),
+        [divider_or("or continue with"), social_btn("google","Continue with Google","Google admin"),
+         link("Registering a new institution?","Start here","Register I8")]),
+    mob_form("Auth · Institution — I8 Facility Admin Log In · Mobile","Facility admin",
+        [("Facility admin",False),("log in",True)],"Manage bookings, staff and billing.",I8B,
+        cta("Log in","Login submit I8","arrow-right","btn-navy.jpg"),
+        [social_btn("google","Continue with Google","Google admin"),
+         link("Forgot password?","Reset it","Forgot I8"),link("New institution?","Start here","Register I8")]))
 
-add("Institution","I8-forgot",
-    desk_form("Auth · Institution — I8 Forgot Password",
-        IP(eyebrow_t="Account recovery",head_parts=[("Locked out?",False),("We'll fix that",True)],
+add("Institution","I9-forgot",
+    desk_form("Auth · Institution — I9 Forgot Password",
+        IP(eyebrow_t="Account recovery",head_parts=[("Locked out?",False),("We’ll fix that",True)],
            sub="A quick code and your facility is back online."),
         "Reset password",[("Reset admin",False),("password",True)],
-        "Enter the admin email and we'll send a reset code.",
-        field("Work email","mail","admin@garkimedical.ng",ph=False,helper="We'll send the reset code here."),
-        cta("Send reset code","Send reset I8","arrow-right","btn-navy.jpg"),
-        [link("Remembered it?","Back to log in","Back login I8")]),
-    mob_form("Auth · Institution — I8 Forgot Password · Mobile","Reset password",
-        [("Reset admin",False),("password",True)],"We'll send a reset code.",
+        "Enter the admin email and we’ll send a reset code.",
+        field("Work email","mail","admin@garkimedical.ng",ph=False,helper="We’ll send the reset code here."),
+        cta("Send reset code","Send reset I9","arrow-right","btn-navy.jpg"),
+        [link("Remembered it?","Back to log in","Back login I9")]),
+    mob_form("Auth · Institution — I9 Forgot Password · Mobile","Reset password",
+        [("Reset admin",False),("password",True)],"We’ll send a reset code.",
         field("Work email","mail","admin@garkimedical.ng",ph=False),
-        cta("Send reset code","Send reset I8","arrow-right","btn-navy.jpg"),
-        [link("Remembered it?","Back to log in","Back login I8")]))
+        cta("Send reset code","Send reset I9","arrow-right","btn-navy.jpg"),
+        [link("Remembered it?","Back to log in","Back login I9")]))
 
-add("Institution","I9-reset",
-    desk_form("Auth · Institution — I9 New Password",
+add("Institution","I10-reset",
+    desk_form("Auth · Institution — I10 New Password",
         IP(eyebrow_t="Account recovery",head_parts=[("Back in",False),("control",True)],
            sub="New password set — your facility awaits."),
         "New password",[("Choose a new",False),("password",True)],
         "Make it strong — it controls your whole facility.",
-        NEWPWD,cta("Save and log in","Save password I9","arrow-right","btn-navy.jpg"),[]),
-    mob_form("Auth · Institution — I9 New Password · Mobile","New password",
+        NEWPWD,cta("Save and log in","Save password I10","arrow-right","btn-navy.jpg"),[]),
+    mob_form("Auth · Institution — I10 New Password · Mobile","New password",
         [("Choose a new",False),("password",True)],"It controls your whole facility.",NEWPWD,
-        cta("Save and log in","Save password I9","arrow-right","btn-navy.jpg"),[]))
+        cta("Save and log in","Save password I10","arrow-right","btn-navy.jpg"),[]))
 
 SUC_I=(f'<Frame w="fill" flex="col" gap={{16}} items="center">{big_icon("circle-check","ok")}'
        f'{T(15,"regular","var:text/muted","Garki Medical Centre is approved and live on Medra. Patients in Abuja can book your doctors now.",w="fill",align="center")}'
        f'{note("info","Taking you to your admin portal…","info")}</Frame>')
-add("Institution","I10-success",
-    desk("Auth · Institution — I10 Success",
-        desk_panel("d-panel-institution.jpg","You're live",[("Your facility is",False),("on Medra",True)],
+add("Institution","I11-success",
+    desk("Auth · Institution — I11 Success",
+        desk_panel("d-panel-institution.jpg","You’re live",[("Your facility is",False),("on Medra",True)],
                    "Start adding doctors and taking bookings today.",
-                   stats=[("Live","Status"),("30","Trial days left"),("0","Doctors added")]),
+                   stats=[("Live","Status"),("30","Trial days left"),("₦145k","Monthly plan")]),
         f'{eyebrow("Approved")}{head_chip([("You’re live,",False),("Mr. Bello",True)],32)}{SUC_I}'
-        f'{cta("Go to admin portal","Go portal I10","layout-dashboard","btn-navy.jpg")}'
-        f'{ghost("Invite my doctors","Invite I10","user-plus")}'),
-    mob_hero("Auth · Institution — I10 Success · Mobile","m-hero-institution.jpg","Approved",
-        [("You're live,",False),("Mr. Bello",True)],"Your facility is verified and taking bookings.",
-        cta("Go to admin portal","Go portal I10","layout-dashboard","btn-navy.jpg"),
-        [ghost("Invite my doctors","Invite I10","user-plus")],skip=False,
+        f'{cta("Go to admin portal","Go portal I11","layout-dashboard","btn-navy.jpg")}'
+        f'{ghost("Invite my doctors","Invite I11","user-plus")}'),
+    mob_hero("Auth · Institution — I11 Success · Mobile","m-hero-institution.jpg","Approved",
+        [("You’re live,",False),("Mr. Bello",True)],"Your facility is verified and taking bookings.",
+        cta("Go to admin portal","Go portal I11","layout-dashboard","btn-navy.jpg"),
+        [ghost("Invite my doctors","Invite I11","user-plus")],skip=False,
         proofs=[proof("circle-check","Approved")]))
 
 # ---------------- write ----------------
@@ -757,53 +873,66 @@ for page,fn,jsx in frames:
     manifest.setdefault(page,[]).append(fn)
 open(os.path.join(OUT,"pages.json"),"w").write(json.dumps(manifest,indent=2))
 
-PAGE_FIGMA={"Entry":"Medra Auth — Entry","Patient":"Medra Auth — Patient",
+PAGE_FIGMA={"Entry":"Medra Auth — Entry","Member":"Medra Auth — Member",
             "Doctor":"Medra Auth — Doctor","Institution":"Medra Auth — Institution"}
 TRN=[
  ("E1-onb1","Btn Next E1-onb1","E2-onb2"),("E1-onb1","Btn Skip E1-onb1","E4-welcome"),("E1-onb1","Btn Skip","E4-welcome"),
  ("E2-onb2","Btn Next E2-onb2","E3-onb3"),("E2-onb2","Btn Skip E2-onb2","E4-welcome"),("E2-onb2","Btn Skip","E4-welcome"),
  ("E3-onb3","Btn Next E3-onb3","E4-welcome"),("E3-onb3","Btn Skip E3-onb3","E4-welcome"),("E3-onb3","Btn Skip","E4-welcome"),
- ("E4-welcome","Btn Create account","E5-role"),("E4-welcome","Btn Login entry","P6-login"),
- ("E5-role","Btn Role Patient","P1-create"),("E5-role","Btn Role Doctor","D1-create"),
- ("E5-role","Btn Role Institution","I1-register"),("E5-role","Btn Continue role","P1-create"),
- ("E5-role","Btn Back","E4-welcome"),("E5-role","Btn Help role","E1-onb1"),("E5-role","Btn Help","P7-help"),
- ("P1-create","Btn Send code P1","P2-otp"),("P1-create","Btn Login P","P6-login"),("P1-create","Btn Back","E5-role"),("P1-create","Btn Help","P7-help"),
- ("P2-otp","Btn Verify P2","P3-name"),("P2-otp","Btn Change number P2","P1-create"),
- ("P2-otp","Btn Help code P2","P7-help"),("P2-otp","Btn Resend P2","P2-otp"),("P2-otp","Btn Back","P1-create"),("P2-otp","Btn Help","P7-help"),
- ("P3-name","Btn Continue P3","P4-about"),("P3-name","Btn Skip P3","P4-about"),("P3-name","Btn Back","P2-otp"),("P3-name","Btn Help","P7-help"),
- ("P4-about","Btn Continue P4","P5-health"),("P4-about","Btn Skip P4","P5-health"),("P4-about","Btn Back","P3-name"),("P4-about","Btn Help","P7-help"),
- ("P5-health","Btn Finish P5","P8-success"),("P5-health","Btn Skip P5","P8-success"),("P5-health","Btn Back","P4-about"),("P5-health","Btn Help","P7-help"),
- ("P6-login","Btn Send code P6","P2-otp"),("P6-login","Btn Create P6","P1-create"),
- ("P6-login","Btn Help P6","P7-help"),("P6-login","Btn Back","E4-welcome"),("P6-login","Btn Help","P7-help"),
- ("P7-help","Btn Back to OTP","P2-otp"),("P7-help","Btn Resend help","P2-otp"),("P7-help","Btn Call help","P2-otp"),
- ("P7-help","Btn Change help","P1-create"),("P7-help","Btn Support help","P7-help"),("P7-help","Btn Back","P2-otp"),("P7-help","Btn Help","P7-help"),
- ("P8-success","Btn Go home P8","E4-welcome"),("P8-success","Btn Explore P8","E4-welcome"),
- ("D1-create","Btn Continue D1","D2-otp"),("D1-create","Btn Login D","D6-login"),("D1-create","Btn Back","E5-role"),("D1-create","Btn Help","P7-help"),
+ ("E4-welcome","Btn Create account","E5-role"),("E4-welcome","Btn Login entry","M6-login"),
+ ("E5-role","Btn Role Member","M1-create"),("E5-role","Btn Role Doctor","D1-create"),
+ ("E5-role","Btn Role Institution","I1-register"),("E5-role","Btn Continue role","M1-create"),
+ ("E5-role","Btn Back","E4-welcome"),("E5-role","Btn Help role","E1-onb1"),("E5-role","Btn Help","M8-help"),
+ ("M1-create","Btn Send code M1","M2-otp"),("M1-create","Btn Login M","M6-login"),("M1-create","Btn Back","E5-role"),("M1-create","Btn Help","M8-help"),
+ ("M1-create","Btn Google signup","M3-name"),("M1-create","Btn Apple signup","M3-name"),
+ ("M1-create","Btn Method Email","M1-create"),("M1-create","Btn Method Phone number","M1-create"),
+ ("M2-otp","Btn Verify M2","M3-name"),("M2-otp","Btn Change number M2","M1-create"),
+ ("M2-otp","Btn Help code M2","M8-help"),("M2-otp","Btn Resend M2","M2-otp"),("M2-otp","Btn Back","M1-create"),("M2-otp","Btn Help","M8-help"),
+ ("M3-name","Btn Continue M3","M4-about"),("M3-name","Btn Skip M3","M4-about"),("M3-name","Btn Back","M2-otp"),("M3-name","Btn Help","M8-help"),
+ ("M4-about","Btn Continue M4","M5-health"),("M4-about","Btn Skip M4","M5-health"),("M4-about","Btn Back","M3-name"),("M4-about","Btn Help","M8-help"),
+ ("M5-health","Btn Finish M5","M9-success"),("M5-health","Btn Skip M5","M9-success"),("M5-health","Btn Back","M4-about"),("M5-health","Btn Help","M8-help"),
+ ("M6-login","Btn Send code M6","M2-otp"),("M6-login","Btn Create M6","M1-create"),
+ ("M6-login","Btn Google login","M7-unlock"),("M6-login","Btn Apple login","M7-unlock"),
+ ("M6-login","Btn Help M6","M8-help"),("M6-login","Btn Back","E4-welcome"),("M6-login","Btn Help","M8-help"),
+ ("M6-login","Btn Login method Email","M6-login"),("M6-login","Btn Login method Phone number","M6-login"),
+ ("M7-unlock","Btn Unlock M7","M9-success"),("M7-unlock","Btn Biometric unlock","M9-success"),
+ ("M7-unlock","Btn Use code M7","M2-otp"),("M7-unlock","Btn Switch M7","M6-login"),("M7-unlock","Btn Help","M8-help"),
+ ("M8-help","Btn Back to OTP","M2-otp"),("M8-help","Btn Resend help","M2-otp"),("M8-help","Btn Call help","M2-otp"),
+ ("M8-help","Btn Email help","M2-otp"),("M8-help","Btn Support help","M8-help"),("M8-help","Btn Back","M2-otp"),("M8-help","Btn Help","M8-help"),
+ ("M9-success","Btn Go home M9","M7-unlock"),("M9-success","Btn Explore M9","M7-unlock"),
+ ("D1-create","Btn Continue D1","D2-otp"),("D1-create","Btn Login D","D6-login"),("D1-create","Btn Back","E5-role"),("D1-create","Btn Help","M8-help"),
  ("D2-otp","Btn Verify D2","D3-password"),("D2-otp","Btn Change number D2","D1-create"),
- ("D2-otp","Btn Resend D2","D2-otp"),("D2-otp","Btn Back","D1-create"),("D2-otp","Btn Help","P7-help"),
- ("D3-password","Btn Continue D3","D4-pending"),("D3-password","Btn Back","D2-otp"),("D3-password","Btn Help","P7-help"),
- ("D4-pending","Btn Explore D4","D5-profile"),("D4-pending","Btn Update MDCN D4","D1-create"),("D4-pending","Btn Support D4","P7-help"),("D4-pending","Btn Help","P7-help"),
- ("D5-profile","Btn Finish D5","D10-success"),("D5-profile","Btn Later D5","D10-success"),("D5-profile","Btn Back","D4-pending"),("D5-profile","Btn Help","P7-help"),
+ ("D2-otp","Btn Resend D2","D2-otp"),("D2-otp","Btn Back","D1-create"),("D2-otp","Btn Help","M8-help"),
+ ("D3-password","Btn Continue D3","D4-pending"),("D3-password","Btn Back","D2-otp"),("D3-password","Btn Help","M8-help"),
+ ("D4-pending","Btn Explore D4","D5-profile"),("D4-pending","Btn Update MDCN D4","D1-create"),("D4-pending","Btn Support D4","M8-help"),("D4-pending","Btn Help","M8-help"),
+ ("D5-profile","Btn Finish D5","D10-success"),("D5-profile","Btn Later D5","D10-success"),("D5-profile","Btn Back","D4-pending"),("D5-profile","Btn Help","M8-help"),
  ("D6-login","Btn Login submit D6","D7-2fa"),("D6-login","Btn Forgot D6","D8-forgot"),
- ("D6-login","Btn Register D6","D1-create"),("D6-login","Btn Back","E4-welcome"),("D6-login","Btn Help","P7-help"),
+ ("D6-login","Btn Register D6","D1-create"),("D6-login","Btn Back","E4-welcome"),("D6-login","Btn Help","M8-help"),
  ("D7-2fa","Btn 2FA verify D7","D10-success"),("D7-2fa","Btn Resend D7","D7-2fa"),
- ("D7-2fa","Btn Help D7","D8-forgot"),("D7-2fa","Btn Back","D6-login"),("D7-2fa","Btn Help","P7-help"),
- ("D8-forgot","Btn Send reset D8","D9-reset"),("D8-forgot","Btn Back login D8","D6-login"),("D8-forgot","Btn Back","D6-login"),("D8-forgot","Btn Help","P7-help"),
- ("D9-reset","Btn Save password D9","D6-login"),("D9-reset","Btn Back","D8-forgot"),("D9-reset","Btn Help","P7-help"),
- ("D10-success","Btn Go dashboard D10","E4-welcome"),("D10-success","Btn Availability D10","E4-welcome"),
- ("I1-register","Btn Continue I1","I2-documents"),("I1-register","Btn Admin login I","I7-admin-login"),("I1-register","Btn Back","E5-role"),("I1-register","Btn Help","P7-help"),
- ("I2-documents","Btn Continue I2","I3-plan"),("I2-documents","Btn Save later I2","I3-plan"),
- ("I2-documents","Btn Upload cac","I2-documents"),("I2-documents","Btn Back","I1-register"),("I2-documents","Btn Help","P7-help"),
- ("I3-plan","Btn Start trial I3","I4-otp"),("I3-plan","Btn Sales I3","I3-plan"),("I3-plan","Btn Back","I2-documents"),("I3-plan","Btn Help","P7-help"),
- ("I4-otp","Btn Verify I4","I5-password"),("I4-otp","Btn Change number I4","I1-register"),
- ("I4-otp","Btn Resend I4","I4-otp"),("I4-otp","Btn Back","I3-plan"),("I4-otp","Btn Help","P7-help"),
- ("I5-password","Btn Create I5","I6-pending"),("I5-password","Btn Back","I4-otp"),("I5-password","Btn Help","P7-help"),
- ("I6-pending","Btn Go portal I6","I10-success"),("I6-pending","Btn Manage I6","I2-documents"),("I6-pending","Btn Help","P7-help"),
- ("I7-admin-login","Btn Login submit I7","I10-success"),("I7-admin-login","Btn Forgot I7","I8-forgot"),
- ("I7-admin-login","Btn Register I7","I1-register"),("I7-admin-login","Btn Back","E4-welcome"),("I7-admin-login","Btn Help","P7-help"),
- ("I8-forgot","Btn Send reset I8","I9-reset"),("I8-forgot","Btn Back login I8","I7-admin-login"),("I8-forgot","Btn Back","I7-admin-login"),("I8-forgot","Btn Help","P7-help"),
- ("I9-reset","Btn Save password I9","I7-admin-login"),("I9-reset","Btn Back","I8-forgot"),("I9-reset","Btn Help","P7-help"),
- ("I10-success","Btn Go portal I10","E4-welcome"),("I10-success","Btn Invite I10","E4-welcome"),
+ ("D7-2fa","Btn Help D7","D8-forgot"),("D7-2fa","Btn Back","D6-login"),("D7-2fa","Btn Help","M8-help"),
+ ("D8-forgot","Btn Send reset D8","D9-reset"),("D8-forgot","Btn Back login D8","D6-login"),("D8-forgot","Btn Back","D6-login"),("D8-forgot","Btn Help","M8-help"),
+ ("D9-reset","Btn Save password D9","D6-login"),("D9-reset","Btn Back","D8-forgot"),("D9-reset","Btn Help","M8-help"),
+ ("D10-success","Btn Go dashboard D10","D6-login"),("D10-success","Btn Availability D10","D6-login"),
+ ("I1-register","Btn Continue I1","I2-documents"),("I1-register","Btn Admin login I","I8-admin-login"),("I1-register","Btn Back","E5-role"),("I1-register","Btn Help","M8-help"),
+ ("I2-documents","Btn Continue I2","I3-orgsize"),("I2-documents","Btn Save later I2","I3-orgsize"),
+ ("I2-documents","Btn Upload cac","I2-documents"),("I2-documents","Btn Back","I1-register"),("I2-documents","Btn Help","M8-help"),
+ ("I3-orgsize","Btn See plan I3","I4-plan"),("I3-orgsize","Btn Skip size I3","I4-plan"),("I3-orgsize","Btn Back","I2-documents"),("I3-orgsize","Btn Help","M8-help"),
+ ("I3-orgsize","Btn Practitioners plus","I3-orgsize"),("I3-orgsize","Btn Practitioners minus","I3-orgsize"),
+ ("I3-orgsize","Btn Branches plus","I3-orgsize"),("I3-orgsize","Btn Branches minus","I3-orgsize"),
+ ("I3-orgsize","Btn Seats plus","I3-orgsize"),("I3-orgsize","Btn Seats minus","I3-orgsize"),
+ ("I4-plan","Btn Start trial I4","I5-otp"),("I4-plan","Btn Sales I4","I4-plan"),("I4-plan","Btn Back","I3-orgsize"),("I4-plan","Btn Help","M8-help"),
+ ("I4-plan","Btn Adj practitioners plus","I4-plan"),("I4-plan","Btn Adj practitioners minus","I4-plan"),
+ ("I4-plan","Btn Adj branches plus","I4-plan"),("I4-plan","Btn Adj branches minus","I4-plan"),
+ ("I5-otp","Btn Verify I5","I6-password"),("I5-otp","Btn Change number I5","I1-register"),
+ ("I5-otp","Btn Resend I5","I5-otp"),("I5-otp","Btn Back","I4-plan"),("I5-otp","Btn Help","M8-help"),
+ ("I6-password","Btn Create I6","I7-pending"),("I6-password","Btn Back","I5-otp"),("I6-password","Btn Help","M8-help"),
+ ("I7-pending","Btn Go portal I7","I11-success"),("I7-pending","Btn Manage I7","I2-documents"),("I7-pending","Btn Help","M8-help"),
+ ("I8-admin-login","Btn Login submit I8","I11-success"),("I8-admin-login","Btn Forgot I8","I9-forgot"),
+ ("I8-admin-login","Btn Google admin","I11-success"),
+ ("I8-admin-login","Btn Register I8","I1-register"),("I8-admin-login","Btn Back","E4-welcome"),("I8-admin-login","Btn Help","M8-help"),
+ ("I9-forgot","Btn Send reset I9","I10-reset"),("I9-forgot","Btn Back login I9","I8-admin-login"),("I9-forgot","Btn Back","I8-admin-login"),("I9-forgot","Btn Help","M8-help"),
+ ("I10-reset","Btn Save password I10","I8-admin-login"),("I10-reset","Btn Back","I9-forgot"),("I10-reset","Btn Help","M8-help"),
+ ("I11-success","Btn Go portal I11","I8-admin-login"),("I11-success","Btn Invite I11","I8-admin-login"),
 ]
 resolved=[]
 for a,hot,b in TRN:
