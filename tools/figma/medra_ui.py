@@ -21,7 +21,7 @@ def head_chip(parts,size=30,color="var:text/strong"):
     for txt,chip in parts:
         out += (f'<Frame px={{12}} py={{2}} rounded={{12}} bg="var:brand/teal"><Text font="Inter" size={{{size}}} weight="bold" color="var:text/on-dark">{txt}</Text></Frame>'
                 if chip else T(size,"bold",color,txt))
-    return f'<Frame w="fill" flex="row" gap={{9}} items="center" wrap="wrap">{out}</Frame>'
+    return f'<Frame w="fill" flex="row" gap={{9}} items="center">{out}</Frame>'
 
 def circle_btn(icon,name,dark=False):
     bg='bg="var:bg/band-2"' if dark else 'bg="var:bg/base" stroke="var:border/subtle" strokeWidth={1}'
@@ -35,6 +35,13 @@ def stepper(i,n):
         elif k==i: d+='<Rect w={30} h={6} rounded={999} bg="var:brand/navy" />'
         else: d+='<Rect w={12} h={6} rounded={999} bg="var:neutral/200" />'
     return f'<Frame flex="row" gap={{5}} items="center">{d}</Frame>'
+
+def rows_of(items, per_row, gap=9):
+    """Explicit row chunking — never rely on wrap="wrap" (the CLI does not honour it)."""
+    out=""
+    for i in range(0, len(items), per_row):
+        out += f'<Frame w="fill" flex="row" gap={{{gap}}}>{"".join(items[i:i+per_row])}</Frame>'
+    return f'<Frame w="fill" flex="col" gap={{{gap}}}>{out}</Frame>'
 
 def card(children,p=22,gap=16,r=28,bg="var:bg/base"):
     """Generic floating white surface — the base of the Soft Clinical language."""
@@ -91,14 +98,14 @@ def checkbox(label,name,checked=True):
     return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{11}} items="start">{b}'
             f'{T(13,"regular","var:text/muted",label,w="fill")}</Frame>')
 
-def chips(options,sel=0,name="chip"):
-    out=""
+def chips(options,sel=0,name="chip",per_row=3):
+    cells=[]
     for i,o in enumerate(options):
         s=i==sel
         st='image="assets/img/btn-navy.jpg" overflow="hidden"' if s else 'bg="var:bg/base" stroke="var:border/default" strokeWidth={1}'
-        out+=(f'<Frame name="Btn {name} {o}" flex="row" px={{16}} py={{11}} rounded={{999}} {st}>'
-              f'{T(14,"medium","var:text/on-dark" if s else "var:text/default",o)}</Frame>')
-    return f'<Frame w="fill" flex="row" gap={{9}} wrap="wrap">{out}</Frame>'
+        cells.append(f'<Frame name="Btn {name} {o}" grow={{1}} flex="row" justify="center" px={{14}} py={{11}} rounded={{999}} {st}>'
+                     f'{T(14,"medium","var:text/on-dark" if s else "var:text/default",o)}</Frame>')
+    return rows_of(cells, 3, 9)
 
 def field_chips(label,options,sel=0,name="chip"):
     return f'<Frame w="fill" flex="col" gap={{9}}>{T(13,"medium","var:text/default",label)}{chips(options,sel,name)}</Frame>'
@@ -214,7 +221,7 @@ def mob_form(name, eyebrow_t, head_parts, sub, body, primary, extras=(), step=No
 def mob_hero(name, img, eyebrow_t, head_parts, sub, primary, extras=(), dots=None, skip=True, proofs=None, hero_h=566):
     skipbtn=(f'<Frame name="Btn Skip" flex="row" px={{14}} py={{8}} rounded={{999}} bg="var:bg/band-2">'
              f'{T(13,"semibold","var:text/on-dark","Skip")}</Frame>') if skip else '<Frame />'
-    proofrow=f'<Frame w="fill" flex="row" gap={{8}} wrap="wrap">{"".join(proofs)}</Frame>' if proofs else ''
+    proofrow=rows_of(list(proofs),2,8) if proofs else ''
     hero=(f'<Frame w="fill" h={{{hero_h}}} image="assets/img/{img}" overflow="hidden" flex="col" justify="between" pb={{24}}>'
           f'{statusbar(dark=True)}'
           f'<Frame w="fill" flex="row" justify="between" items="center" px={{22}} pt={{6}}>'
@@ -237,7 +244,7 @@ def desk_topbar():
             f'</Frame></Frame>')
 
 def desk_panel(img, eyebrow_t, head_parts, sub, proofs=None, stats=None, h=664, w=560):
-    pr=f'<Frame w="fill" flex="row" gap={{8}} wrap="wrap">{"".join(proofs)}</Frame>' if proofs else ''
+    pr=rows_of(list(proofs),2,8) if proofs else ''
     st=stat_row(stats) if stats else ''
     return (f'<Frame w={{{w}}} h={{{h}}} rounded={{32}} image="assets/img/{img}" overflow="hidden" flex="col" justify="end" gap={{14}} p={{30}}>'
             f'{eyebrow(eyebrow_t,"var:brand/teal")}{head_chip(head_parts,30,"var:text/on-dark")}'

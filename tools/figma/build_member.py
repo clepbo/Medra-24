@@ -53,14 +53,14 @@ def next_visit_card(compact=False):
 
 SPECIALTIES=[("heart-pulse","Cardiology"),("brain","Neurology"),("baby","Paediatrics"),
              ("stethoscope","General"),("bone","Orthopaedics"),("syringe","Vaccines")]
-def specialty_row(limit=6):
-    cells=""
+def specialty_row(limit=6, per_row=3):
+    cells=[]
     for ic,label in SPECIALTIES[:limit]:
-        cells+=(f'<Frame name="Btn Specialty {label}" w={{92}} flex="col" gap={{9}} items="center" py={{16}} px={{8}} rounded={{20}} '
+        cells.append(f'<Frame name="Btn Specialty {label}" grow={{1}} flex="col" gap={{8}} items="center" py={{14}} px={{6}} rounded={{20}} '
                 f'bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>'
-                f'<Frame w={{44}} h={{44}} rounded={{14}} bg="var:bg/muted" flex="col" justify="center" items="center">{I(ic,21,A_IC)}</Frame>'
+                f'<Frame w={{42}} h={{42}} rounded={{14}} bg="var:bg/muted" flex="col" justify="center" items="center">{I(ic,20,A_IC)}</Frame>'
                 f'{T(12,"medium","var:text/default",label)}</Frame>')
-    return f'<Frame w="fill" flex="row" gap={{10}} wrap="wrap">{cells}</Frame>'
+    return rows_of(cells, per_row, 10)
 
 def section_head(title, action="See all", name="See all"):
     return (f'<Frame w="fill" flex="row" justify="between" items="center">'
@@ -116,7 +116,7 @@ def date_strip(sel=2):
 def slot_grid(sel="10:30"):
     slots=[("09:00",True),("09:30",True),("10:00",False),("10:30",True),
            ("11:00",True),("11:30",False),("14:00",True),("14:30",True),("15:00",True)]
-    cells=""
+    cells=[]
     for t,ok in slots:
         if not ok:
             st='bg="var:neutral/100"'; col="var:text/faint"
@@ -124,9 +124,9 @@ def slot_grid(sel="10:30"):
             st='image="assets/img/btn-navy.jpg" overflow="hidden"'; col="var:text/on-dark"
         else:
             st='bg="var:bg/base" stroke="var:border/default" strokeWidth={1}'; col="var:text/default"
-        cells+=(f'<Frame name="Btn Slot {t}" w={{98}} flex="row" justify="center" py={{13}} rounded={{16}} {st}>'
+        cells.append(f'<Frame name="Btn Slot {t}" grow={{1}} flex="row" justify="center" py={{13}} rounded={{16}} {st}>'
                 f'{T(14,"semibold",col,t)}</Frame>')
-    return f'<Frame w="fill" flex="row" gap={{9}} wrap="wrap">{cells}</Frame>'
+    return rows_of(cells, 3, 9)
 
 def summary_row(ic,label,value):
     return (f'<Frame w="fill" flex="row" gap={{12}} items="center">'
@@ -134,31 +134,92 @@ def summary_row(ic,label,value):
             f'<Frame grow={{1}} flex="col" gap={{1}}>{T(12,"regular","var:text/muted",label)}'
             f'{T(15,"semibold","var:text/strong",value)}</Frame></Frame>')
 
+
+# ---------------------------------------------------------------- desktop dashboard parts
+def stat_card(ic, value, label, sub, tint="tint-teal.jpg"):
+    return (f'<Frame grow={{1}} flex="col" gap={{12}} p={{20}} rounded={{24}} bg="var:bg/base" '
+            f'stroke="var:border/subtle" strokeWidth={{1}}>'
+            f'<Frame w="fill" flex="row" justify="between" items="center">'
+            f'<Frame w={{44}} h={{44}} rounded={{14}} image="assets/img/{tint}" overflow="hidden" flex="col" justify="center" items="center">{I(ic,20,W_IC)}</Frame>'
+            f'{I("arrow-up-right",17,M_IC)}</Frame>'
+            f'<Frame flex="col" gap={{2}}>{T(28,"bold","var:text/strong",value)}'
+            f'{T(13,"semibold","var:text/default",label)}{T(12,"regular","var:text/muted",sub)}</Frame></Frame>')
+
+def hero_banner():
+    return (f'<Frame w="fill" flex="row" justify="between" items="center" gap={{24}} p={{28}} rounded={{28}} '
+            f'image="assets/img/hero-banner.jpg" overflow="hidden">'
+            f'<Frame grow={{1}} flex="col" gap={{9}}>'
+            f'<Frame flex="row" gap={{9}} items="center">{I("sparkles",17,T_IC)}'
+            f'{T(12,"semibold","var:brand/teal","GOOD MORNING, AMARA")}</Frame>'
+            f'{T(28,"bold","var:text/on-dark","How are you feeling today?")}'
+            f'{T(15,"regular","var:text/on-dark-muted","Book a verified doctor in under a minute — in person or by video.",w="fill")}</Frame>'
+            f'<Frame flex="row" gap={{11}} items="center">'
+            f'<Frame name="Btn Book now" flex="row" gap={{9}} items="center" px={{20}} py={{14}} rounded={{999}} bg="var:bg/base">'
+            f'{I("calendar-plus",17,N_IC)}{T(14,"semibold","var:text/strong","Book a visit")}</Frame>'
+            f'<Frame name="Btn Talk now" flex="row" gap={{9}} items="center" px={{20}} py={{14}} rounded={{999}} bg="var:bg/band-2">'
+            f'{I("video",17,W_IC)}{T(14,"semibold","var:text/on-dark","Talk to a doctor")}</Frame></Frame></Frame>')
+
+def med_row(name, dose, time, taken=True):
+    pill=(f'<Frame flex="row" gap={{6}} items="center" px={{11}} py={{6}} rounded={{999}} bg="var:state/success-bg">'
+          f'{I("check",12,OK_IC)}{T(11,"semibold","var:state/success","Taken")}</Frame>' if taken else
+          f'<Frame name="Btn Take {name}" flex="row" gap={{6}} items="center" px={{13}} py={{6}} rounded={{999}} image="assets/img/btn-teal.jpg" overflow="hidden">'
+          f'{T(11,"semibold","var:text/on-dark","Mark taken")}</Frame>')
+    return (f'<Frame w="fill" flex="row" gap={{12}} items="center" py={{11}}>'
+            f'<Frame w={{38}} h={{38}} rounded={{12}} bg="var:bg/muted" flex="col" justify="center" items="center">{I("pill",17,A_IC)}</Frame>'
+            f'<Frame grow={{1}} flex="col" gap={{1}}>{T(14,"semibold","var:text/strong",name)}'
+            f'{T(12,"regular","var:text/muted",dose)}</Frame>'
+            f'{T(13,"medium","var:text/default",time)}{pill}</Frame>')
+
+def record_row(date, title, doctor):
+    return (f'<Frame name="Btn Record {date}" w="fill" flex="row" gap={{12}} items="center" py={{11}}>'
+            f'<Frame w={{38}} h={{38}} rounded={{12}} bg="var:state/info-bg" flex="col" justify="center" items="center">{I("file-text",17,A_IC)}</Frame>'
+            f'<Frame grow={{1}} flex="col" gap={{1}}>{T(14,"semibold","var:text/strong",title)}'
+            f'{T(12,"regular","var:text/muted",doctor)}</Frame>'
+            f'{T(12,"regular","var:text/muted",date)}{I("chevron-right",16,M_IC)}</Frame>')
+
 # ---------------------------------------------------------------- shells
 def mob(name, children, nav=None):
     navrow=f'<Frame w="fill" px={{14}} pb={{10}}>{nav}</Frame>' if nav else ''
     return (f'<Frame name="{name}" w={{390}} minH={{844}} flex="col" image="assets/img/surface-mobile.jpg" overflow="hidden">'
             f'{statusbar()}{children}{navrow}</Frame>')
 
-def desk(name, children, sidebar_active=0):
+def desk(name, children, sidebar_active=0, topbar=True):
     items=[("house","Home","Nav Home"),("search","Find care","Nav Find"),("calendar-days","My visits","Nav Visits"),
-           ("clipboard-list","Records","Nav Records"),("circle-user","Profile","Nav Profile")]
+           ("clipboard-list","Records","Nav Records"),("pill","Medicines","Nav Meds"),("circle-user","Profile","Nav Profile")]
     navs=""
     for i,(ic,label,nm) in enumerate(items):
         on=i==sidebar_active
-        st='bg="var:bg/muted"' if on else ''
-        navs+=(f'<Frame name="Btn {nm}" w="fill" flex="row" gap={{12}} items="center" px={{14}} py={{12}} rounded={{14}} {st}>'
-               f'{I(ic,19,A_IC if on else M_IC)}'
-               f'{T(14,"semibold" if on else "regular","var:text/strong" if on else "var:text/muted",label)}</Frame>')
-    side=(f'<Frame w={{248}} h="fill" flex="col" gap={{28}} p={{22}} bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>'
-          f'<Image image="assets/logo/logo-gradient.png" w={{96}} h={{71}} />'
-          f'<Frame w="fill" flex="col" gap={{6}}>{navs}</Frame><Frame grow={{1}} />'
-          f'<Frame w="fill" flex="row" gap={{11}} items="center" p={{12}} rounded={{18}} bg="var:bg/subtle">'
-          f'<Image image="assets/img/me.jpg" w={{40}} h={{40}} rounded={{999}} />'
-          f'<Frame grow={{1}} flex="col" gap={{1}}>{T(14,"semibold","var:text/strong","Amara Okeke")}'
-          f'{T(12,"regular","var:text/muted","Member")}</Frame></Frame></Frame>')
+        if on:
+            navs+=(f'<Frame name="Btn {nm}" w="fill" flex="row" gap={{12}} items="center" px={{14}} py={{13}} rounded={{16}} bg="var:bg/base">'
+                   f'{I(ic,19,A_IC)}{T(14,"semibold","var:text/strong",label,w="fill")}'
+                   f'<Rect w={{5}} h={{5}} rounded={{999}} bg="var:brand/teal" /></Frame>')
+        else:
+            navs+=(f'<Frame name="Btn {nm}" w="fill" flex="row" gap={{12}} items="center" px={{14}} py={{13}} rounded={{16}}>'
+                   f'{I(ic,19,"#8FB3CA")}{T(14,"regular","var:text/on-dark-muted",label,w="fill")}</Frame>')
+    side=(f'<Frame w={{262}} h="fill" flex="col" gap={{24}} p={{20}} image="assets/img/sidebar.jpg" overflow="hidden">'
+          f'<Frame w="fill" flex="row" gap={{11}} items="center" pt={{6}} pb={{2}}>'
+          f'<Image image="assets/logo/logo-white.png" w={{86}} h={{64}} /></Frame>'
+          f'<Frame w="fill" flex="col" gap={{5}}>'
+          f'{T(11,"semibold","#6E93AE","MENU")}{navs}</Frame>'
+          f'<Frame grow={{1}} />'
+          f'<Frame w="fill" flex="col" gap={{11}} p={{17}} rounded={{22}} bg="var:bg/band-2">'
+          f'<Frame w={{38}} h={{38}} rounded={{12}} image="assets/img/btn-teal.jpg" overflow="hidden" flex="col" justify="center" items="center">{I("helping-hand",18,W_IC)}</Frame>'
+          f'{T(14,"semibold","var:text/on-dark","Need help?")}'
+          f'{T(12,"regular","var:text/on-dark-muted","Our team replies in minutes, every day.",w="fill")}'
+          f'<Frame name="Btn Support" w="fill" flex="row" justify="center" px={{14}} py={{10}} rounded={{999}} bg="var:bg/base">'
+          f'{T(13,"semibold","var:text/strong","Message us")}</Frame></Frame>'
+          f'<Frame name="Btn Nav Profile" w="fill" flex="row" gap={{11}} items="center" p={{11}} rounded={{18}} bg="var:bg/band-2">'
+          f'<Image image="assets/img/me.jpg" w={{38}} h={{38}} rounded={{999}} />'
+          f'<Frame grow={{1}} flex="col" gap={{1}}>{T(13,"semibold","var:text/on-dark","Amara Okeke")}'
+          f'{T(11,"regular","var:text/on-dark-muted","Member")}</Frame>{I("chevron-right",16,"#8FB3CA")}</Frame></Frame>')
+    top=(f'<Frame w="fill" flex="row" gap={{16}} items="center">'
+         f'<Frame grow={{1}} flex="col">{searchbar()}</Frame>'
+         f'{circle_btn("bell","Notifications")}'
+         f'<Frame name="Btn Nav Profile" flex="row" gap={{10}} items="center" px={{7}} py={{7}} pr={{15}} rounded={{999}} bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>'
+         f'<Image image="assets/img/me.jpg" w={{34}} h={{34}} rounded={{999}} />'
+         f'{T(13,"semibold","var:text/strong","Amara")}{I("chevron-down",15,M_IC)}</Frame></Frame>') if topbar else ''
     return (f'<Frame name="{name}" w={{1440}} minH={{900}} flex="row" image="assets/img/surface-desktop.jpg" overflow="hidden">'
-            f'{side}<Frame grow={{1}} h="fill" flex="col" gap={{22}} px={{40}} py={{32}}>{children}</Frame></Frame>')
+            f'{side}<Frame grow={{1}} h="fill" flex="col" gap={{20}} px={{36}} py={{28}}>{top}{children}</Frame></Frame>')
 
 frames=[]; NAMES={}; ORDER={}
 def add(page,fid,d,m):
@@ -176,27 +237,42 @@ HEALTH_CARD=card(section_head("Your health","Records","Nav Records")
     + summary_row("droplet","Blood group","O+")
     + summary_row("pill","Active prescriptions","2 medicines")
     + summary_row("triangle-alert","Allergies","Penicillin"), p=20, gap=14)
-home_body=(f'{searchbar()}{SP(2)}{next_visit_card()}'
-           f'<Frame w="fill" flex="col" gap={{13}}>{section_head("Browse by specialty","See all","See specialties")}'
-           f'{specialty_row()}</Frame>'
-           f'<Frame w="fill" flex="col" gap={{13}}>{section_head("Available today","See all","See doctors")}'
-           f'{doctor_card(*DOCTORS[0])}{doctor_card(*DOCTORS[1])}</Frame>')
+home_body=(f'{searchbar()}{next_visit_card()}'
+           f'<Frame w="fill" flex="col" gap={{11}}>{section_head("Browse by specialty","See all","See specialties")}'
+           f'{specialty_row(3,3)}</Frame>'
+           f'<Frame w="fill" flex="col" gap={{11}}>{section_head("Available today","See all","See doctors")}'
+           f'{doctor_card(*DOCTORS[0])}</Frame>')
+DASH_STATS=rows_of([
+    stat_card("calendar-check","2","Upcoming visits","Next in 2 days","tint-teal.jpg"),
+    stat_card("pill","2","Active medicines","1 due at 6pm","tint-blue.jpg"),
+    stat_card("clipboard-list","8","Visits on record","Since Jan 2026","tint-ocean.jpg"),
+    stat_card("shield-check","O+","Blood group","Allergy: penicillin","tint-navy.jpg"),
+], 4, 16)
+
+MEDS_PANEL=card(section_head("Today’s medicines","See all","Nav Meds")
+    + med_row("Amlodipine","5 mg · 1 tablet","08:00",True)
+    + '<Rect w="fill" h={1} bg="var:border/subtle" />'
+    + med_row("Metformin","500 mg · 1 tablet","18:00",False), p=20, gap=8)
+
+RECORDS_PANEL=card(section_head("Recent records","See all","Nav Records")
+    + record_row("12 Jun","Hypertension review","Dr. Ngozi Okafor")
+    + '<Rect w="fill" h={1} bg="var:border/subtle" />'
+    + record_row("28 Apr","Full blood count","Garki Medical Centre"), p=20, gap=8)
+
+DOCS_PANEL=card(section_head("Available today","See all","See doctors")
+    + doctor_card(*DOCTORS[0]) + doctor_card(*DOCTORS[1]), p=20, gap=13)
+
+SPEC_PANEL=card(section_head("Browse by specialty","See all","See specialties")
+    + specialty_row(6,3), p=20, gap=13)
+
 add("Member","H1-home",
     desk("Member · Home — H1 Home",
-        f'<Frame w="fill" flex="row" justify="between" items="center">'
-        f'<Frame flex="col" gap={{4}}>{eyebrow("Good morning")}{head_chip([("Hello,",False),("Amara",True)],30)}</Frame>'
-        f'<Frame flex="row" gap={{10}} items="center">{circle_btn("bell","Notifications")}</Frame></Frame>'
-        f'{searchbar()}'
-        f'<Frame w="fill" flex="row" gap={{22}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{20}}>'
-        f'<Frame w="fill" flex="col" gap={{13}}>{section_head("Browse by specialty","See all","See specialties")}{specialty_row()}</Frame>'
-        f'<Frame w="fill" flex="col" gap={{13}}>{section_head("Available today","See all","See doctors")}'
-        f'{doctor_card(*DOCTORS[0])}{doctor_card(*DOCTORS[1])}</Frame></Frame>'
-        f'<Frame w={{384}} flex="col" gap={{16}}>{next_visit_card()}'
-        f'{HEALTH_CARD}'
-        f'</Frame></Frame>'),
+        f'{hero_banner()}{DASH_STATS}'
+        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{18}}>{DOCS_PANEL}{MEDS_PANEL}</Frame>'
+        f'<Frame w={{380}} flex="col" gap={{18}}>{next_visit_card()}{SPEC_PANEL}{RECORDS_PANEL}</Frame></Frame>'),
     mob("Member · Home — H1 Home · Mobile",
-        f'{greet_bar()}<Frame grow={{1}} w="fill" flex="col" gap={{18}} px={{20}} pt={{8}} pb={{10}}>{home_body}</Frame>',
+        f'{greet_bar()}<Frame grow={{1}} w="fill" flex="col" gap={{14}} px={{20}} pt={{6}} pb={{8}}>{home_body}</Frame>',
         nav=bottom_nav(0)))
 
 # ============================================================ H2 HOME (new member, empty)
@@ -206,38 +282,38 @@ empty_body=(f'{searchbar()}'
             f'{T(18,"bold","var:text/strong","No visits booked yet")}'
             f'{T(14,"regular","var:text/muted","Find a verified doctor near you and book your first appointment — it takes about a minute.",w="fill",align="center")}'
             f'{cta("Find a doctor","Find doctor H2","search")}</Frame>'
-            f'<Frame w="fill" flex="col" gap={{13}}>{section_head("Browse by specialty","See all","See specialties")}{specialty_row()}</Frame>'
-            f'<Frame w="fill" flex="col" gap={{13}}>{section_head("Popular near you","See all","See doctors")}{doctor_card(*DOCTORS[1])}</Frame>')
+            f'<Frame w="fill" flex="col" gap={{11}}>{section_head("Browse by specialty","See all","See specialties")}{specialty_row(3,3)}</Frame>'
+            f'<Frame w="fill" flex="col" gap={{11}}>{section_head("Popular near you","See all","See doctors")}{doctor_card(*DOCTORS[1])}</Frame>')
+EMPTY_PANEL=card(
+    '<Frame w="fill" flex="col" gap={16} items="center" py={10}>'
+    + '<Frame w={84} h={84} rounded={999} bg="var:state/info-bg" flex="col" justify="center" items="center">' + I("calendar-plus",36,A_IC) + '</Frame>'
+    + T(20,"bold","var:text/strong","No visits booked yet")
+    + T(14,"regular","var:text/muted","Find a verified doctor near you and book your first appointment — it takes about a minute.",w="fill",align="center")
+    + '<Frame w={280} flex="col">' + cta("Find a doctor","Find doctor H2","search") + '</Frame></Frame>', p=24, gap=0)
+
 add("Member","H2-home-empty",
     desk("Member · Home — H2 First Visit (empty state)",
-        f'<Frame w="fill" flex="row" justify="between" items="center">'
-        f'<Frame flex="col" gap={{4}}>{eyebrow("Welcome")}{head_chip([("Let’s find you",False),("care",True)],30)}</Frame>'
-        f'{circle_btn("bell","Notifications")}</Frame>{searchbar()}'
-        f'<Frame w="fill" flex="row" gap={{22}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{20}}>'
-        f'<Frame w="fill" flex="col" gap={{13}}>{section_head("Browse by specialty","See all","See specialties")}{specialty_row()}</Frame>'
-        f'<Frame w="fill" flex="col" gap={{13}}>{section_head("Popular near you","See all","See doctors")}{doctor_card(*DOCTORS[1])}{doctor_card(*DOCTORS[2])}</Frame></Frame>'
-        f'<Frame w={{384}} flex="col" gap={{16}}>'
-        f'<Frame w="fill" flex="col" gap={{14}} items="center" p={{24}} rounded={{26}} bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>'
-        f'<Frame w={{78}} h={{78}} rounded={{999}} bg="var:state/info-bg" flex="col" justify="center" items="center">{I("calendar-plus",34,A_IC)}</Frame>'
-        f'{T(18,"bold","var:text/strong","No visits booked yet")}'
-        f'{T(14,"regular","var:text/muted","Find a verified doctor and book your first appointment.",w="fill",align="center")}'
-        f'{cta("Find a doctor","Find doctor H2","search")}</Frame></Frame></Frame>'),
+        f'{hero_banner()}'
+        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{18}}>{EMPTY_PANEL}{DOCS_PANEL}</Frame>'
+        f'<Frame w={{380}} flex="col" gap={{18}}>{SPEC_PANEL}'
+        f'{card(section_head("Your health","Add","Nav Records")+summary_row("droplet","Blood group","Not set yet")+summary_row("pill","Medicines","None added")+summary_row("triangle-alert","Allergies","None added"),p=20,gap=14)}</Frame></Frame>'),
     mob("Member · Home — H2 First Visit · Mobile",
-        f'{greet_bar()}<Frame grow={{1}} w="fill" flex="col" gap={{18}} px={{20}} pt={{8}} pb={{10}}>{empty_body}</Frame>',
+        f'{greet_bar()}<Frame grow={{1}} w="fill" flex="col" gap={{14}} px={{20}} pt={{6}} pb={{8}}>{empty_body}</Frame>',
         nav=bottom_nav(0)))
 
 # ============================================================ S1 SEARCH RESULTS
-FILTERS=(f'<Frame w="fill" flex="row" gap={{9}} wrap="wrap">'
-         f'<Frame name="Btn Filter Today" flex="row" gap={{7}} items="center" px={{15}} py={{10}} rounded={{999}} image="assets/img/btn-navy.jpg" overflow="hidden">'
-         f'{I("clock",14,W_IC)}{T(13,"semibold","var:text/on-dark","Today")}</Frame>'
-         f'<Frame name="Btn Filter Week" flex="row" px={{15}} py={{10}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>'
-         f'{T(13,"medium","var:text/default","This week")}</Frame>'
-         f'<Frame name="Btn Filter Virtual" flex="row" gap={{7}} items="center" px={{15}} py={{10}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>'
-         f'{I("video",14,N_IC)}{T(13,"medium","var:text/default","Virtual")}</Frame>'
-         f'<Frame name="Btn Filter Near" flex="row" gap={{7}} items="center" px={{15}} py={{10}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>'
-         f'{I("map-pin",14,N_IC)}{T(13,"medium","var:text/default","Near me")}</Frame></Frame>')
-results=("".join(doctor_card(*d) for d in DOCTORS))
+def filter_chips(per_row=4):
+    cells=[
+      f'<Frame name="Btn Filter Today" grow={{1}} flex="row" gap={{7}} justify="center" items="center" px={{14}} py={{10}} rounded={{999}} image="assets/img/btn-navy.jpg" overflow="hidden">{I("clock",14,W_IC)}{T(13,"semibold","var:text/on-dark","Today")}</Frame>',
+      f'<Frame name="Btn Filter Week" grow={{1}} flex="row" justify="center" px={{14}} py={{10}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>{T(13,"medium","var:text/default","This week")}</Frame>',
+      f'<Frame name="Btn Filter Virtual" grow={{1}} flex="row" gap={{7}} justify="center" items="center" px={{14}} py={{10}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>{I("video",14,N_IC)}{T(13,"medium","var:text/default","Virtual")}</Frame>',
+      f'<Frame name="Btn Filter Near" grow={{1}} flex="row" gap={{7}} justify="center" items="center" px={{14}} py={{10}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>{I("map-pin",14,N_IC)}{T(13,"medium","var:text/default","Near me")}</Frame>',
+    ]
+    return rows_of(cells, per_row, 9)
+FILTERS=filter_chips(4)
+FILTERS_M=filter_chips(2)
+results=("".join(doctor_card(*d) for d in DOCTORS[:3]))
 add("Member","S1-results",
     desk("Member · Search — S1 Results",
         f'{searchbar("Cardiologist in Abuja")}'
@@ -245,12 +321,11 @@ add("Member","S1-results",
         f'<Frame name="Btn Sort" flex="row" gap={{7}} items="center" px={{15}} py={{10}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>'
         f'{I("arrow-up-down",14,N_IC)}{T(13,"medium","var:text/default","Soonest")}</Frame></Frame>'
         f'{T(13,"regular","var:text/muted","24 verified doctors available")}'
-        f'<Frame w="fill" flex="row" gap={{16}} wrap="wrap">'
-        + "".join(f'<Frame w={{440}} flex="col">{doctor_card(*d)}</Frame>' for d in DOCTORS) + '</Frame>', 1),
+        + rows_of([f'<Frame grow={{1}} flex="col">{doctor_card(*d)}</Frame>' for d in DOCTORS], 2, 16), 1),
     mob("Member · Search — S1 Results · Mobile",
         f'{appbar("Find care", right=circle_btn("sliders-horizontal","Filters"))}'
         f'<Frame grow={{1}} w="fill" flex="col" gap={{15}} px={{20}} pt={{6}} pb={{10}}>'
-        f'{searchbar("Cardiologist in Abuja")}{FILTERS}'
+        f'{searchbar("Cardiologist in Abuja")}{FILTERS_M}'
         f'{T(13,"regular","var:text/muted","24 verified doctors available")}{results}</Frame>',
         nav=bottom_nav(1)))
 
@@ -291,8 +366,7 @@ add("Member","S3-empty",
         f'{searchbar("Endocrinologist · Today · Under ₦10k")}{FILTERS}'
         f'<Frame w="fill" flex="row" justify="center" pt={{16}}><Frame w={{520}} flex="col">{nores}</Frame></Frame>'
         f'{section_head("You might also consider","","Alt doctors")}'
-        f'<Frame w="fill" flex="row" gap={{16}} wrap="wrap">'
-        + "".join(f'<Frame w={{440}} flex="col">{doctor_card(*d)}</Frame>' for d in DOCTORS[1:3]) + '</Frame>', 1),
+        + rows_of([f'<Frame grow={{1}} flex="col">{doctor_card(*d)}</Frame>' for d in DOCTORS[1:3]], 2, 16), 1),
     mob("Member · Search — S3 No Results · Mobile",
         f'{appbar("Find care", right=circle_btn("sliders-horizontal","Filters"))}'
         f'<Frame grow={{1}} w="fill" flex="col" gap={{16}} px={{20}} pt={{6}} pb={{10}}>'
@@ -316,8 +390,8 @@ PROFILE_HEAD=(f'<Frame w="fill" flex="col" gap={{16}} p={{20}} rounded={{28}} bg
               f'<Frame w="fill" flex="row" gap={{10}}>{stat_cell("12 yrs","Experience","briefcase-medical")}'
               f'{stat_cell("4.9","Rating","star")}{stat_cell("1.2k","Patients","users")}</Frame></Frame>')
 ABOUT=card(T(16,"bold","var:text/strong","About")+
-           T(14,"regular","var:text/muted","Consultant cardiologist with 12 years of experience in hypertension, heart failure and preventive cardiology. Speaks English, Hausa and Igbo.",w="fill")+
-           f'<Frame w="fill" flex="row" gap={{8}} wrap="wrap">{proof("globe","English · Hausa · Igbo",dark=False)}{proof("video","In-person &amp; virtual",dark=False)}</Frame>',p=20,gap=12)
+           T(14,"regular","var:text/muted","Consultant cardiologist with 12 years of experience in hypertension, heart failure and preventive cardiology. Speaks English, Hausa and Igbo.",w="fill")
+           + rows_of([proof("globe","English · Hausa · Igbo",dark=False),proof("video","In-person &amp; virtual",dark=False)],2,8),p=20,gap=12)
 FEEBAR=(f'<Frame w="fill" flex="row" justify="between" items="center" p={{18}} rounded={{22}} bg="var:state/info-bg">'
         f'<Frame flex="col" gap={{2}}>{T(12,"regular","var:text/muted","Consultation fee")}'
         f'{T(22,"bold","var:text/strong","₦15,000")}</Frame>'
@@ -377,7 +451,7 @@ taken=(f'<Frame w="fill" flex="col" gap={{15}} items="center" p={{26}} rounded={
        f'<Frame w={{80}} h={{80}} rounded={{999}} bg="var:state/warning-bg" flex="col" justify="center" items="center">{I("circle-alert",36,WARN_IC)}</Frame>'
        f'{T(19,"bold","var:text/strong","That slot was just taken")}'
        f'{T(14,"regular","var:text/muted","Someone booked 10:30 a moment ago. Here are the closest times still open with Dr. Okafor.",w="fill",align="center")}'
-       f'<Frame w="fill" flex="row" gap={{9}} justify="center" wrap="wrap">'
+       f'<Frame w="fill" flex="row" gap={{9}} justify="center">'
        f'<Frame name="Btn Slot 11:00" flex="row" px={{18}} py={{12}} rounded={{16}} image="assets/img/btn-navy.jpg" overflow="hidden">{T(14,"semibold","var:text/on-dark","11:00")}</Frame>'
        f'<Frame name="Btn Slot 14:00" flex="row" px={{18}} py={{12}} rounded={{16}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>{T(14,"semibold","var:text/default","14:00")}</Frame>'
        f'<Frame name="Btn Slot 14:30" flex="row" px={{18}} py={{12}} rounded={{16}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>{T(14,"semibold","var:text/default","14:30")}</Frame></Frame>'

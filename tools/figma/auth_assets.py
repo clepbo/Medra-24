@@ -115,12 +115,12 @@ def pulse_line(im, y_frac, color, alpha, width=6, amp=0.30):
     return Image.alpha_composite(im.convert("RGBA"),ov)
 
 # page grounds
-mesh(820,1740,PAPER,[(0.85,0.06,0.55,MIST,.95),(0.10,0.02,0.42,MINT,.75),(0.95,0.42,0.40,SKY,.55),
-                     (0.50,0.95,0.60,MIST,.55),(0.20,0.30,0.35,WHITE,.75)]).save(f"{IMG}/surface-mobile.jpg",quality=92)
-g = mesh(2160,1350,PAPER,[(0.06,0.05,0.40,MINT,.85),(0.32,0.02,0.34,MIST,.7),(0.92,0.14,0.44,SKY,.75),
-                          (0.78,0.72,0.50,MIST,.65),(0.14,0.86,0.44,MINT,.55),(0.50,0.45,0.45,WHITE,.85)])
+mesh(820,1740,(248,250,252),[(0.88,0.04,0.50,(238,245,249),.55),(0.06,0.30,0.45,(243,247,250),.45),
+                     (0.50,0.95,0.55,(238,245,249),.35)],grain=1.6).save(f"{IMG}/surface-mobile.jpg",quality=92)
+g = mesh(2160,1350,(248,250,252),[(0.04,0.04,0.38,(238,245,249),.5),(0.95,0.10,0.40,(238,245,249),.45),
+                          (0.80,0.85,0.45,(243,247,250),.4),(0.45,0.45,0.5,(248,250,252),.6)],grain=1.6)
 png = cairosvg.svg2png(url=LOGO_WHITE, output_width=int(2160*0.34))
-lg = Image.open(io.BytesIO(png)).convert("RGBA"); lg.putalpha(lg.split()[3].point(lambda v:int(v*18/255)))
+lg = Image.open(io.BytesIO(png)).convert("RGBA"); lg.putalpha(lg.split()[3].point(lambda v:int(v*10/255)))
 g = g.convert("RGBA"); g.alpha_composite(lg,(int(2160*0.60),int(1350*0.28)))
 g.convert("RGB").save(f"{IMG}/surface-desktop.jpg",quality=92)
 

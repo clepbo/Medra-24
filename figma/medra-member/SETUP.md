@@ -3,16 +3,28 @@
 **44 frames · 2 Figma pages · Desktop 1440×900 + Mobile 390×844 · "Soft Clinical"**
 
 - `Medra Member — Find & Book` — 10 screens × desktop + mobile (20 frames)
+- Desktop is a **dashboard**: navy gradient rail with an active-state nav, a help card and the
+  member chip; a top bar with search + notifications + avatar; a gradient greeting banner with
+  primary actions; a 4-up KPI row; then panels for doctors, medicines, next visit, specialties
+  and recent records.
 - `Medra — Interactive Components` — 24 component state frames → real component sets
 
 Offline validation: **ALL 44 CLEAN, FULLY OFFLINE ✓** (`node validate.js`)
+
+## Layout rules that matter for Figma
+- **No `wrap="wrap"`.** figma-ds-cli does not honour auto-layout wrapping, so wrapped rows ran
+  off-canvas. Every multi-item row is now chunked into **explicit rows** via `rows_of()`
+  (specialty grid, slot grid, filter chips, chips, proof rows, result grids).
+- **Mobile content fits 390 × 844.** Figma clips fixed-height frames, so each mobile screen is
+  designed to fit the viewport (tallest is 736 px) with the bottom nav pinned below the content.
+  Longer lists are shortened with a "See all" affordance rather than overflowing.
 
 ## Screens
 | # | Screen | Notes |
 |---|---|---|
 | H1 | **Home** (returning) | Next-visit card, search, specialties, available-today |
 | H2 | **Home** (new member) | Empty state — "No visits booked yet" |
-| S1 | **Search results** | Filter chips, sort, 24 verified doctors |
+| S1 | **Search results** | Filter chips (2-up mobile / 4-up desktop), sort, 24 verified doctors |
 | S2 | **Filters** | Bottom sheet on mobile: specialty, availability, type, distance, price, language |
 | S3 | **No results** | Widen search + "notify me when a slot opens" |
 | P1 | **Doctor profile** | Stats, about, languages, fee, availability |
