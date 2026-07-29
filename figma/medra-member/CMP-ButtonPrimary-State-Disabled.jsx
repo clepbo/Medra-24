@@ -1,0 +1,1 @@
+<Frame name="cmp/Button Primary/State=Disabled" w={320} flex="col" p={16} bg="var:bg/base"><Frame w="fill" flex="row" gap={10} justify="center" items="center" px={24} py={17} rounded={999} bg="var:neutral/200"><Text font="Inter" size={16} weight="semibold" color="var:text/faint">Book appointment</Text></Frame></Frame>

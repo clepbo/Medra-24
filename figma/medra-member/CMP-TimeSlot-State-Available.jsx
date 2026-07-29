@@ -1,0 +1,1 @@
+<Frame name="cmp/Time Slot/State=Available" w={140} flex="col" p={16} bg="var:bg/base"><Frame w={98} flex="row" justify="center" py={13} rounded={16} bg="var:bg/base" stroke="var:border/default" strokeWidth={1}><Text font="Inter" size={14} weight="semibold" color="var:text/default">10:30</Text></Frame></Frame>

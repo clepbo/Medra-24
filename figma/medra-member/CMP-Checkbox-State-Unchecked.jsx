@@ -1,0 +1,1 @@
+<Frame name="cmp/Checkbox/State=Unchecked" w={80} flex="col" p={16} bg="var:bg/base"><Rect w={24} h={24} rounded={7} bg="var:bg/base" stroke="var:border/strong" strokeWidth={1} /></Frame>

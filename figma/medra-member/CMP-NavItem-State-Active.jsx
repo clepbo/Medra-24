@@ -1,0 +1,1 @@
+<Frame name="cmp/Nav Item/State=Active" w={120} flex="col" p={16} bg="var:bg/base"><Frame w={84} flex="col" gap={4} items="center"><Icon name="lucide:house" size={22} color="#39B0CF" /><Text font="Inter" size={11} weight="semibold" color="var:text/accent">Home</Text></Frame></Frame>

@@ -1,0 +1,1 @@
+<Frame name="cmp/Toggle/State=Off" w={100} flex="col" p={16} bg="var:bg/base"><Frame w={52} h={30} rounded={999} bg="var:neutral/300" flex="row" justify="start" items="center" px={4}><Ellipse w={22} h={22} bg="#FFFFFF" /></Frame></Frame>

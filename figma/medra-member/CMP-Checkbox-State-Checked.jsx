@@ -1,0 +1,1 @@
+<Frame name="cmp/Checkbox/State=Checked" w={80} flex="col" p={16} bg="var:bg/base"><Frame w={24} h={24} rounded={7} bg="var:brand/teal" flex="col" justify="center" items="center"><Icon name="lucide:check" size={15} color="#FFFFFF" /></Frame></Frame>
