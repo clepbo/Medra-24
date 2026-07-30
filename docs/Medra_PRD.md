@@ -400,6 +400,62 @@ Screen groups expand into individual screens plus states (empty, loading, error,
 
 **Total: ~5–7 weeks** for an MVP-scope first release.
 
+### 15.1 Design progress (as built in Figma)
+
+| Module | Screens | Frames | Figma pages | Status |
+|---|---|---|---|---|
+| Design system + user journeys | — | 27 | 1 | Done |
+| Authentication (all four roles) | 35 | 70 | 4 | Done |
+| Member app, batch 1 — Find & Book | 10 | 44 | 2 | Done |
+| Member app, batch 2 — Visits · Records · Medicines · Profile | 39 | 98 | 6 | Done |
+| Doctor app | — | — | — | Next |
+| Institution admin portal | — | — | — | Not started |
+| Platform admin | — | — | — | Not started |
+
+Every screen is drawn at **1440 desktop and 390 mobile**, wired into a clickable prototype with a
+motion spec, and validated offline (tokens, icons, images, DSL rules) before rendering.
+
+### 15.2 Product decisions settled by the Member batch-2 designs
+
+These were open questions before the screens existed. They are now decided **on the screen**, and
+they need a build and a legal sign-off, not just a design review.
+
+1. **Nothing is shared by default.** A doctor sees a member's history only through an explicit,
+   scoped, time-boxed grant: who · what (six categories) · how long (this visit / 24 h / 7 d /
+   30 d). Revocation is immediate. Consent is recorded with a timestamp under **NDPA 2023**.
+2. **Allergies and current medicines are the one exception** — always visible to any doctor
+   treating the member, because the alternative is unsafe prescribing. The consent control for
+   them reads as locked rather than pretending to be optional.
+3. **The record-access log is append-only.** Every open is logged with who and when, and neither
+   the member, the clinic, nor Medra can edit or delete it. It is the member's evidence.
+4. **Provenance is on every clinical record.** A consultation note carries the doctor's name,
+   **MDCN number**, timestamp and "cannot be edited". Member-uploaded records are labelled
+   "added by you", and member-taken vitals are labelled "self-measured", so a clinician can always
+   tell what the record is worth.
+5. **Account deletion cannot delete clinic-held notes.** Nigerian medical-records retention binds
+   the clinic, not Medra. The delete screen states plainly what disappears (profile, uploads,
+   preferences, shares) and what is kept (clinic copies, payment records, the anonymised access
+   log), with a 30-day grace period and a "pause instead" alternative.
+6. **SMS is the floor, not a fallback.** Visit confirmations always go out by SMS even with every
+   other channel disabled, and **Medra pays for the messages**. Medicine reminders offer SMS for
+   days with no data. This has a real unit cost — model it per active member per month.
+7. **Every video visit has a no-data escape hatch.** Pre-call and connection-lost both offer
+   "ask the clinic to call my phone", plus a low-data mode (~12 MB per 20 minutes) and
+   audio-only. A dropped call never loses the appointment.
+8. **Refills need a human.** A doctor approves or declines a refill request and may require a
+   visit first. Requests carry a supply length, a collection choice (clinic pharmacy, nearby
+   pharmacy, delivery) and an estimated cost.
+9. **Dependants are first-class.** One member can hold records and bookings for a child or an
+   older relative. A child's account **transfers to them at 18**; an adult must confirm by SMS
+   before someone else can manage theirs.
+10. **Offline is a designed state, not an error.** Records, reminders and the Medra ID keep
+    working from local storage; booking and video explicitly do not, because a stale slot is worse
+    than no slot. Queued actions sync on reconnect.
+
+Open items for the pilot clinics: the ₦2,000 late-change fee on reschedules, refill turnaround
+(designed as "within a day"), the ₦1,500 delivery fee, and whether plain-language result
+explainers are acceptable to the clinical partners as written.
+
 ---
 
 ## 16. Brand & Design Direction

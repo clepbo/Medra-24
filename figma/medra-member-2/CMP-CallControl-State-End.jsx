@@ -1,0 +1,1 @@
+<Frame name="cmp/Call Control/State=End" w={110} flex="col" p={16} bg="var:bg/band"><Frame name="Btn CEnd" flex="col" gap={7} items="center"><Frame w={56} h={56} rounded={999} bg="#D14343" flex="col" justify="center" items="center"><Icon name="lucide:phone-off" size={22} color="#FFFFFF" /></Frame></Frame></Frame>

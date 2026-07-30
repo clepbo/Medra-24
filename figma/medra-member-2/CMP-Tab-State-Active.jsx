@@ -1,0 +1,1 @@
+<Frame name="cmp/Tab/State=Active" w={170} flex="col" p={16} bg="var:bg/base"><Frame w="fill" flex="col" gap={9} items="center"><Text font="Inter" size={15} weight="semibold" color="var:text/strong">Upcoming</Text><Rect w="fill" h={3} rounded={999} bg="var:brand/teal" /></Frame></Frame>

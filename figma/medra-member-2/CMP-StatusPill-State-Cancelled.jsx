@@ -1,0 +1,1 @@
+<Frame name="cmp/Status Pill/State=Cancelled" w={170} flex="col" p={16} bg="var:bg/base"><Frame flex="row" gap={6} items="center" px={11} py={6} rounded={999} bg="var:state/error-bg"><Icon name="lucide:circle-x" size={12} color="#D14343" /><Text font="Inter" size={11} weight="semibold" color="var:state/error">Cancelled</Text></Frame></Frame>

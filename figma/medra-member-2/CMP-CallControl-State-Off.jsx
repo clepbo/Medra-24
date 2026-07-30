@@ -1,0 +1,1 @@
+<Frame name="cmp/Call Control/State=Off" w={110} flex="col" p={16} bg="var:bg/band"><Frame name="Btn CMic" flex="col" gap={7} items="center"><Frame w={56} h={56} rounded={999} bg="#3E4C59" flex="col" justify="center" items="center"><Icon name="lucide:mic-off" size={22} color="#FFFFFF" /></Frame></Frame></Frame>

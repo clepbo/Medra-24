@@ -1,0 +1,1 @@
+<Frame name="cmp/Status Pill/State=Confirmed" w={170} flex="col" p={16} bg="var:bg/base"><Frame flex="row" gap={6} items="center" px={11} py={6} rounded={999} bg="var:state/success-bg"><Icon name="lucide:circle-check" size={12} color="#2FA36B" /><Text font="Inter" size={11} weight="semibold" color="var:state/success">Confirmed</Text></Frame></Frame>

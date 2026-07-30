@@ -16,8 +16,20 @@ Offline validation: **ALL 44 CLEAN, FULLY OFFLINE ✓** (`node validate.js`)
   off-canvas. Every multi-item row is now chunked into **explicit rows** via `rows_of()`
   (specialty grid, slot grid, filter chips, chips, proof rows, result grids).
 - **Mobile content fits 390 × 844.** Figma clips fixed-height frames, so each mobile screen is
-  designed to fit the viewport (tallest is 736 px) with the bottom nav pinned below the content.
-  Longer lists are shortened with a "See all" affordance rather than overflowing.
+  designed to fit the viewport, with the bottom nav below the content. Longer lists are shortened
+  with a "See all" affordance rather than overflowing. This is now **measured**, not assumed:
+  `tools/figma/preview_bundle.py` renders the bundle and a Playwright pass measures the
+  bottom-most element in every frame against the budget. Batch 1 is at **0 overflows**.
+
+  That measurement caught three screens that were genuinely over — P1 profile (902 px),
+  S1 results (862 px) and H2 empty home (852 px). The earlier "tallest 736 px" figure came from a
+  weaker check that read the clipped frame height instead of the content extent. Fixed by
+  shortening P1's About block, showing two result cards instead of three on S1, and dropping H2's
+  second doctor section.
+- **The bottom nav has five tabs** — Home · Visits · Records · Medicines · Profile — matching the
+  desktop sidebar minus "Find care" (which lives in the search bar). Medicines used to be
+  desktop-only. Every tab is wired by `link-member2.js` in the batch-2 bundle, so **render batch 2
+  after this one** or four of the five tabs stay dead.
 
 ## Screens
 | # | Screen | Notes |
@@ -35,7 +47,9 @@ Offline validation: **ALL 44 CLEAN, FULLY OFFLINE ✓** (`node validate.js`)
 
 No dead ends: every screen has a back path, a home path, and bottom-nav/sidebar escape.
 `link-member.js` also **closes the auth dead-end** — auth success and quick-unlock now land on
-the member home.
+the member home. The nav tabs themselves are wired by the **batch-2** linker, which has the
+Visits/Records/Medicines/Profile destinations; run `medra-member-2\render-member2.ps1` after this
+bundle.
 
 ## Render (Figma Desktop open + connected)
 ```powershell
