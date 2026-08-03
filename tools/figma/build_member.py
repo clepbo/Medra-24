@@ -122,7 +122,16 @@ add("Member","S1-results",
         nav=bottom_nav(1)))
 
 # ============================================================ S2 FILTERS (sheet)
+ADDRESS_FILTER=(f'<Frame w="fill" flex="col" gap={{9}}>'
+                f'{field("Search around","map-pin","Area 3, Garki, Abuja",ph=False,trailing=("x","Clear address"))}'
+                f'<Frame w="fill" flex="row" gap={{9}}>'
+                f'<Frame name="Btn Use my location" grow={{1}} flex="row" gap={{7}} justify="center" items="center" px={{14}} py={{10}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>'
+                f'{I("navigation",14,N_IC)}{T(13,"medium","var:text/default","Use my location")}</Frame>'
+                f'<Frame name="Btn Use home address" grow={{1}} flex="row" gap={{7}} justify="center" items="center" px={{14}} py={{10}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>'
+                f'{I("house",14,N_IC)}{T(13,"medium","var:text/default","My home address")}</Frame></Frame>'
+                f'{T(12,"regular","var:text/muted","Look for care near anywhere — your house while you are at work, or near a relative you are booking for.",w="fill")}</Frame>')
 filter_body=(f'<Frame w="fill" flex="col" gap={{20}}>'
+             f'{ADDRESS_FILTER}'
              f'{field_chips("Specialty",["Any","Cardiology","General","Paediatrics","Neurology"],1,"FSpec")}'
              f'{field_chips("Availability",["Today","Tomorrow","This week","Any time"],0,"FAvail")}'
              f'{field_chips("Visit type",["Any","In-person","Virtual"],0,"FType")}'
@@ -268,15 +277,43 @@ APPT_CARD=card(T(16,"bold","var:text/strong","Your appointment") + DOC_ROW
     + summary_row("calendar-days","Date","Wednesday, 21 August 2026")
     + summary_row("clock","Time","10:30 AM · 30 minutes")
     + summary_row("video","Type","Virtual consultation")
-    + summary_row("credit-card","Fee","₦15,000 — paid at the clinic"), p=20, gap=14)
+    + summary_row("credit-card","Fee","₦15,000 — paid before the visit"), p=20, gap=14)
 NEXT_CARD=card(T(15,"bold","var:text/strong","What happens next")
-    + summary_row("check","1. We hold your slot","Confirmed instantly")
-    + summary_row("message-square-text","2. SMS confirmation","With your booking reference")
-    + summary_row("bell-ring","3. Reminders","24 hours and 2 hours before"), p=20, gap=13)
+    + summary_row("credit-card","1. You pay ₦15,000","Card, transfer or USSD — held until the visit")
+    + summary_row("check","2. We hold your slot","Confirmed the moment payment clears")
+    + summary_row("message-square-text","3. Confirmation","WhatsApp and SMS, with your reference")
+    + summary_row("bell-ring","4. Reminders","24 hours and 2 hours before"), p=20, gap=13)
+HISTORY_Q=(f'<Frame w="fill" flex="col" gap={{11}} p={{18}} rounded={{22}} bg="var:state/info-bg">'
+           f'<Frame flex="row" gap={{9}} items="center">{I("notebook-pen",17,A_IC)}'
+           f'{T(14,"semibold","var:text/strong","Anything not in your records?")}</Frame>'
+           f'{T(13,"regular","var:text/default","You choose what history to share. If something happened that you keep private, you can still tell the doctor here — or say nothing.",w="fill")}'
+           f'{field("Tell Dr. Okafor (optional)","message-square-text","e.g. I was treated for something in 2019 that I have kept off my record")}'
+           f'{checkbox("I have nothing else to add","Nothing to add")}'
+           f'{T(11,"regular","var:text/muted","We record your answer with the booking, so it is clear what the doctor was and was not told.",w="fill")}</Frame>')
+REMINDERS_Q=(f'<Frame w="fill" flex="col" gap={{10}} p={{18}} rounded={{22}} bg="var:bg/base" '
+             f'stroke="var:border/subtle" strokeWidth={{1}}>'
+             f'{T(14,"semibold","var:text/strong","Remind me 24 hours and 2 hours before")}'
+             f'{checkbox("In the app","Remind push")}'
+             f'{checkbox("WhatsApp — +234 801 234 5678","Remind whatsapp")}'
+             f'{checkbox("SMS — works with no data","Remind sms")}'
+             f'{checkbox("Email — amara.okeke@gmail.com","Remind email",checked=False)}</Frame>')
 REVIEW=(f'{APPT_CARD}'
         f'{field("Reason for visit (optional)","file-text","e.g. chest pain for 3 days")}'
-        f'{note("shield-check","Dr. Okafor will see your allergies and current medicines so they can prescribe safely. Nothing else is shared.","info")}'
-        f'{checkbox("Send me SMS reminders 24 hours and 2 hours before","SMS reminders")}')
+        f'{HISTORY_Q}'
+        f'{note("shield-check","Dr. Okafor will see your allergies and current medicines so they can prescribe safely. Nothing else is shared unless you allow it.","info")}'
+        f'{REMINDERS_Q}')
+HISTORY_Q_M=(f'<Frame w="fill" flex="col" gap={{10}} p={{16}} rounded={{22}} bg="var:state/info-bg">'
+             f'<Frame flex="row" gap={{9}} items="center">{I("notebook-pen",16,A_IC)}'
+             f'{T(14,"semibold","var:text/strong","Anything not in your records?")}</Frame>'
+             f'{T(12,"regular","var:text/default","You choose what history to share — you can still tell the doctor here.",w="fill")}'
+             f'{field("Tell Dr. Okafor (optional)","message-square-text","e.g. something I keep off my record")}</Frame>')
+APPT_CARD_M=card(T(16,"bold","var:text/strong","Your appointment") + DOC_ROW
+    + '<Rect w="fill" h={1} bg="var:border/subtle" />'
+    + summary_row("calendar-days","When","Wed, 21 Aug · 10:30 AM")
+    + summary_row("credit-card","Fee","₦15,000 — paid before the visit"), p=18, gap=13)
+REVIEW_M=(f'{APPT_CARD_M}'
+          f'{field("Reason for visit (optional)","file-text","e.g. chest pain for 3 days")}'
+          f'{HISTORY_Q_M}')
 add("Member","B3-review",
     desk("Member · Booking — B3 Review &amp; Confirm",
         f'{head_chip([("Review and",False),("confirm",True)],30)}'
@@ -284,16 +321,66 @@ add("Member","B3-review",
         f'<Frame grow={{1}} flex="col" gap={{16}}>{REVIEW}</Frame>'
         f'<Frame w={{368}} flex="col" gap={{16}}>'
         f'{NEXT_CARD}'
-        f'{cta("Confirm booking","Confirm B3","check")}{ghost("Back to times","Back times B3","arrow-left")}</Frame></Frame>', 1),
+        f'{cta("Continue to payment","Pay B3","credit-card")}{ghost("Back to times","Back times B3","arrow-left")}</Frame></Frame>', 1),
     mob("Member · Booking — B3 Review &amp; Confirm · Mobile",
         f'{appbar("Review")}'
-        f'<Frame grow={{1}} w="fill" flex="col" gap={{14}} px={{20}} pt={{4}} pb={{10}}>{REVIEW}'
-        f'<Frame grow={{1}} />{cta("Confirm booking","Confirm B3","check")}</Frame>'))
+        f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{10}}>{REVIEW_M}'
+        f'<Frame grow={{1}} />{cta("Continue to payment","Pay B3","credit-card")}</Frame>'))
+
+
+# ============================================================ B4 PAYMENT (before confirmation)
+PAY_SUMMARY=card(T(16,"bold","var:text/strong","What you are paying for") + DOC_ROW
+    + '<Rect w="fill" h={1} bg="var:border/subtle" />'
+    + summary_row("calendar-days","Wednesday, 21 August","10:30 AM · 30 minutes")
+    + summary_row("video","Virtual consultation","Link sent on WhatsApp and SMS")
+    + '<Rect w="fill" h={1} bg="var:border/subtle" />'
+    + summary_row("credit-card","Consultation fee","₦15,000")
+    + summary_row("receipt","Medra service fee","₦0 — we do not charge members"), p=20, gap=14)
+PAY_METHODS=card(T(16,"bold","var:text/strong","How would you like to pay?")
+    + choice("credit-card","Card","Mastercard, Visa or Verve — saved for next time if you want","Pay card",sel=True)
+    + choice("building-2","Bank transfer","We give you an account number that expires in 30 minutes","Pay transfer")
+    + choice("smartphone","USSD","Dial a code on your phone — no data needed","Pay ussd")
+    + choice("wallet","Medra wallet","₦0 balance — top up any time","Pay wallet"), p=20, gap=12)
+PAY_CARD_FIELDS=card(field("Card number","credit-card","5399 8342 1109 4402",ph=False)
+    + f'<Frame w="fill" flex="row" gap={{14}}>'
+    + f'<Frame grow={{1}} flex="col">{field("Expiry","calendar-days","09 / 28",ph=False)}</Frame>'
+    + f'<Frame grow={{1}} flex="col">{field("CVV","lock","•••",ph=False)}</Frame></Frame>'
+    + checkbox("Save this card for next time","Save card"), p=20, gap=14)
+PAY_TRUST=(f'<Frame w="fill" flex="col" gap={{11}} p={{18}} rounded={{22}} bg="var:state/success-bg">'
+           f'<Frame flex="row" gap={{9}} items="center">{I("shield-check",17,OK_IC)}'
+           f'{T(14,"semibold","var:text/strong","Your money is safe")}</Frame>'
+           f'{T(13,"regular","var:text/default","Paystack handles the payment — Medra never sees your card. If the doctor cancels or does not show up, you are refunded in full, automatically.",w="fill")}'
+           f'{T(12,"regular","var:text/muted","Cancel more than 4 hours before and you get a full refund. After that the clinic keeps ₦2,000.",w="fill")}</Frame>')
+PAYSTACK_PILL=(f'<Frame flex="row" gap={{6}} items="center" px={{11}} py={{6}} rounded={{999}} bg="var:state/info-bg">'
+               f'{I("lock",12,A_IC)}{T(11,"semibold","var:state/info","Secured by Paystack")}</Frame>')
+PAY_TOTAL=(f'<Frame w="fill" flex="row" justify="between" items="center" p={{18}} rounded={{20}} bg="var:bg/muted">'
+           f'<Frame flex="col" gap={{2}}>{T(12,"regular","var:text/muted","Total to pay now")}'
+           f'{T(26,"bold","var:text/strong","₦15,000")}</Frame>'
+           f'{PAYSTACK_PILL}</Frame>')
+add("Member","B4-payment",
+    desk("Member · Booking — B4 Payment",
+        f'{head_chip([("Pay to hold",False),("your slot",True)],30)}'
+        f'{T(15,"regular","var:text/muted","Your 10:30 is reserved for the next 10 minutes while you pay.",w="fill")}'
+        f'<Frame w="fill" flex="row" gap={{22}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{16}}>{PAY_METHODS}{PAY_CARD_FIELDS}</Frame>'
+        f'<Frame w={{368}} flex="col" gap={{16}}>{PAY_SUMMARY}{PAY_TOTAL}'
+        f'{cta("Pay ₦15,000","Confirm B3","lock")}{PAY_TRUST}'
+        f'{ghost("Back to review","Back review B4","arrow-left")}</Frame></Frame>', 1),
+    mob("Member · Booking — B4 Payment · Mobile",
+        f'{appbar("Payment")}'
+        f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{10}}>'
+        f'{PAY_TOTAL}'
+        f'{card(choice("credit-card","Card","Mastercard, Visa or Verve","Pay card",sel=True)+choice("building-2","Bank transfer","Account number valid 30 minutes","Pay transfer")+choice("smartphone","USSD","No data needed","Pay ussd"),p=16,gap=11)}'
+        f'{PAY_TRUST}<Frame grow={{1}} />{cta("Pay ₦15,000","Confirm B3","lock")}</Frame>'))
 
 # ============================================================ C1 CONFIRMED
 CONFIRM_CARD=card(summary_row("calendar-days","Date","Wednesday, 21 August 2026")
     + summary_row("clock","Time","10:30 AM · 30 minutes")
-    + summary_row("video","Type","Virtual — link by SMS"), p=20, gap=13)
+    + summary_row("video","Type","Virtual — link on WhatsApp and SMS")
+    + summary_row("receipt","Paid","₦15,000 · Paystack ref PSK-99417-C"), p=20, gap=13)
+CONFIRM_CARD_M=card(summary_row("calendar-days","When","Wed, 21 Aug · 10:30 AM")
+    + summary_row("video","Type","Virtual — link on WhatsApp")
+    + summary_row("receipt","Paid","₦15,000 · ref PSK-99417-C"), p=18, gap=12)
 CONFIRM=(f'<Frame w="fill" flex="col" gap={{16}} items="center">'
          f'{big_icon("circle-check","ok",104)}'
          f'{T(24,"bold","var:text/strong","Booking confirmed")}'
@@ -301,7 +388,14 @@ CONFIRM=(f'<Frame w="fill" flex="col" gap={{16}} items="center">'
          f'<Frame w="fill" flex="row" gap={{10}} justify="center" items="center" px={{18}} py={{13}} rounded={{999}} bg="var:bg/muted">'
          f'{I("receipt",16,A_IC)}{T(14,"semibold","var:text/strong","Reference MDR-4820-71")}</Frame>'
          f'{CONFIRM_CARD}'
-         f'{note("message-square-text","We’ve texted your confirmation to +234 801 234 5678. Reminders follow 24 hours and 2 hours before.","ok")}</Frame>')
+         f'{note("message-square-text","Confirmation sent on WhatsApp and SMS to +234 801 234 5678. Reminders follow 24 hours and 2 hours before.","ok")}</Frame>')
+CONFIRM_M=(f'<Frame w="fill" flex="col" gap={{14}} items="center">'
+           f'{big_icon("circle-check","ok",92)}'
+           f'{T(23,"bold","var:text/strong","Booking confirmed")}'
+           f'{T(14,"regular","var:text/muted","Dr. Ngozi Okafor is expecting you on Wednesday, 21 August at 10:30 AM.",w="fill",align="center")}'
+           f'<Frame w="fill" flex="row" gap={{10}} justify="center" items="center" px={{16}} py={{12}} rounded={{999}} bg="var:bg/muted">'
+           f'{I("receipt",15,A_IC)}{T(13,"semibold","var:text/strong","Reference MDR-4820-71")}</Frame>'
+           f'{CONFIRM_CARD_M}</Frame>')
 add("Member","C1-confirmed",
     desk("Member · Booking — C1 Confirmed",
         f'<Frame w="fill" flex="row" justify="center" pt={{10}}>'
@@ -311,7 +405,7 @@ add("Member","C1-confirmed",
         f'<Frame grow={{1}} flex="col">{cta("View my visits","View visits C1")}</Frame></Frame></Frame></Frame>', 2),
     mob("Member · Booking — C1 Confirmed · Mobile",
         f'{appbar(None, back=False, right=circle_btn("x","Close confirm"))}'
-        f'<Frame grow={{1}} w="fill" flex="col" gap={{16}} px={{20}} pt={{6}} pb={{10}}>{CONFIRM}'
+        f'<Frame grow={{1}} w="fill" flex="col" gap={{14}} px={{20}} pt={{6}} pb={{10}}>{CONFIRM_M}'
         f'<Frame grow={{1}} />{cta("View my visits","View visits C1")}'
         f'{ghost("Add to calendar","Add calendar C1","calendar-plus")}</Frame>'))
 
@@ -398,7 +492,9 @@ TRN=[
  ("B1-slot","Btn Slot 10:00","B2-taken"),("B1-slot","Btn Nav Home","H1-home"),
  ("B2-taken","Btn Book alt B2","B3-review"),("B2-taken","Btn Another day B2","B1-slot"),
  ("B2-taken","Btn Back","B1-slot"),("B2-taken","Btn Nav Home","H1-home"),
- ("B3-review","Btn Confirm B3","C1-confirmed"),("B3-review","Btn Back times B3","B1-slot"),
+ ("B3-review","Btn Pay B3","B4-payment"),("B3-review","Btn Back times B3","B1-slot"),
+ ("B4-payment","Btn Confirm B3","C1-confirmed"),("B4-payment","Btn Back review B4","B3-review"),
+ ("B4-payment","Btn Back","B3-review"),("B4-payment","Btn Nav Home","H1-home"),
  ("B3-review","Btn Back","B1-slot"),("B3-review","Btn Nav Home","H1-home"),
  ("C1-confirmed","Btn View visits C1","H1-home"),("C1-confirmed","Btn Add calendar C1","C1-confirmed"),
  ("C1-confirmed","Btn Close confirm","H1-home"),("C1-confirmed","Btn Nav Home","H1-home"),

@@ -140,8 +140,9 @@ story_body = (header("02","THE BRAND","Brand Story")
       '<Frame grow={1} flex="col" gap={22}>'
         '<Text font="Inter" size={30} weight="bold" color="var:text/strong" w="fill">One record. Every doctor. No paper.</Text>'
         '<Text font="Inter" size={17} weight="regular" color="var:text/muted" w="fill">Medra replaces paper filing and WhatsApp booking with a single system for finding care, booking consultations, and carrying a portable medical history. Booking is the entry point — the durable value is a unified medical database that follows the patient across providers.</Text>'
-        '<Frame w="fill" flex="row" gap={12} wrap="wrap">'
-          + pill("Trustworthy") + pill("Clinical, not cold") + pill("Clear over clever") + pill("Human") +
+        '<Frame w="fill" flex="col" gap={12}>'
+          '<Frame w="fill" flex="row" gap={12}>' + pill("Trustworthy") + pill("Clinical, not cold") + '</Frame>'
+          '<Frame w="fill" flex="row" gap={12}>' + pill("Clear over clever") + pill("Human") + '</Frame>' +
         '</Frame>'
       '</Frame>'
       '<Frame w={420} flex="col" gap={16} p={28} rounded={20} image="assets/img/gradient-diag.png" overflow="hidden">'
@@ -273,7 +274,7 @@ frames.append((7,"07-logo-misuse.jsx",frame("Medra DS — 07 Logo Misuse", misus
 
 # ============================================================ 08 COLOUR PRIMARY
 col_primary = (header("08","FOUNDATIONS","Colour — Primary","The navy-to-teal spectrum carries the brand. Navy grounds, teal energises.")
-    + '<Frame w="fill" flex="row" gap={14} wrap="wrap">'
+    + '<Frame w="fill" flex="row" gap={14}>'
       + swatch("Navy Deep","#0F2233","brand/navy-deep")
       + swatch("Navy","#1B3A5B","brand/navy")
       + swatch("Blue","#245F88","brand/blue")
@@ -377,14 +378,19 @@ icon_names = ["activity","heart-pulse","stethoscope","calendar-days","calendar-c
     "shield-check","badge-check","bell","message-square-text","video","phone","credit-card",
     "wallet","lock","settings","file-text","pill","syringe","thermometer","clipboard-list",
     "star","image","eye","download","share-2","house","log-out"]
+def rows_of_ds(items, per_row, gap=12):
+    """Explicit row chunking — figma-ds-cli does not honour wrap="wrap"."""
+    out = ""
+    for i in range(0, len(items), per_row):
+        out += f'<Frame w="fill" flex="row" gap={{{gap}}}>{"".join(items[i:i+per_row])}</Frame>'
+    return f'<Frame w="fill" flex="col" gap={{{gap}}}>{out}</Frame>'
+
 def icon_cell(n):
     return (f'<Frame w={{96}} h={{88}} flex="col" gap={{10}} justify="center" items="center" rounded={{14}} bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>'
             f'<Icon name="lucide:{n}" size={{24}} color="#1B3A5B" />'
             f'<Text font="Inter" size={{10}} weight="regular" color="var:text/muted">{n}</Text></Frame>')
 icon_body = (header("13","FOUNDATIONS","Iconography","Lucide, 1.75px stroke, 24px grid. Rounded caps to echo the mark. Navy default, teal when active.")
-    + '<Frame w="fill" flex="row" gap={12} wrap="wrap">'
-      + "".join(icon_cell(n) for n in icon_names)
-    + '</Frame>'
+    + rows_of_ds([icon_cell(n) for n in icon_names], 12, 12)
     + '<Frame w="fill" flex="row" gap={16}>'
       + card('<Text font="Inter" size={15} weight="semibold" color="var:text/strong">Sizes</Text><Frame flex="row" gap={18} items="center" pt={4}><Icon name="lucide:heart-pulse" size={16} color="#1B3A5B" /><Icon name="lucide:heart-pulse" size={20} color="#1B3A5B" /><Icon name="lucide:heart-pulse" size={24} color="#1B3A5B" /><Icon name="lucide:heart-pulse" size={32} color="#1B3A5B" /></Frame><Text font="Inter" size={13} weight="regular" color="var:text/muted">16 · 20 · 24 · 32</Text>')
       + card('<Text font="Inter" size={15} weight="semibold" color="var:text/strong">States</Text><Frame flex="row" gap={18} items="center" pt={4}><Icon name="lucide:calendar-check" size={24} color="#5B6B7A" /><Icon name="lucide:calendar-check" size={24} color="#1B3A5B" /><Icon name="lucide:calendar-check" size={24} color="#39B0CF" /></Frame><Text font="Inter" size={13} weight="regular" color="var:text/muted">Muted · Default · Active</Text>')
@@ -444,7 +450,7 @@ def btn(label, kind, icon=None):
 btn_body = (header("15","COMPONENTS","Buttons","Pill buttons, 12px vertical padding. Navy is primary; teal drives the key booking action.")
     + '<Frame w="fill" flex="row" gap={16} items="start">'
       + card('<Text font="Inter" size={14} weight="semibold" color="var:text/strong">Variants</Text>'
-             '<Frame flex="row" gap={12} wrap="wrap" items="center" pt={4}>'
+             '<Frame flex="row" gap={12} items="center" pt={4}>'
              + btn("Book now","teal","calendar-check")+btn("Primary","primary")+btn("Secondary","secondary")+btn("Ghost","ghost")+btn("Cancel","danger","ban") +
              '</Frame>')
     + '</Frame>'
@@ -540,14 +546,18 @@ def alert(icon, title, body, bg, fg):
 badge_body = (header("18","COMPONENTS","Badges, Status &amp; Alerts","Status is colour-coded consistently: green confirmed, amber pending, red cancelled, teal virtual.")
     + '<Frame w="fill" flex="row" gap={16} items="start">'
       + card('<Text font="Inter" size={14} weight="semibold" color="var:text/strong">Status badges</Text>'
-             '<Frame flex="row" gap={10} wrap="wrap" pt={4}>'
+             '<Frame w="fill" flex="col" gap={10} pt={4}>'
+             '<Frame flex="row" gap={10}>'
              + badge("Verified","badge-check","var:state/success-bg","#2FA36B")
              + badge("Confirmed","circle-check","var:state/success-bg","#2FA36B")
              + badge("Pending","clock","var:state/warning-bg","#E0A32E")
              + badge("Cancelled","ban","var:state/error-bg","#D14343")
+             + '</Frame>'
+             '<Frame flex="row" gap={10}>'
              + badge("No-show","triangle-alert","var:state/error-bg","#D14343")
              + badge("Virtual","video","var:state/info-bg","#2F8BAC")
              + badge("Trial","sparkles","var:bg/muted","#39B0CF")
+             + '</Frame>'
              + '</Frame>')
     + '</Frame>'
     + '<Frame w="fill" flex="col" gap={12}>'

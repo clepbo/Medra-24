@@ -60,6 +60,9 @@ for (const file of jsxFiles) {
     if (/^https?:/.test(p)) report(`remote image not allowed: ${p}`);
     else if (!fs.existsSync(path.join(ROOT, p))) report(`missing image: ${p}`);
   }
+  // 11. wrap="wrap" is NOT honoured by figma-ds-cli — rows must be chunked explicitly
+  if (/wrap="wrap"/.test(src)) report('uses wrap="wrap" — the CLI ignores it, chunk rows with rows_of()');
+
   // 9. exactly one root <Frame> with a name
   const roots = src.match(/^<Frame\b[^>]*name="/);
   if (!roots) { console.log(`  ! ${file}: root frame has no name=`); warnings++; }

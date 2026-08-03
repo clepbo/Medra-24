@@ -406,9 +406,9 @@ Screen groups expand into individual screens plus states (empty, loading, error,
 |---|---|---|---|---|
 | Design system + user journeys | — | 27 | 1 | Done |
 | Authentication (all four roles) | 35 | 70 | 4 | Done |
-| Member app, batch 1 — Find & Book | 10 | 44 | 2 | Done |
-| Member app, batch 2 — Visits · Records · Medicines · Profile | 39 | 98 | 6 | Done |
-| Doctor app | — | — | — | Next |
+| Member app, batch 1 — Find & Book | 11 | 46 | 2 | Done |
+| Member app, batch 2 — Visits · Records · Medicines · Profile | 44 | 108 | 6 | Done |
+| Doctor app, batch 1 — Queue · Consultation · Patients · Practice | 23 | 58 | 6 | Done |
 | Institution admin portal | — | — | — | Not started |
 | Platform admin | — | — | — | Not started |
 
@@ -455,6 +455,65 @@ they need a build and a legal sign-off, not just a design review.
 Open items for the pilot clinics: the ₦2,000 late-change fee on reschedules, refill turnaround
 (designed as "within a day"), the ₦1,500 delivery fee, and whether plain-language result
 explainers are acceptable to the clinical partners as written.
+
+### 15.3 Product review — 1 August 2026 (Godwin Okwor, Abraham Peter, Israel Oni)
+
+Two sessions: a 69-minute walkthrough of the design system, authentication and the member app,
+and a 9-minute review of the member profile. Everything raised is now in the designs.
+
+**Authentication and onboarding**
+1. **WhatsApp is a verification channel**, offered before SMS — "not a lot of people are using
+   SMS ... WhatsApp is faster actually". Member, doctor and institution OTP screens all lead with
+   it, and "send it on WhatsApp" is an option on the can't-get-a-code screen.
+2. **Name is mandatory**, not skippable — "you don't want to say dear +234 801...".
+3. **Age can replace a date of birth.** People often do not know the exact date; the system works
+   the year back from an age.
+4. **Every member gets a Medra ID** (`MDR-8842-19`). Shown at the end of onboarding with copy and
+   QR actions, printed under their name on their profile, on the one-page summary, and accepted as
+   a **log-in method**. A doctor can search a card by it when the patient remembers nothing else.
+5. **Onboarding captures genotype, height and weight** alongside blood group, allergies and
+   long-term conditions — relevant in Nigeria and cheap to ask once.
+6. **Doctor specialisation is a platform-managed list** with an "add another" for second
+   specialities, wired so the platform admin can extend it.
+7. **Doctors choose how patients reach them** — WhatsApp, work email, phone — set during profile
+   setup and changeable later.
+8. **Institutions**: contact person grouped as its own block (name, role, email, phone), the
+   institution type expanded to a managed list, RC number captured for the CAC check, and setup
+   can continue while verification is pending.
+9. **The institution flow leads with a free month**, everything unlocked, and shows the plan that
+   would apply afterwards — with an option to skip the trial and pay now.
+
+**Member app**
+10. **Payment happens before the booking is confirmed.** New screen B4: card, transfer, USSD or
+    wallet, held by Paystack, refunded in full if the doctor cancels or does not show.
+11. **Search around an address you type**, not only your live location — "some people would not
+    want to use their live address ... to look for care around their house while at work".
+12. **The undisclosed-history question is asked at booking** and again by the doctor in the
+    consultation. What was asked and what was answered is stored with the visit, so it is never
+    later unclear what the doctor did and did not know.
+13. **Reminder channels are in-app, WhatsApp, SMS and email**, chosen per event.
+14. **Virtual visits use the doctor's own meeting link for the MVP** — Google Meet or Zoom,
+    embedded in the Join button. The in-app video screens stay in the file, marked **PHASE 2**.
+15. **Who-has-access is a selectable list** — revoke one, revoke selected, or revoke everything.
+16. **The one-page summary is a printable log the member composes**: blood group and allergies
+    always on, everything else opt-in, with a QR code back to the full record.
+17. **Deleting an account takes four steps** — a reason, typing DELETE, a code to your phone, and
+    an explicit acknowledgement — because "people prefer to just leave their account" and the
+    ones who do delete should mean it.
+18. **The notification bell opens a panel** with the five most recent, and a "View all" into the
+    full screen.
+19. **Dependants: two free, then a family plan.** ₦3,000/month for up to six people, or ₦1,500 per
+    extra person — "they can book for two people first for free, then from the third they pay",
+    so the value is felt before it is charged. Figures are indicative.
+
+**Also fixed in this round, found while measuring rather than in the review:** every one of the
+70 authentication frames and 5 design-system frames still used `wrap="wrap"`, which figma-ds-cli
+ignores — the same defect that made the member module render badly in Figma. All 297 frames across
+the five bundles are now clean, and the validator rejects it permanently.
+
+**Still open, by agreement:** a medical doctor reviews the clinical screens before build; legal
+opinion on what an institution must supply at verification; a drug-reference API for prescribing;
+and confirmation of the commission and family-plan prices with the pilot clinics.
 
 ---
 

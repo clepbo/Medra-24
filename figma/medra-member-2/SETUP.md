@@ -1,6 +1,6 @@
 # Medra — Member App (batch 2: Visits · Records · Medicines · Profile)
 
-**98 frames · 6 Figma pages · Desktop 1440×900 + Mobile 390×844 · "Soft Clinical"**
+**108 frames · 6 Figma pages · Desktop 1440×900 + Mobile 390×844 · "Soft Clinical"**
 
 This batch closes the bottom nav. Before it, three of the five mobile tabs went nowhere and
 "Visits" pointed at the booking-confirmed screen as a stand-in. Now every tab lands on a real
@@ -8,14 +8,14 @@ screen, on both breakpoints, and so does the desktop sidebar.
 
 | Figma page | Screens | Frames |
 |---|---|---|
-| `Medra Member — Visits & Virtual Care` | V1–V7, W1–W4 (11) | 22 |
-| `Medra Member — Records` | R1–R9 (9) | 18 |
+| `Medra Member — Visits & Virtual Care` | W0, V1–V7, W1–W4 (12) | 24 |
+| `Medra Member — Records` | R1–R10 (10) | 20 |
 | `Medra Member — Medicines` | M1–M5 (5) | 10 |
-| `Medra Member — Profile & Settings` | P0–P9 (9) | 18 |
-| `Medra Member — Alerts & States` | N1–N2, X1–X3 (5) | 10 |
+| `Medra Member — Profile & Settings` | P0–P9 + P3b, P9b (11) | 22 |
+| `Medra Member — Alerts & States` | N0–N2, X1–X3 (6) | 12 |
 | `Medra — Interactive Components · Care` | 6 component sets | 20 |
 
-Offline validation: **ALL 98 CLEAN, FULLY OFFLINE ✓** (`node validate.js`)
+Offline validation: **ALL 108 CLEAN, FULLY OFFLINE ✓** (`node validate.js`)
 
 ## Render (Figma Desktop open + connected)
 
@@ -125,7 +125,7 @@ A non-empty `missing` means that frame is a stale render — re-render just that
 
 `link-member2.js` wires in three passes:
 
-1. **336 explicit screen-to-screen links** from the table above.
+1. **382 explicit screen-to-screen links** from the table above.
 2. **The nav map** — `Nav Home · Nav Find · Nav Visits · Nav Records · Nav Meds · Nav Profile ·
    Notifications` applied to **every frame in both batches**, desktop→desktop and mobile→mobile.
 3. **A sweep**: anything still named `Btn …` with no reaction gets an `ON_CLICK` that stays on
@@ -164,6 +164,21 @@ Figures, ranges and timings on screen are indicative — validate them with the 
 ```bash
 python3 tools/figma/preview_bundle.py figma/medra-member-2   # writes preview.html
 ```
-`medra-member-2-overview.png` is the contact sheet for all 98 frames.
+`medra-member-2-overview.png` is the contact sheet for all 108 frames.
 
 See `MOTION.md` for the animation spec.
+
+
+## Added after the 1 August product review
+
+| # | Screen | Why |
+|---|---|---|
+| W0 | **Join by link** | The MVP video path: the doctor's own Google Meet or Zoom link, embedded in the Join button, with phone and WhatsApp fallbacks. W1/W2/W4 (in-app video) stay in the file, badged **PHASE 2** |
+| R10 | **One-page summary** | "What would the print one-page summary look like? Can they select what to print?" — blood group and allergies always on, everything else opt-in, live preview, QR code |
+| N0 | **Notification panel** | The bell now opens an overlay with the five most recent and a "View all", instead of jumping straight to the full page |
+| P3b | **Family plan** | Two dependants free, then ₦3,000/month for up to six people or ₦1,500 per extra person — "they taste the service before" |
+| P9b | **Confirm deletion** | Deleting now takes four steps: a reason, typing DELETE, a code to your phone, and an acknowledgement |
+
+Changed in place: the Medra ID sits under the member's name on the profile; WhatsApp is a first
+class notification and reminder channel everywhere; who-has-access is a selectable list with
+revoke-selected and revoke-everything.

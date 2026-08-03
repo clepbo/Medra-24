@@ -21,7 +21,9 @@
     "W3-callend-d.jsx",
     "W3-callend-m.jsx",
     "W4-lost-d.jsx",
-    "W4-lost-m.jsx"
+    "W4-lost-m.jsx",
+    "W0-join-d.jsx",
+    "W0-join-m.jsx"
   ],
   "Records": [
     "R1-records-d.jsx",
@@ -41,7 +43,9 @@
     "R8-added-d.jsx",
     "R8-added-m.jsx",
     "R9-records-empty-d.jsx",
-    "R9-records-empty-m.jsx"
+    "R9-records-empty-m.jsx",
+    "R10-summary-d.jsx",
+    "R10-summary-m.jsx"
   ],
   "Medicines": [
     "M1-meds-d.jsx",
@@ -73,7 +77,11 @@
     "P8-privacy-d.jsx",
     "P8-privacy-m.jsx",
     "P9-delete-d.jsx",
-    "P9-delete-m.jsx"
+    "P9-delete-m.jsx",
+    "P3b-family-d.jsx",
+    "P3b-family-m.jsx",
+    "P9b-delete-confirm-d.jsx",
+    "P9b-delete-confirm-m.jsx"
   ],
   "Alerts": [
     "N1-notifs-d.jsx",
@@ -85,7 +93,9 @@
     "X2-offline-d.jsx",
     "X2-offline-m.jsx",
     "X3-error-d.jsx",
-    "X3-error-m.jsx"
+    "X3-error-m.jsx",
+    "N0-panel-d.jsx",
+    "N0-panel-m.jsx"
   ],
   "Components": [
     "CMP-Tab-State-Active.jsx",

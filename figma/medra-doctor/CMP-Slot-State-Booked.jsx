@@ -1,0 +1,1 @@
+<Frame name="cmp/Slot/State=Booked" w={150} flex="col" p={16} bg="var:bg/base"><Frame w="fill" flex="row"><Frame name="Btn Slot 10:30" grow={1} flex="row" justify="center" py={11} rounded={14} image="assets/img/btn-navy.jpg" overflow="hidden"><Text font="Inter" size={13} weight="semibold" color="var:text/on-dark">10:30</Text></Frame></Frame></Frame>

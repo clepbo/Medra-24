@@ -24,12 +24,19 @@ def head_chip(parts,size=30,color="var:text/strong"):
     for txt,chip in parts:
         out += (f'<Frame px={{12}} py={{2}} rounded={{12}} bg="var:brand/teal"><Text font="Inter" size={{{size}}} weight="bold" color="var:text/on-dark">{txt}</Text></Frame>'
                 if chip else T(size,"bold",color,txt))
-    return f'<Frame w="fill" flex="row" gap={{9}} items="center" wrap="wrap">{out}</Frame>'
+    return f'<Frame w="fill" flex="row" gap={{9}} items="center">{out}</Frame>'
 
 def circle_btn(icon,name,dark=False):
     bg='bg="var:bg/band-2"' if dark else 'bg="var:bg/base" stroke="var:border/subtle" strokeWidth={1}'
     return (f'<Frame name="Btn {name}" w={{44}} h={{44}} rounded={{999}} {bg} flex="col" justify="center" items="center">'
             f'{I(icon,19,W_IC if dark else N_IC)}</Frame>')
+
+def rows_of(items, per_row, gap=9):
+    """Explicit row chunking — figma-ds-cli does not honour wrap="wrap"."""
+    out=""
+    for i in range(0, len(items), per_row):
+        out += f'<Frame w="fill" flex="row" gap={{{gap}}}>{"".join(items[i:i+per_row])}</Frame>'
+    return f'<Frame w="fill" flex="col" gap={{{gap}}}>{out}</Frame>'
 
 def stepper(i,n):
     d=""
@@ -89,14 +96,14 @@ def checkbox(label,name,checked=True):
     return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{11}} items="start">{b}'
             f'{T(13,"regular","var:text/muted",label,w="fill")}</Frame>')
 
-def chips(options,sel=0,name="chip"):
-    out=""
+def chips(options,sel=0,name="chip",per_row=3):
+    cells=[]
     for i,o in enumerate(options):
         s=i==sel
         st='image="assets/img/btn-navy.jpg" overflow="hidden"' if s else 'bg="var:bg/base" stroke="var:border/default" strokeWidth={1}'
-        out+=(f'<Frame name="Btn {name} {o}" flex="row" px={{16}} py={{11}} rounded={{999}} {st}>'
-              f'{T(14,"medium","var:text/on-dark" if s else "var:text/default",o)}</Frame>')
-    return f'<Frame w="fill" flex="row" gap={{9}} wrap="wrap">{out}</Frame>'
+        cells.append(f'<Frame name="Btn {name} {o}" grow={{1}} flex="row" justify="center" px={{14}} py={{11}} rounded={{999}} {st}>'
+                     f'{T(14,"medium","var:text/on-dark" if s else "var:text/default",o)}</Frame>')
+    return rows_of(cells, per_row, 9)
 
 def field_chips(label,options,sel=0,name="chip"):
     return f'<Frame w="fill" flex="col" gap={{9}}>{T(13,"medium","var:text/default",label)}{chips(options,sel,name)}</Frame>'
@@ -212,7 +219,7 @@ def mob_form(name, eyebrow_t, head_parts, sub, body, primary, extras=(), step=No
 def mob_hero(name, img, eyebrow_t, head_parts, sub, primary, extras=(), dots=None, skip=True, proofs=None, hero_h=566):
     skipbtn=(f'<Frame name="Btn Skip" flex="row" px={{14}} py={{8}} rounded={{999}} bg="var:bg/band-2">'
              f'{T(13,"semibold","var:text/on-dark","Skip")}</Frame>') if skip else '<Frame />'
-    proofrow=f'<Frame w="fill" flex="row" gap={{8}} wrap="wrap">{"".join(proofs)}</Frame>' if proofs else ''
+    proofrow=rows_of(list(proofs),2,8) if proofs else ''
     hero=(f'<Frame w="fill" h={{{hero_h}}} image="assets/img/{img}" overflow="hidden" flex="col" justify="between" pb={{24}}>'
           f'{statusbar(dark=True)}'
           f'<Frame w="fill" flex="row" justify="between" items="center" px={{22}} pt={{6}}>'
@@ -235,7 +242,7 @@ def desk_topbar():
             f'</Frame></Frame>')
 
 def desk_panel(img, eyebrow_t, head_parts, sub, proofs=None, stats=None, h=664, w=560):
-    pr=f'<Frame w="fill" flex="row" gap={{8}} wrap="wrap">{"".join(proofs)}</Frame>' if proofs else ''
+    pr=rows_of(list(proofs),2,8) if proofs else ''
     st=stat_row(stats) if stats else ''
     return (f'<Frame w={{{w}}} h={{{h}}} rounded={{32}} image="assets/img/{img}" overflow="hidden" flex="col" justify="end" gap={{14}} p={{30}}>'
             f'{eyebrow(eyebrow_t,"var:brand/teal")}{head_chip(head_parts,30,"var:text/on-dark")}'
@@ -341,7 +348,8 @@ add("Member","M1-create",
         [("Create your",False),("account",True)],"Sign up your way — verify once, then we remember this device.",
         SIGNUP_B,cta("Continue","Send code M1"),SOCIALS,step=(0,5)))
 
-OTP_M=(f'<Frame w="fill" flex="col" gap={{14}}>{otp("3907")}'
+CHANNEL=segmented(["WhatsApp","SMS"],0,"Code channel")
+OTP_M=(f'<Frame w="fill" flex="col" gap={{14}}>{CHANNEL}{otp("3907")}'
        f'{link("Didn’t get it?","Resend in 0:24","Resend M2")}'
        f'{checkbox("Keep me signed in on this device","Trust device")}'
        f'{note("shield-check","We’ll remember this device for 30 days — no code needed next time. Always ask on a shared phone.","info")}</Frame>')
@@ -350,11 +358,11 @@ add("Member","M2-otp",
         MP(eyebrow_t="For members",head_parts=[("Verify once,",False),("not every time",True)],
            sub="Confirming your number keeps your records yours alone — then we stay out of your way.",
            proofs=[proof("lock","Encrypted"),proof("smartphone","Trusted device")]),
-        "Step 2 of 5",[("Enter the",False),("6-digit code",True)],"We sent it to +234 801 234 5678 by SMS.",
+        "Step 2 of 5",[("Enter the",False),("6-digit code",True)],"We sent it to +234 801 234 5678 on WhatsApp — tap SMS if you’d rather have a text.",
         OTP_M,cta("Verify and continue","Verify M2"),
         [link("Wrong number?","Change it","Change number M2"),link("Code not arriving?","Get help another way","Help code M2")],step=(1,5)),
     mob_form("Auth · Member — M2 Verify Once · Mobile","Step 2 of 5",
-        [("Enter the",False),("6-digit code",True)],"Sent to +234 801 234 5678.",
+        [("Enter the",False),("6-digit code",True)],"Sent on WhatsApp to +234 801 234 5678.",
         OTP_M,cta("Verify and continue","Verify M2"),
         [link("Wrong number?","Change it","Change number M2"),link("","Get help another way","Help code M2")],step=(1,5)))
 
@@ -363,19 +371,22 @@ NAME_B=(f'<Frame w="fill" flex="col" gap={{18}}>'
         f'<Frame w={{74}} h={{74}} rounded={{999}} bg="var:bg/muted" flex="col" justify="center" items="center">{I("camera",25,A_IC)}</Frame>'
         f'<Frame name="Btn Add photo" flex="row" gap={{8}} items="center" px={{16}} py={{11}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>'
         f'{I("upload",16,N_IC)}{T(13,"semibold","var:text/default","Add a photo (optional)")}</Frame></Frame>'
-        f'{field("Full name","user","Amara Okeke",ph=False)}'
-        f'{field("Date of birth","calendar-days","12 March 1994",ph=False,helper="Helps your doctor prescribe safely.")}</Frame>')
+        f'{field("Full name","user","Amara Okeke",ph=False,helper="Required — this is how we and your doctor address you.")}'
+        f'{segmented(["Date of birth","Just my age"],0,"Age method")}'
+        f'{field("Date of birth","calendar-days","12 March 1994",ph=False,helper="Don’t know the exact date? Switch to “Just my age” and we’ll work out the year.")}</Frame>')
 add("Member","M3-name",
     desk_form("Auth · Member — M3 Your Name",
         MP(eyebrow_t="For members",head_parts=[("Care that",False),("knows you",True)],
            sub="Your details stay private and are shared only with doctors you choose to book.",
            proofs=[proof("lock","Private by default")]),
         "Step 3 of 5",[("What should we",False),("call you?",True)],
-        "This is the name your doctor will see on your records.",
-        NAME_B,cta("Continue","Continue M3"),[link("","Skip for now","Skip M3")],step=(2,5)),
+        "We need your name — nobody wants to be greeted as +234 801 234 5678.",
+        NAME_B,cta("Continue","Continue M3"),
+        [note("info","Your name and age are the only things we ask for here — everything after this step can wait.","info")],step=(2,5)),
     mob_form("Auth · Member — M3 Your Name · Mobile","Step 3 of 5",
         [("What should we",False),("call you?",True)],"This is the name your doctor will see.",
-        NAME_B,cta("Continue","Continue M3"),[link("","Skip for now","Skip M3")],step=(2,5)))
+        NAME_B,cta("Continue","Continue M3"),
+        [note("info","Name and age are required. Everything after this step can wait.","info")],step=(2,5)))
 
 ABOUT_B=(f'<Frame w="fill" flex="col" gap={{18}}>'
          f'{field_chips("Gender",["Female","Male","Non-binary","Prefer not to say"],0,"Gender")}'
@@ -395,7 +406,12 @@ add("Member","M4-about",
 
 HEALTH_B=(f'<Frame w="fill" flex="col" gap={{16}}>'
           f'{field_chips("Blood group",["A+","A-","B+","B-","O+","O-","AB+","Not sure"],4,"Blood")}'
+          f'{field_chips("Genotype",["AA","AS","SS","AC","SC","Not sure"],0,"Genotype")}'
+          f'<Frame w="fill" flex="row" gap={{14}}>'
+          f'<Frame grow={{1}} flex="col">{field("Height","ruler","1.68 m",ph=False)}</Frame>'
+          f'<Frame grow={{1}} flex="col">{field("Weight","weight","74 kg",ph=False)}</Frame></Frame>'
           f'{field("Allergies","triangle-alert","e.g. penicillin, peanuts")}'
+          f'{field("Long-term conditions","heart-pulse","e.g. asthma, hypertension")}'
           f'{field("Medicines you take now","pill","e.g. metformin 500mg")}'
           f'{field("Emergency contact","phone-call","802 000 0000",prefix="+234")}</Frame>')
 add("Member","M5-health",
@@ -410,7 +426,7 @@ add("Member","M5-health",
         [("Your",False),("health basics",True)],"Optional — but it helps doctors keep you safe.",
         HEALTH_B,cta("Finish","Finish M5"),[link("","I’ll do this later","Skip M5")],step=(4,5)))
 
-LOGIN_B=(f'<Frame w="fill" flex="col" gap={{16}}>{segmented(["Phone number","Email"],0,"Login method")}'
+LOGIN_B=(f'<Frame w="fill" flex="col" gap={{16}}>{segmented(["Phone","Email","Medra ID"],0,"Login method")}'
          f'{field("Phone number","phone","801 234 5678",prefix="+234",focus=True)}'
          f'{checkbox("Keep me signed in on this device","Stay signed in")}</Frame>')
 LOGIN_X=[divider_or("or continue with"), social_btn("google","Continue with Google","Google login"),
@@ -423,7 +439,7 @@ add("Member","M6-login",
            sub="Your appointments and records are exactly where you left them.",
            proofs=[proof("calendar-check","2 upcoming visits")]),
         "Log in",[("Welcome",False),("back",True)],
-        "Use whichever is easiest — we only ask for a code on a new device.",
+        "Phone, email or your Medra ID — whichever you remember. We only ask for a code on a new device.",
         LOGIN_B,cta("Continue","Send code M6"),LOGIN_X),
     mob_form("Auth · Member — M6 Log In · Mobile","Log in",[("Welcome",False),("back",True)],
         "We only ask for a code on a new device.",
@@ -451,7 +467,8 @@ add("Member","M7-unlock",
         [link("","Use a one-time code instead","Use code M7"),link("Not you?","Switch account","Switch M7")],back=False))
 
 HELPC=(f'<Frame w="fill" flex="col" gap={{11}}>'
-       f'{choice("refresh-cw","Resend the code","Text the 6-digit code again","Resend help")}'
+       f'{choice("refresh-cw","Resend the code","Send the 6-digit code again","Resend help")}'
+       f'{choice("message-circle","Send it on WhatsApp","Usually arrives faster than SMS","WhatsApp help")}'
        f'{choice("phone-call","Call me instead","Get the code by automated call","Call help")}'
        f'{choice("mail","Use my email instead","Send the code to my email address","Email help")}'
        f'{choice("message-square-text","Message support","Chat with the Medra team","Support help")}</Frame>')
@@ -467,9 +484,19 @@ add("Member","M8-help",
         [("Didn’t get your",False),("code?",True)],"Pick an option — we’ll get you in.",HELPC,
         ghost("Back to verification","Back to OTP","arrow-left")))
 
+MEDRA_ID=(f'<Frame w="fill" flex="col" gap={{10}} items="center" p={{20}} rounded={{24}} bg="var:state/info-bg" '
+          f'stroke="var:border/accent" strokeWidth={{2}}>'
+          f'{eyebrow("YOUR MEDRA ID")}'
+          f'{T(30,"bold","var:text/strong","MDR-8842-19")}'
+          f'{T(13,"regular","var:text/muted","Give this at any reception, or use it to log in. It lets a doctor pull up your card without spelling your name.",w="fill",align="center")}'
+          f'<Frame w="fill" flex="row" gap={{10}}>'
+          f'<Frame name="Btn Copy medra id" grow={{1}} flex="row" gap={{7}} justify="center" items="center" px={{14}} py={{10}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>'
+          f'{I("copy",14,N_IC)}{T(13,"semibold","var:text/default","Copy")}</Frame>'
+          f'<Frame name="Btn Show qr M9" grow={{1}} flex="row" gap={{7}} justify="center" items="center" px={{14}} py={{10}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>'
+          f'{I("qr-code",14,N_IC)}{T(13,"semibold","var:text/default","Show QR")}</Frame></Frame></Frame>')
 SUC_M=(f'<Frame w="fill" flex="col" gap={{16}} items="center">{big_icon("circle-check","ok")}'
        f'{T(15,"regular","var:text/muted","Your account is ready and this device is trusted — next time you’ll go straight in.",w="fill",align="center")}'
-       f'{note("info","Taking you to your home…","info")}</Frame>')
+       f'{MEDRA_ID}</Frame>')
 add("Member","M9-success",
     desk("Auth · Member — M9 Success",
         desk_panel("success.jpg","You’re in",[("Welcome to",False),("Medra",True)],
@@ -488,7 +515,13 @@ D1B=(f'<Frame w="fill" flex="col" gap={{16}}>{field("Full name","user","Dr. Ngoz
      f'{field("Work email","mail","dr.okafor@clinic.ng",ph=False,helper="You can sign in with this, your phone or your MDCN number.")}'
      f'{field("Phone number","phone","803 555 0110",prefix="+234")}'
      f'{field("MDCN number","id-card","MDCN/45201",helper="Your Medical &amp; Dental Council of Nigeria registration number.")}'
-     f'{field_chips("Specialisation",["Cardiology","General practice","Paediatrics","Other"],1,"Specialty")}</Frame>')
+     f'{field("Specialisation","stethoscope","General practice",ph=False,trailing=("chevron-down","Specialty dropdown"),helper="Pick from the list — the Medra team keeps it current. Choose “Other” to type your own.")}'
+     f'<Frame w="fill" flex="col" gap={{9}}>{T(13,"medium","var:text/default","Also practises")}'
+     f'<Frame w="fill" flex="row" gap={{9}}>'
+     f'<Frame name="Btn Spec chip Internal medicine" flex="row" gap={{7}} items="center" px={{13}} py={{9}} rounded={{999}} bg="var:bg/muted">'
+     f'{T(13,"medium","var:text/default","Internal medicine")}{I("x",13,M_IC)}</Frame>'
+     f'<Frame name="Btn Add specialty" flex="row" gap={{7}} items="center" px={{13}} py={{9}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>'
+     f'{I("plus",13,N_IC)}{T(13,"medium","var:text/default","Add another")}</Frame></Frame></Frame></Frame>')
 add("Doctor","D1-create",
     desk_form("Auth · Doctor — D1 Create Account",
         DP(eyebrow_t="For doctors",head_parts=[("Your practice,",False),("amplified",True)],
@@ -563,7 +596,12 @@ PROF_D=(f'<Frame w="fill" flex="col" gap={{18}}>'
         f'{I("camera",16,N_IC)}{T(13,"semibold","var:text/default","Change photo")}</Frame></Frame>'
         f'{field("Short bio","file-text","Cardiologist with 12 years experience…",ph=False)}'
         f'{field("Consultation fee","credit-card","15,000",prefix="₦",helper="You can change this anytime.")}'
-        f'{field_chips("Consultation types",["In-person","Virtual","Both"],2,"Ctype")}</Frame>')
+        f'{field_chips("Consultation types",["In-person","Virtual","Both"],2,"Ctype")}'
+        f'<Frame w="fill" flex="col" gap={{9}}>{T(13,"medium","var:text/default","How can patients reach you between visits?")}'
+        f'{checkbox("Work email — dr.okafor@clinic.ng","Contact email")}'
+        f'{checkbox("WhatsApp — +234 803 555 0110","Contact whatsapp")}'
+        f'{checkbox("Phone call — +234 803 555 0110","Contact phone",checked=False)}'
+        f'{T(12,"regular","var:text/muted","Only patients you have consulted can see these, and you can turn any of them off later.",w="fill")}</Frame></Frame>')
 add("Doctor","D5-profile",
     desk_form("Auth · Doctor — D5 Profile Setup",
         DP(eyebrow_t="For doctors",head_parts=[("A strong first",False),("impression",True)],
@@ -661,11 +699,21 @@ add("Doctor","D10-success",
 
 # ============================================================ INSTITUTION
 IP=lambda **kw: desk_panel("d-panel-institution.jpg",**kw)
+# "just easily have contact person ... under contact person you can have email, name" — grouped,
+# so the institution's details and the human we deal with are never confused for each other.
+I1_CONTACT = ('<Frame w="fill" flex="col" gap={13} p={18} rounded={24} bg="var:bg/base" '
+    'stroke="var:border/subtle" strokeWidth={1}>'
+    + T(13,"semibold","var:text/strong","Contact person")
+    + T(12,"regular","var:text/muted","The person we deal with. They become the first facility admin.",w="fill")
+    + field("Full name","user","Yusuf Bello",ph=False)
+    + field("Role at the institution","briefcase-medical","Medical Director",ph=False)
+    + field("Work email","mail","admin@garkimedical.ng",ph=False)
+    + field("Phone number","phone","802 111 2233",prefix="+234")
+    + '</Frame>')
 I1B=(f'<Frame w="fill" flex="col" gap={{16}}>{field("Institution name","hospital","Garki Medical Centre",ph=False)}'
-     f'{field_chips("Type",["Private hospital","Clinic","Diagnostic centre"],0,"Itype")}'
-     f'{field("Admin full name","user","Yusuf Bello",ph=False)}'
-     f'{field("Work email","mail","admin@garkimedical.ng",ph=False)}'
-     f'{field("Admin phone","phone","802 111 2233",prefix="+234")}</Frame>')
+     f'{field("Type of institution","building-2","Private hospital",ph=False,trailing=("chevron-down","Itype dropdown"),helper="Private hospital · Clinic · Public or government hospital · Diagnostic centre · Laboratory · Pharmacy · Other")}'
+     f'{field("RC number (CAC)","receipt","RC 1284005",ph=False,helper="We check this against the CAC register.")}'
+     f'{I1_CONTACT}</Frame>')
 add("Institution","I1-register",
     desk_form("Auth · Institution — I1 Register",
         IP(eyebrow_t="For institutions",head_parts=[("Run your facility,",False),("digitally",True)],
@@ -692,7 +740,8 @@ add("Institution","I2-documents",
         "Step 2 of 6",[("Upload your",False),("documents",True)],
         "We verify every institution before it goes live. Add your practice licence and CAC certificate.",
         DOCS,cta("Continue","Continue I2","arrow-right","btn-navy.jpg"),
-        [link("Don’t have them handy?","Save and finish later","Save later I2")],step=(1,6)),
+        [link("Don’t have them handy?","Save and set up the rest first","Save later I2"),
+         note("info","You can finish setting up, invite staff and explore the dashboard while we verify. Only going live with public bookings needs the documents.","info")],step=(1,6)),
     mob_form("Auth · Institution — I2 Verify Documents · Mobile","Step 2 of 6",
         [("Upload your",False),("documents",True)],"Practice licence and CAC certificate.",DOCS,
         cta("Continue","Continue I2","arrow-right","btn-navy.jpg"),
@@ -740,23 +789,39 @@ OTHER_PLANS=(f'<Frame w="fill" flex="col" gap={{11}}>'
              f'{plan("Starter","₦45,000","1 practitioner · 1 branch · core booking &amp; records")}'
              f'{plan("Group","₦280,000","Up to 30 practitioners · up to 3 branches · analytics")}'
              f'{plan("Enterprise","Custom","Unlimited practitioners &amp; branches · SSO · dedicated support")}</Frame>')
-PLAN_B=(f'<Frame w="fill" flex="col" gap={{16}}>{segmented(["Monthly","Annual · 2 months free"],0,"Billing")}'
+TRIAL_CARD=(f'<Frame w="fill" flex="col" gap={{13}} p={{20}} rounded={{24}} image="assets/img/btn-navy.jpg" overflow="hidden">'
+            f'<Frame w="fill" flex="row" justify="between" items="center">'
+            f'<Frame flex="row" gap={{8}} items="center">{I("sparkles",16,T_IC)}'
+            f'{T(12,"semibold","var:brand/teal","START HERE — NO CARD NEEDED")}</Frame>'
+            f'{T(12,"medium","var:text/on-dark-muted","Ends 14 Sep 2026")}</Frame>'
+            f'{T(24,"bold","var:text/on-dark","1 month free, everything unlocked")}'
+            f'{T(14,"regular","var:text/on-dark-muted","Your whole institution on the full plan for a month. No limits held back, nothing to cancel if you walk away.",w="fill")}'
+            f'<Frame w="fill" flex="col" gap={{8}}>'
+            f'{proof("users","Unlimited practitioners during the trial")}'
+            f'{proof("building","Every branch you operate")}'
+            f'{proof("clipboard-list","Bookings, records, staff roles and analytics")}'
+            f'{proof("credit-card","No card, no auto-charge when it ends")}</Frame></Frame>')
+PLAN_B=(f'<Frame w="fill" flex="col" gap={{16}}>{TRIAL_CARD}'
+        f'{T(13,"semibold","var:text/default","When the trial ends, this is what you would pay")}'
+        f'{segmented(["Monthly","Annual · 2 months free"],0,"Billing")}'
         f'{RECOMMENDED}{ADJUST}'
         f'{T(13,"semibold","var:text/default","Other plans")}{OTHER_PLANS}'
-        f'{note("sparkles","Every plan starts with a 30-day free trial — no card required.","ok")}</Frame>')
+        f'{note("info","Prices are set by the Medra team and can change — you will always see the current price here before anything is charged.","info")}</Frame>')
 add("Institution","I4-plan",
     desk_form("Auth · Institution — I4 Your Plan",
         IP(eyebrow_t="For institutions",head_parts=[("Priced to",False),("your size",True)],
            sub="From a single practice to a multi-branch group — pay only for what you need.",
            proofs=[proof("credit-card","Paystack billing"),proof("receipt","Cancel anytime")]),
-        "Step 4 of 6",[("Your recommended",False),("plan",True)],
-        "Based on 8 practitioners across 2 branches. Change anything below — the price updates as you go.",
-        PLAN_B,cta("Start my free trial","Start trial I4"),
-        [link("Need something custom?","Talk to our team","Sales I4")],step=(3,6)),
+        "Step 4 of 6",[("Your free month",False),("starts now",True)],
+        "Start with a free month on the full plan. What you would pay afterwards is worked out below — change anything and it updates as you go.",
+        PLAN_B,cta("Start my free month","Start trial I4","sparkles"),
+        [link("Rather pay now and skip the trial?","Choose a plan","Pay now I4"),
+         link("Need something custom?","Talk to our team","Sales I4")],step=(3,6)),
     mob_form("Auth · Institution — I4 Your Plan · Mobile","Step 4 of 6",
-        [("Your recommended",False),("plan",True)],"Based on 8 practitioners across 2 branches.",
-        PLAN_B,cta("Start my free trial","Start trial I4"),
-        [link("Need something custom?","Talk to our team","Sales I4")],step=(3,6)))
+        [("Your free month",False),("starts now",True)],"Then the plan below, based on 8 practitioners across 2 branches.",
+        PLAN_B,cta("Start my free month","Start trial I4","sparkles"),
+        [link("Rather pay now?","Choose a plan","Pay now I4"),
+         link("Need something custom?","Talk to our team","Sales I4")],step=(3,6)))
 
 OTP_I=(f'<Frame w="fill" flex="col" gap={{14}}>{otp("77")}{link("Didn’t get it?","Resend in 0:25","Resend I5")}'
        f'{checkbox("Trust this device for 30 days","Trust device I5")}</Frame>')

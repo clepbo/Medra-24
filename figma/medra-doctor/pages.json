@@ -1,0 +1,72 @@
+{
+  "Today": [
+    "K1-today-d.jsx",
+    "K1-today-m.jsx",
+    "K2-appointments-d.jsx",
+    "K2-appointments-m.jsx",
+    "K3-appointment-d.jsx",
+    "K3-appointment-m.jsx",
+    "K4-availability-d.jsx",
+    "K4-availability-m.jsx",
+    "K5-timeoff-d.jsx",
+    "K5-timeoff-m.jsx"
+  ],
+  "Consultation": [
+    "C1-room-d.jsx",
+    "C1-room-m.jsx",
+    "C2-templates-d.jsx",
+    "C2-templates-m.jsx",
+    "C3-prescribe-d.jsx",
+    "C3-prescribe-m.jsx",
+    "C4-tests-d.jsx",
+    "C4-tests-m.jsx",
+    "C5-upload-d.jsx",
+    "C5-upload-m.jsx",
+    "C6-sign-d.jsx",
+    "C6-sign-m.jsx",
+    "C7-done-d.jsx",
+    "C7-done-m.jsx"
+  ],
+  "Patients": [
+    "T1-patients-d.jsx",
+    "T1-patients-m.jsx",
+    "T2-record-d.jsx",
+    "T2-record-m.jsx",
+    "T3-access-d.jsx",
+    "T3-access-m.jsx"
+  ],
+  "Practice": [
+    "S1-profile-d.jsx",
+    "S1-profile-m.jsx",
+    "S2-fees-d.jsx",
+    "S2-fees-m.jsx",
+    "S3-meeting-d.jsx",
+    "S3-meeting-m.jsx",
+    "S4-contact-d.jsx",
+    "S4-contact-m.jsx",
+    "S5-earnings-d.jsx",
+    "S5-earnings-m.jsx"
+  ],
+  "States": [
+    "X1-verifying-d.jsx",
+    "X1-verifying-m.jsx",
+    "X2-empty-d.jsx",
+    "X2-empty-m.jsx",
+    "X3-notifications-d.jsx",
+    "X3-notifications-m.jsx"
+  ],
+  "Components": [
+    "CMP-Slot-State-Open.jsx",
+    "CMP-Slot-State-Booked.jsx",
+    "CMP-Slot-State-Blocked.jsx",
+    "CMP-Slot-State-Break.jsx",
+    "CMP-ShareToggle-State-Shared.jsx",
+    "CMP-ShareToggle-State-Withheld.jsx",
+    "CMP-QueueRow-State-Waiting.jsx",
+    "CMP-QueueRow-State-Now.jsx",
+    "CMP-ScopeLine-State-Granted.jsx",
+    "CMP-ScopeLine-State-Locked.jsx",
+    "CMP-DrugResult-State-Default.jsx",
+    "CMP-DrugResult-State-Blocked.jsx"
+  ]
+}

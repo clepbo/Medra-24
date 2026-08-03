@@ -1,0 +1,1 @@
+<Frame name="cmp/Slot/State=Break" w={150} flex="col" p={16} bg="var:bg/base"><Frame w="fill" flex="row"><Frame name="Btn Slot 10:30" grow={1} flex="row" justify="center" py={11} rounded={14} bg="var:state/warning-bg"><Text font="Inter" size={13} weight="semibold" color="var:state/warning">10:30</Text></Frame></Frame></Frame>

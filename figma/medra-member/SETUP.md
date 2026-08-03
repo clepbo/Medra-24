@@ -1,15 +1,15 @@
 # Medra — Member App (batch 1: Find & Book)
 
-**44 frames · 2 Figma pages · Desktop 1440×900 + Mobile 390×844 · "Soft Clinical"**
+**46 frames · 2 Figma pages · Desktop 1440×900 + Mobile 390×844 · "Soft Clinical"**
 
-- `Medra Member — Find & Book` — 10 screens × desktop + mobile (20 frames)
+- `Medra Member — Find & Book` — 11 screens × desktop + mobile (22 frames)
 - Desktop is a **dashboard**: navy gradient rail with an active-state nav, a help card and the
   member chip; a top bar with search + notifications + avatar; a gradient greeting banner with
   primary actions; a 4-up KPI row; then panels for doctors, medicines, next visit, specialties
   and recent records.
 - `Medra — Interactive Components` — 24 component state frames → real component sets
 
-Offline validation: **ALL 44 CLEAN, FULLY OFFLINE ✓** (`node validate.js`)
+Offline validation: **ALL 46 CLEAN, FULLY OFFLINE ✓** (`node validate.js`)
 
 ## Layout rules that matter for Figma
 - **No `wrap="wrap"`.** figma-ds-cli does not honour auto-layout wrapping, so wrapped rows ran
@@ -37,13 +37,14 @@ Offline validation: **ALL 44 CLEAN, FULLY OFFLINE ✓** (`node validate.js`)
 | H1 | **Home** (returning) | Next-visit card, search, specialties, available-today |
 | H2 | **Home** (new member) | Empty state — "No visits booked yet" |
 | S1 | **Search results** | Filter chips (2-up mobile / 4-up desktop), sort, 24 verified doctors |
-| S2 | **Filters** | Bottom sheet on mobile: specialty, availability, type, distance, price, language |
+| S2 | **Filters** | Bottom sheet on mobile. Now opens with **an address to search around** — not just "near me" — so you can look for care near your house while you are at work |
 | S3 | **No results** | Widen search + "notify me when a slot opens" |
 | P1 | **Doctor profile** | Stats, about, languages, fee, availability |
 | B1 | **Choose a time** | Date strip, slot grid (taken slots disabled), in-person vs virtual |
 | B2 | **Slot just taken** | Concurrency edge case → nearest open times |
-| B3 | **Review & confirm** | Full summary, reason for visit, data-sharing note, SMS opt-in |
-| C1 | **Booking confirmed** | Reference number, details, SMS note, add to calendar |
+| B3 | **Review & confirm** | Full summary, reason for visit, the **"anything not in your records?"** question, data-sharing note, and reminder channels including WhatsApp |
+| B4 | **Payment** | Added after the 1 Aug review — payment happens *before* the booking is confirmed. Card, transfer, USSD or wallet, held by Paystack, refunded in full if the doctor cancels |
+| C1 | **Booking confirmed** | Reference number, details, payment receipt, WhatsApp + SMS note, add to calendar |
 
 No dead ends: every screen has a back path, a home path, and bottom-nav/sidebar escape.
 `link-member.js` also **closes the auth dead-end** — auth success and quick-unlock now land on

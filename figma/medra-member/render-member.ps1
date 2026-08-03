@@ -5,7 +5,7 @@ figma-cli tokens import-design-md .\DESIGN.md
 
 # ---- Medra Member — Find & Book ----
 figma-cli eval "(async()=>{const t='Medra Member — Find & Book';let p=figma.root.children.find(n=>n.name===t);if(!p){p=figma.createPage();p.name=t;}await figma.setCurrentPageAsync(p);return p.name;})()"
-foreach ($f in @('H1-home-d.jsx', 'H1-home-m.jsx', 'H2-home-empty-d.jsx', 'H2-home-empty-m.jsx', 'S1-results-d.jsx', 'S1-results-m.jsx', 'S2-filters-d.jsx', 'S2-filters-m.jsx', 'S3-empty-d.jsx', 'S3-empty-m.jsx', 'P1-profile-d.jsx', 'P1-profile-m.jsx', 'B1-slot-d.jsx', 'B1-slot-m.jsx', 'B2-taken-d.jsx', 'B2-taken-m.jsx', 'B3-review-d.jsx', 'B3-review-m.jsx', 'C1-confirmed-d.jsx', 'C1-confirmed-m.jsx')) { figma-cli render (Get-Content $f -Raw) }
+foreach ($f in @('H1-home-d.jsx', 'H1-home-m.jsx', 'H2-home-empty-d.jsx', 'H2-home-empty-m.jsx', 'S1-results-d.jsx', 'S1-results-m.jsx', 'S2-filters-d.jsx', 'S2-filters-m.jsx', 'S3-empty-d.jsx', 'S3-empty-m.jsx', 'P1-profile-d.jsx', 'P1-profile-m.jsx', 'B1-slot-d.jsx', 'B1-slot-m.jsx', 'B2-taken-d.jsx', 'B2-taken-m.jsx', 'B3-review-d.jsx', 'B3-review-m.jsx', 'B4-payment-d.jsx', 'B4-payment-m.jsx', 'C1-confirmed-d.jsx', 'C1-confirmed-m.jsx')) { figma-cli render (Get-Content $f -Raw) }
 
 # ---- Medra — Interactive Components ----
 figma-cli eval "(async()=>{const t='Medra — Interactive Components';let p=figma.root.children.find(n=>n.name===t);if(!p){p=figma.createPage();p.name=t;}await figma.setCurrentPageAsync(p);return p.name;})()"

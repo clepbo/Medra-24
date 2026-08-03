@@ -65,6 +65,9 @@ for (const file of jsxFiles) {
     report(`prop ${m[1]}=${m[2]} is missing braces — should be ${m[1]}={${m[2]}}`);
   }
 
+  // 11. wrap="wrap" is NOT honoured by figma-ds-cli — rows must be chunked explicitly
+  if (/wrap="wrap"/.test(src)) report('uses wrap="wrap" — the CLI ignores it, chunk rows with rows_of()');
+
   // 10. exactly one root <Frame> with a name
   const roots = src.match(/^<Frame\b[^>]*name="/);
   if (!roots) { console.log(`  ! ${file}: root frame has no name=`); warnings++; }

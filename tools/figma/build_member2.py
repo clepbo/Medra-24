@@ -325,6 +325,8 @@ add("Visits", "V7-cancelled",
 # =====================================================================================
 # VIRTUAL VISIT
 # =====================================================================================
+PHASE2 = (f'<Frame flex="row" gap={{7}} items="center" px={{12}} py={{7}} rounded={{999}} bg="var:state/warning-bg">'
+          f'{I("sparkles",13,WARN_IC)}{T(11,"semibold","var:state/warning","PHASE 2 · not in the MVP")}</Frame>')
 W1_CHECKS = (f'<Frame w="fill" flex="col" gap={{14}} p={{20}} rounded={{24}} bg="var:bg/band-2">'
              f'{eyebrow("BEFORE YOU JOIN","var:brand/teal")}'
              f'{check_line("Camera is working","ok","Front camera · you can see yourself below")}'
@@ -354,8 +356,9 @@ add("Visits", "W1-precall",
     desk_stage("Member · Virtual — W1 Pre-call Check",
         f'<Frame w="fill" flex="row" justify="between" items="center" px={{40}} pt={{26}}>'
         f'<Image image="assets/logo/logo-white.png" w={{92}} h={{68}} />'
+        f'<Frame flex="row" gap={{12}} items="center">{PHASE2}'
         f'<Frame name="Btn Leave precall" flex="row" gap={{8}} items="center" px={{15}} py={{10}} rounded={{999}} bg="var:bg/band-2">'
-        f'{I("x",16,W_IC)}{T(13,"medium","var:text/on-dark","Leave")}</Frame></Frame>'
+        f'{I("x",16,W_IC)}{T(13,"medium","var:text/on-dark","Leave")}</Frame></Frame></Frame>'
         f'<Frame grow={{1}} w="fill" flex="row" gap={{34}} justify="center" items="center" px={{56}} py={{28}}>'
         f'<Frame w={{620}} h={{460}} rounded={{28}} image="assets/img/call-self.jpg" overflow="hidden" flex="col" justify="between" p={{18}}>'
         f'<Frame w="fill" flex="row" justify="end">{status_pill("live","Camera on")}</Frame>'
@@ -371,8 +374,7 @@ add("Visits", "W1-precall",
     mob_stage("Member · Virtual — W1 Pre-call Check · Mobile",
         statusbar(dark=True)
         + f'<Frame w="fill" flex="row" justify="between" items="center" px={{20}} pt={{8}} pb={{6}}>'
-          f'{circle_btn("arrow-left","Leave precall",dark=True)}'
-          f'{T(15,"semibold","var:text/on-dark","Virtual visit")}'
+          f'{circle_btn("arrow-left","Leave precall",dark=True)}{PHASE2}'
           f'{circle_btn("circle-help","Help call",dark=True)}</Frame>'
           f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{20}}>'
           f'<Frame w="fill" h={{250}} rounded={{26}} image="assets/img/call-self.jpg" overflow="hidden" flex="col" justify="between" p={{14}}>'
@@ -406,7 +408,7 @@ add("Visits", "W2-incall",
         f'{call_controls([("mic","Toggle mic W2","on",56,"Mute"),("video","Toggle cam W2","on",56,"Camera"),("screen-share","Share screen W2","dark",56,"Share"),("message-circle","Open chat W2","dark",56,"Chat"),("share-2","Share record W2","dark",56,"Records"),("phone-off","End call W2","end",56,"End")])}'
         f'</Frame></Frame>'
         f'<Frame w={{360}} h="fill" flex="col" gap={{14}} p={{20}} rounded={{28}} bg="var:bg/band-2">'
-        f'{eyebrow("DURING THE VISIT","var:brand/teal")}'
+        f'<Frame w="fill" flex="row" justify="between" items="center">{eyebrow("DURING THE VISIT","var:brand/teal")}{PHASE2}</Frame>'
         f'{T(17,"bold","var:text/on-dark","Dr. Okafor can see")}'
         f'{check_line("Allergies and medicines","ok","Always shared during a visit")}'
         f'{check_line("Your last 3 visits","ok","You allowed this until 11:00")}'
@@ -420,7 +422,9 @@ add("Visits", "W2-incall",
         f'{note("shield-check","This call is end-to-end encrypted. Medra never records video or audio.","info")}</Frame></Frame>'),
     mob_stage("Member · Virtual — W2 In Call · Mobile",
         f'<Frame grow={{1}} w="fill" flex="col" justify="between" image="assets/img/call-doctor-m.jpg" overflow="hidden">'
-        f'{statusbar(dark=True)}{call_plate("Dr. Ngozi Okafor","Cardiologist")}'
+        f'{statusbar(dark=True)}'
+        f'<Frame w="fill" flex="row" justify="center" pt={{6}}>{PHASE2}</Frame>'
+        f'{call_plate("Dr. Ngozi Okafor","Cardiologist")}'
         f'<Frame w="fill" flex="row" justify="end" px={{16}}>{call_pip()}</Frame>'
         f'<Frame grow={{1}} />'
         f'<Frame w="fill" flex="col" gap={{10}} px={{16}} pb={{18}}>{W2_CAPTION}{W2_CONTROLS_M}</Frame></Frame>',
@@ -476,7 +480,7 @@ add("Visits", "W3-callend",
 W4 = (f'<Frame w="fill" flex="col" gap={{16}} items="center" p={{26}} rounded={{28}} bg="var:bg/band-2">'
       f'<Frame w={{86}} h={{86}} rounded={{999}} bg="#143352" flex="col" justify="center" items="center">'
       f'{I("wifi-off",38,WARN_IC)}</Frame>'
-      f'{T(21,"bold","var:text/on-dark","Connection lost")}'
+      f'{PHASE2}{T(21,"bold","var:text/on-dark","Connection lost")}'
       f'{T(14,"regular","var:text/on-dark-muted","We are trying to get you back in — attempt 2 of 5. Dr. Okafor can still see you in the waiting room, so your visit is not gone.",w="fill",align="center")}'
       f'{check_line("Your visit is saved","ok","Nothing you or the doctor recorded is lost")}'
       f'{check_line("Reconnecting…","wait","Usually takes a few seconds")}</Frame>')
@@ -779,9 +783,38 @@ add("Records", "R5-share",
           f'<Frame grow={{1}} />{cta("Share access","Confirm share R5","shield-check")}</Frame>'))
 
 # ---------------- R6 who has access
+def access_row(avatar, who, meta, what, expires, name, checked=False):
+    box = (f'<Frame w={{22}} h={{22}} rounded={{7}} bg="var:brand/teal" flex="col" justify="center" items="center">'
+           f'{I("check",14,W_IC)}</Frame>' if checked else
+           '<Rect w={22} h={22} rounded={7} bg="var:bg/base" stroke="var:border/strong" strokeWidth={1} />')
+    return (f'<Frame name="Btn Select {name}" w="fill" flex="row" gap={{12}} items="center" py={{12}}>{box}'
+            f'<Image image="assets/img/{avatar}" w={{40}} h={{40}} rounded={{13}} />'
+            f'<Frame grow={{1}} flex="col" gap={{2}}>{T(14,"semibold","var:text/strong",who)}'
+            f'{T(11,"regular","var:text/muted",meta,w="fill")}'
+            f'{T(11,"regular","var:text/muted",what,w="fill")}</Frame>'
+            f'<Frame flex="col" gap={{4}} items="end">'
+            f'<Frame flex="row" gap={{5}} items="center">{I("clock",11,WARN_IC)}'
+            f'{T(11,"medium","var:state/warning",expires)}</Frame>'
+            f'{mini_btn("Revoke","Revoke "+name,"circle-slash","danger",grow=False)}</Frame></Frame>')
+
+R6_SELECT_BAR = (f'<Frame w="fill" flex="row" justify="between" items="center" p={{14}} rounded={{18}} bg="var:bg/muted">'
+                 f'<Frame name="Btn Select all access" flex="row" gap={{11}} items="center">'
+                 f'<Rect w={{22}} h={{22}} rounded={{7}} bg="var:bg/base" stroke="var:border/strong" strokeWidth={{1}} />'
+                 f'{T(13,"medium","var:text/default","Select all")}</Frame>'
+                 f'{T(12,"regular","var:text/muted","1 of 3 selected")}</Frame>')
+R6_ACTIONS = (f'<Frame w="fill" flex="row" gap={{11}}>'
+              f'{mini_btn("Revoke selected (1)","Revoke selected","circle-slash","danger")}'
+              f'{mini_btn("Revoke everything","Revoke all","shield-off","ghost")}</Frame>')
 R6_ACTIVE = group_card("Can see your records now", [
-    share_row("avatar-4.jpg", "Dr. Ngozi Okafor", "Consultations · lab results", "Ends 21 Aug, 11:00", "Revoke Okafor"),
-], footer="Revoking takes effect immediately, even if the doctor has the record open.")
+    R6_SELECT_BAR,
+    access_row("avatar-4.jpg", "Dr. Ngozi Okafor", "Cardiologist · Garki Medical Centre",
+               "Consultations · lab results", "Ends 21 Aug, 11:00", "Okafor", checked=True),
+    access_row("avatar-1.jpg", "Dr. Chuka Eze", "General practice · Wuse Clinic",
+               "Allergies and medicines only", "Ends 3 Sep", "Eze"),
+    access_row("avatar-3.jpg", "Maitama Hospital reception", "Front desk · check-in only",
+               "Name, Medra ID, allergies", "Ends today, 18:00", "Maitama"),
+    R6_ACTIONS,
+], footer="Revoking takes effect immediately, even if the doctor has the record open on screen.")
 R6_PAST = group_card("Ended", [
     list_row("circle-slash", "Dr. Chuka Eze", value="Ended 28 Apr", sub="Consultations only · you revoked it early", name="Past share Eze", chevron=False),
     list_row("circle-slash", "Wuse Clinic reception", value="Ended 28 Apr", sub="Immunisation certificate · QR code, 1 hour", name="Past share Wuse", chevron=False),
@@ -803,15 +836,14 @@ add("Records", "R6-access",
           f'<Frame w={{380}} flex="col" gap={{16}}>{R6_PAST}'
           f'<Frame name="Btn Revoke all" w="fill" flex="row" gap={{9}} justify="center" items="center" px={{20}} py={{15}} rounded={{999}} bg="var:state/error-bg">'
           f'{I("shield-off",17,ERR_IC)}{T(15,"semibold","var:state/error","Revoke every share now")}</Frame>'
+          f'{group_card("Reception check-in", [list_row("qr-code","Show my Medra ID at reception",sub="A one-hour pass: name, Medra ID and allergies only",name="QR share R5")], p=16)}'
           f'{note("info","Clinics also keep their own copy of notes they wrote — the law requires it. Revoking stops new access to your Medra history.","info")}</Frame></Frame>',
         SIDE["Records"]),
     mob("Member · Records — R6 Who Has Access · Mobile",
         appbar("Who has access")
         + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{8}}>'
-          f'{R6_ACTIVE}'
-          f'{group_card("Who opened what", [audit_row("Dr. Ngozi Okafor","Opened “Hypertension review”","Today, 09:12"),audit_row("You","Shared 2 categories","14 Aug, 20:31")], p=16)}'
-          f'<Frame name="Btn Revoke all" w="fill" flex="row" gap={{9}} justify="center" items="center" px={{20}} py={{15}} rounded={{999}} bg="var:state/error-bg">'
-          f'{I("shield-off",17,ERR_IC)}{T(15,"semibold","var:state/error","Revoke every share")}</Frame></Frame>',
+          f'{group_card("Can see your records now", [R6_SELECT_BAR, access_row("avatar-4.jpg","Dr. Ngozi Okafor","Cardiologist","Consultations · lab results","Ends 21 Aug","Okafor",checked=True), access_row("avatar-1.jpg","Dr. Chuka Eze","General practice","Allergies and medicines","Ends 3 Sep","Eze"), R6_ACTIONS], p=16)}'
+          f'{group_card("Who opened what", [audit_row("Dr. Ngozi Okafor","Opened “Hypertension review”","Today, 09:12"),audit_row("You","Shared 2 categories","14 Aug, 20:31")], p=16)}</Frame>',
         nav=bottom_nav(2)))
 
 # ---------------- R7 upload
@@ -1133,7 +1165,7 @@ P0_SECURITY = group_card("Security", [
     list_row("key", "Ask for a code every time", value="Off", sub="Off means faster sign-in on this trusted device", name="Open security P5"),
 ])
 P0_PREFS = group_card("Preferences", [
-    list_row("bell-ring", "Notifications", value="Push + SMS", name="Open notifs P6"),
+    list_row("bell-ring", "Notifications", value="App, WhatsApp, SMS", name="Open notifs P6"),
     list_row("languages", "Language", value="English", sub="Hausa, Yoruba, Igbo and Pidgin available", name="Open language P7"),
     list_row("accessibility", "Text size and contrast", value="Default", name="Open language P7"),
 ])
@@ -1159,14 +1191,14 @@ P0_ACCOUNT_M = group_card("Account", [
     list_row("smartphone", "Devices and security", value="3", name="Open security P5"),
 ], p=16)
 P0_PREFS_M = group_card("Preferences", [
-    list_row("bell-ring", "Notifications", value="Push + SMS", name="Open notifs P6"),
+    list_row("bell-ring", "Notifications", value="App, WhatsApp, SMS", name="Open notifs P6"),
     list_row("languages", "Language", value="English", name="Open language P7"),
 ], p=16)
 P0_TILES_M = rows_of([
     tile("circle-user", "Personal details", "Name, phone, address", "Open details P2"),
     tile("users-round", "People I care for", "Chidi and Mama Grace", "Open dependants P3"),
     tile("smartphone", "Devices", "3 signed in", "Open security P5"),
-    tile("bell-ring", "Notifications", "Push and SMS", "Open notifs P6"),
+    tile("bell-ring", "Notifications", "App, WhatsApp, SMS", "Open notifs P6"),
     tile("languages", "Language", "English", "Open language P7"),
     tile("shield-check", "Privacy and data", "1 doctor has access", "Open privacy P8", "var:state/info-bg"),
 ], 2, 11)
@@ -1469,13 +1501,26 @@ P9_KEPT = group_card("What we must keep, and why", [
     list_row("receipt", "Payment records", sub="Kept for tax and audit, without your medical details", name="Kept payments", chevron=False),
     list_row("eye", "The access log", sub="Anonymised, so nobody can quietly erase who looked at what", name="Kept audit", chevron=False),
 ], footer="We would rather tell you this plainly now than surprise you afterwards.")
+# Four deliberate gates. Deleting an account holding someone's medical history should take
+# more effort than abandoning it — the review asked for exactly this.
 P9_CONFIRM = (f'<Frame w="fill" flex="col" gap={{14}} p={{20}} rounded={{24}} bg="var:state/error-bg">'
-              f'{T(15,"semibold","var:state/error","This cannot be undone after 30 days")}'
-              f'{T(13,"regular","var:text/default","For the next 30 days you can sign in and cancel. After that everything above is gone for good.",w="fill")}'
+              f'{T(15,"semibold","var:state/error","Four steps, on purpose")}'
+              f'{T(13,"regular","var:text/default","This is not a button you can hit by accident. For 30 days after this you can still sign in and cancel — after that it is gone for good.",w="fill")}'
+              f'{prep_step(1,"Tell us why","So we can fix whatever went wrong",done=True)}'
               f'{field("Type DELETE to confirm","type","DELETE",ph=False,focus=True)}'
-              f'{checkbox("I understand my uploaded records will be permanently deleted.","Confirm delete understood")}'
+              f'{prep_step(3,"Confirm it is you","We send a code to +234 801 234 5678")}'
+              f'{otp("")}'
+              f'{checkbox("I understand my uploaded records will be permanently deleted, and that my clinics keep their own copies.","Confirm delete understood")}'
               f'<Frame name="Btn Confirm delete" w="fill" flex="row" gap={{9}} justify="center" items="center" px={{24}} py={{16}} rounded={{999}} bg="#D14343">'
-              f'{I("trash-2",18,W_IC)}{T(15,"semibold","var:text/on-dark","Delete my account")}</Frame></Frame>')
+              f'{I("trash-2",18,W_IC)}{T(15,"semibold","var:text/on-dark","Delete my account")}</Frame>'
+              f'{T(11,"regular","var:text/muted","Nothing happens until all four are done.",w="fill",align="center")}</Frame>')
+P9_REASON = group_card("Why are you leaving?", [
+    radio_row("I do not need Medra any more", name="Del reason nouse"),
+    radio_row("I am worried about my data", sub="Tell us — privacy is the thing we most want to get right", on=True, name="Del reason privacy"),
+    radio_row("It is too expensive", name="Del reason cost"),
+    radio_row("I could not find the care I needed", name="Del reason care"),
+    radio_row("Something else", name="Del reason other"),
+], footer="A real person reads these. If it is something we can fix, we would rather fix it than lose you.")
 P9_ALT = group_card("Or do something smaller", [
     list_row("moon", "Pause my account instead", sub="Nothing is deleted, no notifications, come back any time", name="Pause account"),
     list_row("bell-off", "Just stop the notifications", name="Open notifs P6"),
@@ -1490,13 +1535,13 @@ add("Profile", "P9-delete",
         + head_chip([("Delete your", False), ("account", True)], 30)
         + T(15, "regular", "var:text/muted", "Read this first — some of it is not ours to delete.", w="fill")
         + f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-          f'<Frame grow={{1}} flex="col" gap={{16}}>{P9_GONE}{P9_KEPT}</Frame>'
-          f'<Frame w={{400}} flex="col" gap={{16}}>{P9_CONFIRM}{P9_ALT}</Frame></Frame>',
+          f'<Frame grow={{1}} flex="col" gap={{16}}>{P9_GONE}{P9_KEPT}{P9_REASON}</Frame>'
+          f'<Frame w={{400}} flex="col" gap={{16}}>{P9_ALT}{P9_CONFIRM}</Frame></Frame>',
         SIDE["Profile"]),
     mob("Member · Profile — P9 Delete Account · Mobile",
         appbar("Delete account")
         + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{10}}>'
-          f'{P9_GONE}{P9_CONFIRM}</Frame>'))
+          f'{P9_ALT}{P9_GONE}</Frame>'))
 
 # =====================================================================================
 # ALERTS & SYSTEM STATES
@@ -1631,6 +1676,230 @@ add("Alerts", "X3-error",
           f'{X3}{X3_REF}</Frame>',
         nav=bottom_nav(0)))
 
+
+# =====================================================================================
+# ADDED AFTER THE 1 AUG PRODUCT REVIEW
+# =====================================================================================
+
+# ---------------- W0  join a video visit (MVP: the doctor's own meeting link)
+# "for MVP make it open ... the doctor will set up the meeting and add the link, and the link
+#  is embedded into the Join button" — in-app video (W1/W2/W4) stays designed, for phase 2.
+W0_LINK = (f'<Frame w="fill" flex="col" gap={{14}} p={{20}} rounded={{26}} bg="var:bg/base" '
+           f'stroke="var:border/accent" strokeWidth={{2}}>'
+           f'<Frame w="fill" flex="row" gap={{13}} items="center">'
+           f'<Frame w={{46}} h={{46}} rounded={{15}} bg="var:state/info-bg" flex="col" justify="center" items="center">'
+           f'{I("video",22,A_IC)}</Frame>'
+           f'<Frame grow={{1}} flex="col" gap={{2}}>{T(15,"semibold","var:text/strong","Google Meet")}'
+           f'{T(12,"regular","var:text/muted","Dr. Okafor set this up for your visit",w="fill")}</Frame>'
+           f'{status_pill("today","Opens 10:20")}</Frame>'
+           f'<Frame w="fill" flex="row" gap={{10}} items="center" px={{14}} py={{13}} rounded={{16}} bg="var:neutral/50">'
+           f'{I("external-link",15,M_IC)}{T(13,"regular","var:text/default","meet.google.com/kfa-jrqz-nmo",w="fill")}'
+           f'<Frame name="Btn Copy meet link" flex="row">{I("copy",15,N_IC)}</Frame></Frame>'
+           f'{cta("Join the visit","Open meeting W0","external-link")}'
+           f'{T(11,"regular","var:text/muted","This opens Google Meet. You do not need an account — just tap and allow your camera.",w="fill",align="center")}</Frame>')
+W0_READY = group_card("Before you tap join", [
+    prep_step(1, "Find somewhere quiet with a signal", "A doctor cannot examine what they cannot hear."),
+    prep_step(2, "Have your readings and medicines nearby", "Blood pressure, the pack of anything you take."),
+    prep_step(3, "Share your records if you have not", "Dr. Okafor sees only what you allow.", done=True),
+])
+W0_FALLBACK = group_card("If the video will not work", [
+    list_row("phone-call", "Ask the clinic to call my phone", sub="+234 801 234 5678 — no data needed at all", name="Phone instead W0"),
+    list_row("message-circle", "Message the clinic on WhatsApp", sub="+234 809 112 4477", name="WhatsApp clinic W0"),
+    list_row("calendar-clock", "Move this visit", sub="Free more than 4 hours before", name="Reschedule V4"),
+], footer="You paid for this consultation. If it cannot go ahead, you are refunded in full — you never chase us for it.")
+W0_PHASE2 = (f'<Frame name="Btn Phase 2 call" w="fill" flex="row" gap={{11}} items="center" p={{15}} rounded={{20}} '
+             f'bg="var:bg/muted">{I("sparkles",17,A_IC)}'
+             f'<Frame grow={{1}} flex="col" gap={{2}}>{T(13,"semibold","var:text/strong","Coming later: video inside Medra")}'
+             f'{T(11,"regular","var:text/muted","No third-party app, and the doctor writes the note as you talk. Preview the design →",w="fill")}</Frame></Frame>')
+
+add("Visits", "W0-join",
+    desk("Member · Virtual — W0 Join by Link",
+        f'<Frame w="fill" flex="row" justify="between" items="center">'
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",18,N_IC)}'
+        f'{T(14,"semibold","var:text/default","Visit details")}</Frame>{status_pill("soon","Starts in 8 minutes")}</Frame>'
+        + head_chip([("Your visit with", False), ("Dr. Okafor", True)], 30)
+        + f'<Frame w="fill" flex="row" gap={{20}} items="start">'
+          f'<Frame grow={{1}} flex="col" gap={{16}}>{W0_LINK}{W0_READY}</Frame>'
+          f'<Frame w={{380}} flex="col" gap={{16}}>{W0_FALLBACK}{W0_PHASE2}</Frame></Frame>',
+        SIDE["Visits"]),
+    mob("Member · Virtual — W0 Join by Link · Mobile",
+        appbar("Your visit", right=circle_btn("circle-help", "Help call"))
+        + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{8}}>'
+          f'{W0_LINK}'
+          f'{group_card("If the video will not work", [list_row("phone-call","Ask the clinic to call me",sub="No data needed",name="Phone instead W0"),list_row("message-circle","Message on WhatsApp",name="WhatsApp clinic W0")], p=16)}</Frame>',
+        nav=bottom_nav(1)))
+
+# ---------------- R10  print / share a one-page summary
+# "what would the print one page summary look like? ... can they select what to print?"
+R10_PICK = group_card("What goes on the page?", [
+    consent_row("droplet", "Blood group and genotype", "O+ · AA", "Print blood", locked=True),
+    consent_row("triangle-alert", "Allergies", "Penicillin", "Print allergies", locked=True),
+    consent_row("pill", "Current medicines", "3 medicines with doses", "Print meds"),
+    consent_row("heart-pulse", "Long-term conditions", "Hypertension, diagnosed Jun 2026", "Print conditions"),
+    consent_row("stethoscope", "Last 3 consultations", "Date, doctor, diagnosis — one line each", "Print visits"),
+    consent_row("flask-conical", "Latest lab results", "Full blood count, 12 Jun", "Print labs", on=False),
+    consent_row("syringe", "Immunisations", "Yellow fever, tetanus", "Print vaccines", on=False),
+    consent_row("phone-call", "Emergency contact", "Ijeoma Okeke · +234 805 998 1122", "Print emergency"),
+], footer="Blood group and allergies always print. In an emergency they are the two lines that matter.")
+
+R10_PREVIEW = (f'<Frame w="fill" flex="col" gap={{13}} p={{22}} rounded={{22}} bg="var:bg/base" '
+               f'stroke="var:border/default" strokeWidth={{1}}>'
+               f'<Frame w="fill" flex="row" justify="between" items="center">'
+               f'<Image image="assets/logo/logo-gradient.png" w={{70}} h={{52}} />'
+               f'<Frame w={{62}} h={{62}} rounded={{12}} bg="var:neutral/50" flex="col" justify="center" items="center">'
+               f'{I("qr-code",36,N_IC)}</Frame></Frame>'
+               f'<Frame w="fill" flex="col" gap={{2}}>{T(18,"bold","var:text/strong","Amara Chinaza Okeke")}'
+               f'{T(12,"regular","var:text/muted","MDR-8842-19 · 34 years · Area 3, Garki, Abuja")}</Frame>'
+               f'{hr()}'
+               f'{kv_pair(kv("Blood group","O+","droplet"), kv("Genotype","AA","activity"))}'
+               f'{kv("Allergies","Penicillin — rash and swelling","triangle-alert")}'
+               f'{kv("Conditions","Hypertension (Jun 2026)","heart-pulse")}'
+               f'{kv("Medicines","Amlodipine 5 mg morning · Metformin 500 mg evening · Vitamin D 1000 IU","pill")}'
+               f'{kv("Emergency contact","Ijeoma Okeke (sister) · +234 805 998 1122","phone-call")}'
+               f'{hr()}'
+               f'{T(10,"regular","var:text/faint","Printed from Medra on 14 Aug 2026. Scan the code for the full record, with the member’s permission.",w="fill")}</Frame>')
+
+R10_ACTIONS = (f'<Frame w="fill" flex="col" gap={{11}}>'
+               f'{cta("Print this page","Print now R10","printer")}'
+               f'{ghost("Save as PDF","Save pdf R10","download")}'
+               f'{ghost("Send to my email","Email summary R10","mail")}'
+               f'{ghost("Show as a QR code instead","QR share R5","qr-code")}</Frame>')
+
+add("Records", "R10-summary",
+    desk("Member · Records — R10 One-page Summary",
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",18,N_IC)}'
+        f'{T(14,"semibold","var:text/default","Privacy and data")}</Frame>'
+        + head_chip([("A page you can", False), ("hand over", True)], 30)
+        + T(15, "regular", "var:text/muted",
+            "For a walk-in clinic, an emergency, or a relative who keeps your papers. You choose what is on it.", w="fill")
+        + f'<Frame w="fill" flex="row" gap={{20}} items="start">'
+          f'<Frame grow={{1}} flex="col" gap={{16}}>{R10_PICK}</Frame>'
+          f'<Frame w={{420}} flex="col" gap={{16}}>{eyebrow("PREVIEW")}{R10_PREVIEW}{R10_ACTIONS}</Frame></Frame>',
+        SIDE["Records"]),
+    mob("Member · Records — R10 One-page Summary · Mobile",
+        appbar("One-page summary", right=circle_btn("printer", "Print now R10"))
+        + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{10}}>'
+          f'{group_card("What goes on the page?", [consent_row("droplet","Blood group and genotype","O+ · AA","Print blood",locked=True),consent_row("triangle-alert","Allergies","Penicillin","Print allergies",locked=True),consent_row("pill","Current medicines","3 medicines","Print meds"),consent_row("stethoscope","Last 3 consultations","One line each","Print visits")], p=16)}'
+          f'<Frame grow={{1}} />{cta("Preview and print","Print now R10","printer")}'
+          f'{ghost("Save as PDF","Save pdf R10","download")}</Frame>'))
+
+# ---------------- N0  the bell overlay
+# "once they click on the notification it shows an overlay with maybe five important
+#  notifications, then View all brings them to the full screen"
+N0_PANEL = (f'<Frame w={{400}} flex="col" gap={{12}} p={{18}} rounded={{26}} bg="var:bg/base" '
+            f'stroke="var:border/default" strokeWidth={{1}}>'
+            f'<Frame w="fill" flex="row" justify="between" items="center">'
+            f'{T(16,"bold","var:text/strong","Notifications")}'
+            f'<Frame flex="row" gap={{9}} items="center">'
+            f'<Frame flex="row" px={{9}} py={{4}} rounded={{999}} bg="var:state/error-bg">'
+            f'{T(11,"semibold","var:state/error","3 new")}</Frame>'
+            f'<Frame name="Btn Close notif panel" flex="row">{I("x",18,M_IC)}</Frame></Frame></Frame>'
+            f'{notif_row("bell-ring","Visit tomorrow at 10:30","Dr. Ngozi Okafor · virtual","2h ago","Notif visit",unread=True,tone="info")}'
+            f'{notif_row("eye","Dr. Okafor opened your records","“Hypertension review” at 09:12","3h ago","Notif audit",unread=True,tone="muted")}'
+            f'{notif_row("pill","Metformin at 18:00","One tablet with food","5h ago","Notif med",unread=True,tone="ok")}'
+            f'{notif_row("package","Refill approved","Waiting at Garki pharmacy","Tue","Notif refill",tone="ok")}'
+            f'{notif_row("flask-conical","New result: Full blood count","One value outside the normal range","Mon","Notif result",tone="warn")}'
+            f'{hr()}'
+            f'<Frame w="fill" flex="row" gap={{11}}>'
+            f'{mini_btn("Mark all read","Mark all read","check-check","ghost")}'
+            f'{mini_btn("View all","Open notifs N1","arrow-right","teal")}</Frame></Frame>')
+
+# The panel drops over the home screen, so the frame shows the dashboard dimmed behind it.
+N0_BEHIND = rows_of([
+    stat_card("calendar-check", "2", "Upcoming visits", "Next in 2 days", "tint-teal.jpg"),
+    stat_card("pill", "3", "Active medicines", "1 due at 18:00", "tint-mint.jpg"),
+    stat_card("clipboard-list", "14", "Records", "Across 3 clinics", "tint-ocean.jpg"),
+    stat_card("shield-check", "1", "Active share", "Expires in 6 days", "tint-blue.jpg"),
+], 4, 16)
+N0_PANEL_M = (f'<Frame w="fill" flex="col" gap={{11}} p={{16}} rounded={{26}} bg="var:bg/base" '
+              f'stroke="var:border/default" strokeWidth={{1}}>'
+              f'<Frame w="fill" flex="row" justify="between" items="center">'
+              f'{T(16,"bold","var:text/strong","Notifications")}'
+              f'<Frame flex="row" gap={{9}} items="center">'
+              f'<Frame flex="row" px={{9}} py={{4}} rounded={{999}} bg="var:state/error-bg">'
+              f'{T(11,"semibold","var:state/error","3 new")}</Frame>'
+              f'<Frame name="Btn Close notif panel" flex="row">{I("x",18,M_IC)}</Frame></Frame></Frame>'
+              f'{notif_row("bell-ring","Visit tomorrow at 10:30","Dr. Ngozi Okafor · virtual","2h ago","Notif visit",unread=True,tone="info")}'
+              f'{notif_row("eye","Dr. Okafor opened your records","“Hypertension review” at 09:12","3h ago","Notif audit",unread=True,tone="muted")}'
+              f'{notif_row("pill","Metformin at 18:00","One tablet with food","5h ago","Notif med",unread=True,tone="ok")}'
+              f'{notif_row("package","Refill approved","Waiting at Garki pharmacy","Tue","Notif refill",tone="ok")}'
+              f'{hr()}'
+              f'<Frame w="fill" flex="row" gap={{11}}>'
+              f'{mini_btn("Mark all read","Mark all read","check-check","ghost")}'
+              f'{mini_btn("View all","Open notifs N1","arrow-right","teal")}</Frame></Frame>')
+
+add("Alerts", "N0-panel",
+    desk("Member · Alerts — N0 Notification Panel",
+        hero_banner()
+        + f'<Frame w="fill" flex="row" justify="end" pt={{2}}>{N0_PANEL}</Frame>'
+        + N0_BEHIND,
+        SIDE["Home"]),
+    mob("Member · Alerts — N0 Notification Panel · Mobile",
+        greet_bar()
+        + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{16}} pt={{2}} pb={{8}}>'
+          f'{N0_PANEL_M}</Frame>',
+        nav=bottom_nav(0)))
+
+# ---------------- P3b  family plan
+# "they can book for two people first for free, then from the third they have to pay ...
+#  more like they taste the service before"
+P3B_STATE = (f'<Frame w="fill" flex="row" gap={{13}} items="center" p={{18}} rounded={{22}} bg="var:state/warning-bg">'
+             f'{I("users-round",20,WARN_IC)}'
+             f'<Frame grow={{1}} flex="col" gap={{2}}>{T(15,"semibold","var:text/strong","You have used both free places")}'
+             f'{T(12,"regular","var:text/muted","Chidi and Mama Grace. Adding a third person needs a family plan.",w="fill")}</Frame></Frame>')
+P3B_PLAN = (f'<Frame w="fill" flex="col" gap={{14}} p={{22}} rounded={{26}} bg="var:state/info-bg" '
+            f'stroke="var:border/accent" strokeWidth={{2}}>'
+            f'<Frame w="fill" flex="row" justify="between" items="center">'
+            f'{eyebrow("MEDRA FAMILY")}{status_pill("new","Recommended")}</Frame>'
+            f'<Frame flex="row" gap={{6}} items="end">{T(34,"bold","var:text/strong","₦3,000")}'
+            f'{T(14,"regular","var:text/muted","/month")}</Frame>'
+            f'<Frame w="fill" flex="col" gap={{9}}>'
+            f'{proof("users-round","Up to 6 people, including you",dark=False)}'
+            f'{proof("clipboard-list","A separate record for each of them",dark=False)}'
+            f'{proof("calendar-plus","Book and reschedule for anyone",dark=False)}'
+            f'{proof("bell-ring","Their reminders on your phone",dark=False)}'
+            f'{proof("credit-card","One payment method for the family",dark=False)}</Frame>'
+            f'{hr("var:border/accent")}'
+            f'{T(12,"regular","var:text/muted","Or ₦1,500 per extra person per month if you only need one more. Cancel any time — nobody loses their records, you just stop managing them.",w="fill")}</Frame>')
+P3B_FREE = group_card("Always free, plan or no plan", [
+    list_row("circle-user", "Your own account and records", name="Free own", chevron=False),
+    list_row("users", "Two people in your care", sub="Chidi and Mama Grace stay free forever", name="Free two", chevron=False),
+    list_row("clipboard-list", "Everything they already have", sub="Records, visits and prescriptions are theirs to keep", name="Free records", chevron=False),
+], footer="Consultation fees are separate and go to the doctor — the family plan only covers managing people.")
+
+add("Profile", "P3b-family",
+    desk("Member · Profile — P3b Family Plan",
+        light_banner("banner-family.jpg", "PEOPLE I CARE FOR", "Add a third person",
+                     "Two places are free. Beyond that, a family plan keeps everyone in one app.",
+                     actions=mini_btn("Maybe later", "Back dependants P3b", None, "ghost", grow=False))
+        + f'<Frame w="fill" flex="row" gap={{18}} items="start">'
+          f'<Frame grow={{1}} flex="col" gap={{16}}>{P3B_STATE}{P3B_FREE}</Frame>'
+          f'<Frame w={{400}} flex="col" gap={{16}}>{P3B_PLAN}'
+          f'{cta("Start the family plan","Subscribe family P3b","credit-card")}'
+          f'{ghost("Add one person for ₦1,500","Add one P3b","user-plus")}</Frame></Frame>',
+        SIDE["Profile"]),
+    mob("Member · Profile — P3b Family Plan · Mobile",
+        appbar("Family plan")
+        + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{10}}>'
+          f'{P3B_STATE}{P3B_PLAN}<Frame grow={{1}} />'
+          f'{cta("Start the family plan","Subscribe family P3b","credit-card")}'
+          f'{link("","Add one person for ₦1,500","Add one P3b")}</Frame>'))
+
+# ---------------- P9b  the deletion gate
+add("Profile", "P9b-delete-confirm",
+    desk("Member · Profile — P9b Confirm Deletion",
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",18,N_IC)}'
+        f'{T(14,"semibold","var:text/default","Delete account")}</Frame>'
+        + head_chip([("Last chance to", False), ("change your mind", True)], 30)
+        + f'<Frame w="fill" flex="row" gap={{20}} items="start">'
+          f'<Frame grow={{1}} flex="col" gap={{16}}>{P9_REASON}{P9_KEPT}</Frame>'
+          f'<Frame w={{400}} flex="col" gap={{16}}>{P9_CONFIRM}</Frame></Frame>',
+        SIDE["Profile"]),
+    mob("Member · Profile — P9b Confirm Deletion · Mobile",
+        appbar("Confirm deletion")
+        + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{10}}>'
+          f'{P9_CONFIRM}</Frame>'))
+
 # =====================================================================================
 # INTERACTIVE COMPONENT STATES  (components-member2.js turns these into variant sets)
 # =====================================================================================
@@ -1712,7 +1981,7 @@ NAV = {
   "Btn Nav Records":   NAMES["R1-records"],
   "Btn Nav Meds":      NAMES["M1-meds"],
   "Btn Nav Profile":   NAMES["P0-profile"],
-  "Btn Notifications": NAMES["N1-notifs"],
+  "Btn Notifications": NAMES["N0-panel"],
 }
 ALL_PAIRS = dict(B1_PAIRS); ALL_PAIRS.update(NAMES)
 
@@ -1720,7 +1989,7 @@ ALL_PAIRS = dict(B1_PAIRS); ALL_PAIRS.update(NAMES)
 TRN = [
  # ---- visits
  ("V1-visits","Btn Visits tab Past","V2-past"),("V1-visits","Btn Visits tab Upcoming","V1-visits"),
- ("V1-visits","Btn Join visit","W1-precall"),("V1-visits","Btn Reschedule V1","V5-reschedule"),
+ ("V1-visits","Btn Join visit","W0-join"),("V1-visits","Btn Reschedule V1","V5-reschedule"),
  ("V1-visits","Btn Cancel V1","V6-cancel"),("V1-visits","Btn Visit MDR-4820-71","V4-visit"),
  ("V1-visits","Btn Visit MDR-4901-08","V4-visit"),("V1-visits","Btn Open visit V1b","V4-visit"),
  ("V1-visits","Btn Book new V1","B1:S1-results"),("V1-visits","Btn Export visits","V2-past"),
@@ -1729,7 +1998,7 @@ TRN = [
  ("V2-past","Btn Past visit Jun","R2-note"),("V2-past","Btn Past visit Apr","R2-note"),
  ("V2-past","Btn Past visit Mar","V7-cancelled"),("V2-past","Btn Export visits","V2-past"),
  ("V3-visits-empty","Btn Find doctor V3","B1:S1-results"),("V3-visits-empty","Btn Visits tab Past","V2-past"),
- ("V4-visit","Btn Join visit","W1-precall"),("V4-visit","Btn Reschedule V4","V5-reschedule"),
+ ("V4-visit","Btn Join visit","W0-join"),("V4-visit","Btn Reschedule V4","V5-reschedule"),
  ("V4-visit","Btn Cancel V4","V6-cancel"),("V4-visit","Btn Share R5","R5-share"),
  ("V4-visit","Btn Share visit V4","R5-share"),("V4-visit","Btn Back","V1-visits"),
  ("V4-visit","Btn Reminders V4","P6-notifs"),
@@ -1739,6 +2008,10 @@ TRN = [
  ("V6-cancel","Btn Back","V4-visit"),
  ("V7-cancelled","Btn Back visits V7","V1-visits"),("V7-cancelled","Btn Rebook V7","B1:S1-results"),
  # ---- virtual visit
+ ("W0-join","Btn Open meeting W0","W3-callend"),("W0-join","Btn Back","V4-visit"),
+ ("W0-join","Btn Phone instead W0","V4-visit"),("W0-join","Btn WhatsApp clinic W0","V4-visit"),
+ ("W0-join","Btn Reschedule V4","V5-reschedule"),("W0-join","Btn Phase 2 call","W1-precall"),
+ ("W0-join","Btn Help call","V4-visit"),
  ("W1-precall","Btn Join call W1","W2-incall"),("W1-precall","Btn Leave precall","V4-visit"),
  ("W1-precall","Btn Phone instead W1","V4-visit"),("W1-precall","Btn Help call","V4-visit"),
  ("W2-incall","Btn End call W2","W3-callend"),("W2-incall","Btn Share record W2","R5-share"),
@@ -1754,7 +2027,7 @@ TRN = [
  ("R1-records","Btn Open note R2","R2-note"),("R1-records","Btn Open med M2","M2-med"),
  ("R1-records","Btn Open lab R3","R3-lab"),("R1-records","Btn Open vaccine","R3-lab"),
  ("R1-records","Btn Open upload","R3-lab"),("R1-records","Btn Open meds R1","M1-meds"),
- ("R1-records","Btn Open vaccines","R3-lab"),("R1-records","Btn Print summary","R1-records"),
+ ("R1-records","Btn Open vaccines","R3-lab"),("R1-records","Btn Print summary","R10-summary"),
  ("R1-records","Btn Request clinic","R1-records"),("R1-records","Btn Search records","R1-records"),
  ("R2-note","Btn Back","R1-records"),("R2-note","Btn Share R5","R5-share"),
  ("R2-note","Btn Open med M2","M2-med"),("R2-note","Btn Open lab R3","R3-lab"),
@@ -1775,6 +2048,7 @@ TRN = [
  ("R8-added","Btn Edit type R8","R7-upload"),("R8-added","Btn Edit date R8","R7-upload"),
  ("R8-added","Btn Edit clinic R8","R7-upload"),("R8-added","Btn Edit pages R8","R7-upload"),
  ("R8-added","Btn Edit share R8","R5-share"),
+ ("R10-summary","Btn Back","P8-privacy"),
  ("R9-records-empty","Btn Open upload R7","R7-upload"),("R9-records-empty","Btn Find doctor R9","B1:S1-results"),
  # ---- medicines
  ("M1-meds","Btn Open med M2","M2-med"),("M1-meds","Btn Open med M2b","M2-med"),
@@ -1793,7 +2067,10 @@ TRN = [
  ("P0-profile","Btn Sign out","AUTH"),
  ("P2-details","Btn Back","P0-profile"),("P2-details","Btn Save details P2","P0-profile"),
  ("P2-details","Btn Open meds P2","M1-meds"),("P2-details","Btn Open vaccines","R3-lab"),
- ("P3-dependants","Btn Open add dependant P4","P4-add-dependant"),("P3-dependants","Btn Back","P0-profile"),
+ ("P3-dependants","Btn Open add dependant P4","P3b-family"),
+ ("P3b-family","Btn Back dependants P3b","P3-dependants"),
+ ("P3b-family","Btn Subscribe family P3b","P4-add-dependant"),
+ ("P3b-family","Btn Add one P3b","P4-add-dependant"),("P3b-family","Btn Back","P3-dependants"),("P3-dependants","Btn Back","P0-profile"),
  ("P3-dependants","Btn Book for Chidi","B1:S1-results"),("P3-dependants","Btn Book for Grace","B1:S1-results"),
  ("P3-dependants","Btn Manage Chidi","P2-details"),("P3-dependants","Btn Manage Grace","P2-details"),
  ("P4-add-dependant","Btn Save dependant P4","P3-dependants"),("P4-add-dependant","Btn Back","P3-dependants"),
@@ -1801,11 +2078,16 @@ TRN = [
  ("P6-notifs","Btn Back","P0-profile"),("P6-notifs","Btn Save notifs P6","P0-profile"),
  ("P7-language","Btn Back","P0-profile"),("P7-language","Btn Save language P7","P0-profile"),
  ("P8-privacy","Btn Back","P0-profile"),("P8-privacy","Btn Open access R6","R6-access"),
- ("P8-privacy","Btn Open delete P9","P9-delete"),
- ("P9-delete","Btn Back","P8-privacy"),("P9-delete","Btn Confirm delete","AUTH"),
+ ("P8-privacy","Btn Open delete P9","P9-delete"),("P8-privacy","Btn Print summary","R10-summary"),
+ ("P9-delete","Btn Back","P8-privacy"),("P9-delete","Btn Confirm delete","P9b-delete-confirm"),
+ ("P9b-delete-confirm","Btn Confirm delete","AUTH"),("P9b-delete-confirm","Btn Back","P9-delete"),
  ("P9-delete","Btn Pause account","P8-privacy"),("P9-delete","Btn Open notifs P6","P6-notifs"),
  ("P9-delete","Btn Open access R6","R6-access"),
  # ---- alerts & states
+ ("N0-panel","Btn Open notifs N1","N1-notifs"),("N0-panel","Btn Close notif panel","B1:H1-home"),
+ ("N0-panel","Btn Mark all read","N2-notifs-empty"),("N0-panel","Btn Notif visit","V4-visit"),
+ ("N0-panel","Btn Notif audit","R6-access"),("N0-panel","Btn Notif med","M1-meds"),
+ ("N0-panel","Btn Notif refill","M1-meds"),("N0-panel","Btn Notif result","R3-lab"),
  ("N1-notifs","Btn Notif visit","V4-visit"),("N1-notifs","Btn Notif audit","R6-access"),
  ("N1-notifs","Btn Notif med","M1-meds"),("N1-notifs","Btn Notif refill","M1-meds"),
  ("N1-notifs","Btn Notif result","R3-lab"),("N1-notifs","Btn Notif moved","V5-reschedule"),
