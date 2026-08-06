@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
-"""Medra — Doctor app, batch 1.
+"""Medra — Doctor / Medical Practitioner module (rebuild).
 
-Built from the 1 August product review, where the doctor flow was asked to be "much more
-robust". The spine is: see today's queue → read the file before you walk in → consult and write
-the note as you go → decide what the patient sees → sign it. Everything else (schedule, fees,
-meeting links, contact channels, earnings) exists to serve that spine.
+Covers the PRD's doctor requirements end to end (§7 Modules 2/4/6/7/8, §10.2 D1–D5, §11.3–11.4),
+everything raised about the doctor in the 1 August review, and the AARRR loop a two-sided
+marketplace needs on the supply side:
 
-23 screens × desktop 1440 + mobile 390 = 46 frames, plus the doctor component states.
+  Acquisition  G2 verification · R3 booking link, QR poster, patient import · G3 invite a colleague
+  Activation   G1 setup checklist with a real "you cannot be booked until" gate · X2 first-week empty
+  Retention    K1 queue · P4 follow-ups and recalls · P5 messages · R1 insights · R2 reviews · X3 alerts
+  Referral     G3 invite a colleague · C6 refer a patient onward · R3 share your booking link
+  Revenue      S2 fees · S5 earnings and payouts · S6 subscription, trial countdown, Paystack · X1 locked
+
+45 screens × desktop 1440 + mobile 390 = 90 frames. **Mobile carries the same information as
+desktop** — it is a scrolling frame, not a trimmed one.
 """
 import os, re, json, sys, shutil
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -23,1029 +29,2319 @@ def add(page, fid, d, m):
     ORDER.setdefault(page, []).append(fid)
 
 PAGE_FIGMA = {
-  "Today":        "Medra Doctor — Today &amp; Schedule",
-  "Consultation": "Medra Doctor — Consultation",
-  "Patients":     "Medra Doctor — Patients",
-  "Practice":     "Medra Doctor — Practice &amp; Earnings",
-  "States":       "Medra Doctor — States",
-  "Components":   "Medra Doctor — Components",
+  "Start":     "Medra Doctor — 1 Getting Started",
+  "Today":     "Medra Doctor — 2 Today &amp; Schedule",
+  "Consult":   "Medra Doctor — 3 Consultation",
+  "Patients":  "Medra Doctor — 4 Patients",
+  "Practice":  "Medra Doctor — 5 Practice &amp; Money",
+  "Growth":    "Medra Doctor — 6 Growth",
+  "States":    "Medra Doctor — 7 States &amp; Edge Cases",
+  "Components":"Medra Doctor — 8 Components",
 }
-SIDE = {"Today": 0, "Schedule": 1, "Patients": 2, "Notes": 3, "Earnings": 4, "Settings": 5}
-TAB  = {"Today": 0, "Schedule": 1, "Patients": 2, "Earnings": 3, "Settings": 4}
+NAV = {"Today": 0, "Requests": 1, "Schedule": 2, "Patients": 3, "Consults": 4,
+       "Money": 5, "Growth": 6, "Settings": 7}
+MTAB = {"Today": 0, "Requests": 1, "Consult": 2, "Patients": 3, "More": 4}
+BADGES = {"Requests": 6, "Consults": 2}
 
 # =====================================================================================
-# TODAY & SCHEDULE
+# CONTEXTUAL PANELS — one per section. This column is the reason the app can be dense
+# without being cluttered: it always holds what that section needs next.
 # =====================================================================================
-K_STATS = rows_of([
-    stat_card("users", "8", "Patients today", "3 seen, 5 to go", "tint-teal.jpg"),
-    stat_card("clock", "6 min", "Median wait", "Better than last week", "tint-mint.jpg"),
-    stat_card("video", "5", "Virtual", "3 in person", "tint-ocean.jpg"),
-    stat_card("banknote", "₦96,000", "Earned today", "Paid out Friday", "tint-navy.jpg"),
-], 4, 16)
+PANEL_TODAY = panel("Thursday 14 Aug",
+    dcard(progress_row("Clinic progress", "3 of 8", 38, "teal")
+          + kpi_line("Running", "4 min early", "ok") + kpi_line("Median wait", "6 min")
+          + kpi_line("Finish by", "16:40"), p=14, gap=4)
+    + dcard(eyerow("Needs you")
+            + drow("flask-conical", "Results to release", value="3", name="Open results P7", tone="warn", chevron=False)
+            + drow("package", "Refill requests", value="2", name="Open refills P6", tone="warn", chevron=False)
+            + drow("notebook-pen", "Unsigned notes", value="1", name="Open drafts C9", tone="err", chevron=False), p=14, gap=2),
+    foot=dbtn("I am running late", "Open late K3", "timer", "warn", full=True, size="sm")
+         + dbtn("Block the next 15 min", "Open timeoff K8", "calendar-x", "ghost", full=True, size="sm"))
 
-NOW = now_card("avatar-2.jpg", "Amara Okeke", "34 years · MDR-8842-19 · seen 3 times",
-               "Hypertension follow-up. Home readings around 138/88 for two weeks.", "10:30")
+PANEL_REQ = panel("Inbox",
+    dcard(drow("calendar-clock", "Booking requests", value="3", name="Open requests K2", tone="info", chevron=False)
+          + drow("package", "Refills", value="2", name="Open refills P6", chevron=False)
+          + drow("flask-conical", "Results to release", value="3", name="Open results P7", tone="warn", chevron=False)
+          + drow("message-square-text", "Access replies", value="1", name="Open patients P1", chevron=False)
+          + drow("message-circle", "Messages", value="4", name="Open messages P5", chevron=False), p=14, gap=2)
+    + alert_strip("clock", "Reply within a day",
+                  "Members are told you answer refills and requests within 24 hours. Two are close to that.", "warn"))
 
-QUEUE = (queue_row("11:00", "avatar-6.jpg", "Chidi Okeke", "6 years · MDR-8842-20 · guardian: Amara Okeke",
-                   "Cough for four days, no fever", "confirmed", "In person", "Q Chidi")
-         + queue_row("11:30", "avatar-1.jpg", "Musa Ibrahim", "51 years · MDR-7714-02 · first visit",
-                     "Chest tightness when climbing stairs", "confirmed", "Virtual", "Q Musa")
-         + queue_row("12:00", "avatar-3.jpg", "Grace Okeke", "68 years · MDR-8842-21 · diabetes, hypertension",
-                     "Review after blood sugar test", "confirmed", "In person", "Q Grace")
-         + queue_row("14:00", "avatar-5.jpg", "Tunde Bello", "44 years · MDR-6620-88",
-                     "Results discussion", "pending", "Virtual", "Q Tunde"))
+PANEL_SCHED = panel("Schedule",
+    dcard(eyerow("This week") + kpi_line("Booked", "24") + kpi_line("Open", "9")
+          + kpi_line("Cancelled", "2") + kpi_line("No-shows", "1", "warn"), p=14, gap=3)
+    + dcard(eyerow("Next free slot") + T(20, "bold", "var:text/strong", "Today 15:00")
+            + T(11, "regular", "var:text/muted", "Then 15:30 and 16:00", w="fill")
+            + dbtn("Offer it to my waiting list", "Offer waitlist", "send", "ghost", full=True, size="sm"), p=14, gap=8),
+    foot=dbtn("Edit my hours", "Open availability K7", "clock", "navy", full=True, size="sm")
+         + dbtn("Block time off", "Open timeoff K8", "calendar-x", "ghost", full=True, size="sm"))
 
-K_ATTENTION = group_card("Needs you", [
-    list_row("flask-conical", "3 results waiting to be released", sub="Musa Ibrahim, Grace Okeke, Amara Okeke", name="Open results", tint="var:state/warning-bg"),
-    list_row("package", "2 refill requests", sub="Oldest is 19 hours old — members are told you reply within a day", name="Open refills", tint="var:state/warning-bg"),
-    list_row("notebook-pen", "1 unsigned note", sub="Yesterday, 16:40 — the patient cannot see it until you sign", name="Open unsigned", tint="var:state/error-bg"),
-], footer="Anything here is blocking a patient. Everything else can wait until after clinic.")
+PANEL_PATIENTS = panel("Patients",
+    dcard(eyerow("Lists") + drow("users", "Everyone", value="42", name="Filter all", chevron=False)
+          + drow("calendar-check", "Seen this week", value="8", name="Filter week", chevron=False)
+          + drow("flask-conical", "Owing a test", value="5", name="Filter owing", tone="warn", chevron=False)
+          + drow("repeat", "Due a follow-up", value="7", name="Open followups P4", tone="warn", chevron=False)
+          + drow("circle-slash", "Missed a visit", value="2", name="Filter noshow", chevron=False), p=14, gap=2)
+    + dcard(eyerow("Recently opened") + drow("clipboard-list", "Amara Okeke", sub="Today, 09:12", name="Open Amara")
+            + drow("clipboard-list", "Grace Okeke", sub="3 Aug", name="Open Grace"), p=14, gap=2))
 
-K_TIMELINE = group_card("Rest of the day", [
-    list_row("coffee", "13:00 — Break", value="1 hour", sub="Blocked, nobody can book it", name="Break row", chevron=False),
-    list_row("video", "14:00 — Tunde Bello", value="Virtual", sub="Awaiting his payment — slot released at 13:30 if unpaid", name="Q Tunde"),
-    list_row("circle-plus", "15:00 — Open", sub="Bookable right now", name="Open slot 15", chevron=False),
-    list_row("circle-plus", "15:30 — Open", sub="Bookable right now", name="Open slot 1530", chevron=False),
+CONSULT_WHO = (f'<Frame w="fill" flex="row" gap={{10}} items="center">'
+               f'<Image image="assets/img/avatar-2.jpg" w={{36}} h={{36}} rounded={{11}} />'
+               f'<Frame grow={{1}} flex="col" gap={{1}}>{T(13,"semibold","var:text/strong","Amara Okeke")}'
+               f'{T(10,"regular","var:text/muted","MDR-8842-19")}</Frame></Frame>')
+PANEL_CONSULT = panel("Consultation",
+    dcard(eyerow("With you now") + CONSULT_WHO + kpi_line("Elapsed", "12:04", "err")
+          + kpi_line("Booked for", "30 min"), p=14, gap=8)
+    + dcard(eyerow("Add to this visit") + drow("pill", "Prescription", name="Open prescribe C3")
+            + drow("flask-conical", "Test order", name="Open tests C4")
+            + drow("upload", "Result or file", name="Open upload C5")
+            + drow("share-2", "Refer to a colleague", name="Open refer C6")
+            + drow("calendar-plus", "Follow-up", name="Open followups P4"), p=14, gap=2),
+    foot=dbtn("Finish and review", "Open sign C7", "arrow-right", "navy", full=True, size="sm"))
+
+PANEL_MONEY = panel("Money",
+    dcard(eyerow("Next payout") + T(24, "bold", "var:text/strong", "₦129,750")
+          + T(11, "regular", "var:text/muted", "Friday 22 August · Zenith ****4421", w="fill"), p=14, gap=6)
+    + dcard(eyerow("This month") + kpi_line("Consultations", "32") + kpi_line("Collected", "₦486,000")
+            + kpi_line("Refunded", "₦15,000", "muted") + kpi_line("Net", "₦471,000", "ok"), p=14, gap=3)
+    + alert_strip("sparkles", "Free trial · 12 days left",
+                  "Your practice subscription starts 26 August unless you cancel.", "info"),
+    foot=dbtn("Subscription and billing", "Open billing S6", "credit-card", "ghost", full=True, size="sm"))
+
+PANEL_GROWTH = panel("Growth",
+    dcard(progress_row("Profile completeness", "85%", 85, "teal")
+          + T(11, "regular", "var:text/muted", "Add two more languages and a clinic photo to reach 100%.", w="fill"), p=14, gap=6)
+    + dcard(eyerow("Last 30 days") + kpi_line("Profile views", "486") + kpi_line("Booked", "32", "ok")
+            + kpi_line("View to booking", "6.6%") + kpi_line("Repeat patients", "61%", "ok"), p=14, gap=3),
+    foot=dbtn("Share my booking link", "Open link R3", "share-2", "navy", full=True, size="sm")
+         + dbtn("Invite a colleague", "Open invite G3", "user-plus", "ghost", full=True, size="sm"))
+
+SETTINGS_NAV = [("circle-user", "Public profile", "Open profile S1"), ("banknote", "Types and fees", "Open fees S2"),
+                ("video", "Virtual visits", "Open virtual S3"), ("message-circle", "How patients reach me", "Open contact S4"),
+                ("wallet", "Earnings and payouts", "Open earnings S5"), ("credit-card", "Subscription and billing", "Open billing S6"),
+                ("hospital", "Where I practise", "Open practice S7"), ("shield-check", "Account and security", "Open security S8")]
+PANEL_SETTINGS = panel("Settings",
+    dcard("".join(drow(ic, label, name=nm) for ic, label, nm in SETTINGS_NAV), p=12, gap=2),
+    foot=dbtn("Sign out", "Sign out", "log-out", "ghost", full=True, size="sm"))
+
+PANEL_START = panel("Getting started",
+    dcard(progress_row("Setup", "4 of 7", 57, "teal")
+          + T(11, "regular", "var:text/muted", "You cannot receive bookings until the three required steps are done.", w="fill"), p=14, gap=6)
+    + dcard(eyerow("Required") + drow("badge-check", "MDCN verified", value="Pending", name="Open verify G2", tone="warn", chevron=False)
+            + drow("clock", "Working hours", value="Done", name="Open availability K7", tone="ok", chevron=False)
+            + drow("banknote", "Fees", value="Done", name="Open fees S2", tone="ok", chevron=False), p=14, gap=2))
+
+PANEL_STATES = panel("Diagnostics",
+    dcard(eyerow("Session") + kpi_line("Signed in", "Today 07:58") + kpi_line("Device", "Chrome · Windows")
+          + kpi_line("Last sync", "2 minutes ago") + kpi_line("Build", "2026.8.14"), p=14, gap=3)
+    + dcard(eyerow("If something breaks") + drow("refresh-cw", "Reload the app", name="Retry X5", chevron=False)
+            + drow("message-square-text", "Message Medra support", sub="Median reply 4 minutes", name="Open help")
+            + drow("phone-call", "Call the clinic line", sub="+234 809 112 4477", name="Call clinic", chevron=False), p=14, gap=2))
+
+# =====================================================================================
+# 1. GETTING STARTED — activation and acquisition
+# =====================================================================================
+G1_STEPS = dgroup("What is left", [
+    checklist_row(True, "Register with your MDCN number", "MDCN 71482 · submitted 4 February", "Step mdcn"),
+    checklist_row(True, "Set your working hours", "Mon–Thu 09:00–17:00, Wed half day, Sat virtual", "Step hours"),
+    checklist_row(True, "Set your consultation types and fees", "3 types, ₦8,000 to ₦20,000", "Step fees"),
+    checklist_row(True, "Add a photo and a bio", "Profiles with a photo are booked about twice as often", "Step photo"),
+    checklist_row(False, "Connect your video link", "Needed before you can accept virtual bookings", "Step video"),
+    checklist_row(False, "Choose how patients reach you", "WhatsApp, email or phone between visits", "Step contact"),
+    checklist_row(False, "Add your payout account", "Where Medra sends what patients pay you", "Step payout"),
+], footer="The first three are required to appear in search. The rest make you easier to choose.")
+
+G1_GATE = alert_strip("triangle-alert", "You are not bookable yet",
+    "MDCN verification is still running. Nothing you set up now is wasted — your profile goes live the moment a reviewer signs it off.",
+    "warn", dbtn("Check status", "Open verify G2", None, "ghost", grow=False, size="sm"))
+
+G1_VALUE = dgroup("What happens once you are live", [
+    drow("search", "You appear in search", sub="Members filter by specialty, availability, price and language", name="Value search", chevron=False),
+    drow("calendar-check", "Bookings arrive with the reason for the visit", sub="You know what it is about before it starts", name="Value reason", chevron=False),
+    drow("clipboard-list", "You see the history the member shared", sub="Allergies and medicines always; the rest with permission", name="Value history", chevron=False),
+    drow("banknote", "Payment is collected before the visit", sub="No cash conversation, no chasing", name="Value paid", chevron=False),
+])
+
+G1_STATS = rows_of([
+    stat_tile("users", "1,240", "Members in Abuja", "Looking for care this month", "teal", "Stat members"),
+    stat_tile("search", "38", "Cardiology searches", "Your area, last 7 days", "info", "Stat searches"),
+    stat_tile("clock", "4 days", "To first booking", "Median, complete profile", "ok", "Stat first"),
+], 3, 14)
+
+add("Start", "G1-checklist",
+    dr_desk("Doctor · Start — G1 Setup Checklist", ["Getting started", "Setup"],
+        f'{dhead([("Three steps from",False),("your first patient",True)],26)}'
+        f'{T(14,"regular","var:text/muted","You have done four. The rest take about six minutes in total.",w="fill")}'
+        f'{G1_GATE}{G1_STATS}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{G1_STEPS}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{G1_VALUE}'
+        f'{dcta("Connect my video link","Open virtual S3","video")}</Frame></Frame>',
+        NAV["Today"], PANEL_START, urgent=0),
+    dr_mob("Doctor · Start — G1 Setup Checklist · Mobile",
+        dr_head("Getting started", "4 of 7 done", back=False,
+                stats=[("4/7", "Setup"), ("Pending", "MDCN"), ("0", "Bookings")]),
+        f'{G1_GATE}{G1_STEPS}{G1_VALUE}'
+        f'{rows_of([stat_tile("users","1,240","Members in Abuja","This month","teal","Stat members"),stat_tile("search","38","Cardiology searches","Last 7 days","info","Stat searches")],2,10)}'
+        f'{dcta("Connect my video link","Open virtual S3","video")}',
+        MTAB["Today"]))
+
+G2_STEPS = dgroup("Where your application is", [
+    prep_step(1, "Details received", "4 February, 09:12", done=True),
+    prep_step(2, "MDCN register checked", "4 February, 11:40 — MDCN 71482 found, active, no restrictions", done=True),
+    prep_step(3, "Identity confirmed", "A Medra reviewer is comparing your ID with the register. Started 3 hours ago."),
+    prep_step(4, "Profile goes live", "Usually within 48 hours of step 3, often the same day"),
+], footer="Every doctor is checked by a person. It is slower, and it is why a member trusts a Medra booking.")
+
+G2_DOCS = dgroup("What we have", [
+    drow("badge-check", "MDCN certificate", value="Accepted", sub="Uploaded 4 Feb · expires 31 Dec 2026", name="Doc mdcn", tone="ok"),
+    drow("id-card", "Government ID", value="Under review", sub="NIN slip · uploaded 4 Feb", name="Doc id", tone="warn"),
+    drow("hospital", "Proof of practice", value="Optional", sub="A letter from Garki Medical Centre would speed this up", name="Doc practice"),
+    drow("upload", "Add another document", sub="Anything that helps us confirm it is you", name="Doc add", chevron=False),
+])
+
+G2_MEANWHILE = dgroup("Worth doing while you wait", [
+    drow("circle-user", "Finish your public profile", value="85%", name="Open profile S1"),
+    drow("video", "Connect your video link", name="Open virtual S3", tone="warn"),
+    drow("message-circle", "Choose how patients reach you", name="Open contact S4"),
+    drow("wallet", "Add your payout account", name="Open earnings S5"),
+], footer="All of it goes live with you. Nothing needs redoing after approval.")
+
+G2_FAQ = dgroup("Common questions", [
+    drow("circle-help", "I entered the wrong MDCN number", sub="Fix it and the check restarts immediately — you keep your place", name="Faq mdcn", chevron=False),
+    drow("circle-help", "How long does this usually take?", sub="Median 26 hours on a weekday, longer over a weekend", name="Faq time", chevron=False),
+    drow("circle-help", "Can I see patients before approval?", sub="No. An unverified profile is invisible to members, by design", name="Faq before", chevron=False),
+    drow("message-square-text", "Ask the Medra team", sub="Median reply 4 minutes", name="Open help"),
+])
+
+G2_HERO = (f'<Frame w="fill" flex="col" gap={{13}} p={{22}} rounded={{18}} image="assets/img/btn-navy.jpg" overflow="hidden">'
+           f'<Frame w="fill" flex="row" justify="between" items="center">'
+           f'{T(11,"semibold","var:brand/teal","VERIFICATION IN PROGRESS")}{status_pill("pending","Step 3 of 4")}</Frame>'
+           f'{T(26,"bold","var:text/on-dark","We are checking your licence")}'
+           f'{T(14,"regular","var:text/on-dark-muted","Started 3 hours ago. The median for a weekday application is 26 hours.",w="fill")}'
+           f'{bar(65,"teal",10)}</Frame>')
+
+add("Start", "G2-verification",
+    dr_desk("Doctor · Start — G2 Verification", ["Getting started", "Verification"],
+        f'{G2_HERO}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{G2_STEPS}{G2_DOCS}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{G2_MEANWHILE}{G2_FAQ}</Frame></Frame>',
+        NAV["Today"], PANEL_START, urgent=0),
+    dr_mob("Doctor · Start — G2 Verification · Mobile",
+        dr_head("Verification", "Step 3 of 4 · started 3 hours ago",
+                stats=[("26h", "Median"), ("3h", "Elapsed"), ("Active", "MDCN")]),
+        f'{G2_STEPS}{G2_DOCS}{G2_MEANWHILE}{G2_FAQ}',
+        MTAB["Today"]))
+
+G3_HOW = dgroup("How it works", [
+    prep_step(1, "Send them your invite", "WhatsApp, SMS or a copied link"),
+    prep_step(2, "They register and get verified", "Same MDCN check, usually within a day"),
+    prep_step(3, "You both get a free month", "Credited after their first completed consultation"),
+], footer="Indicative — the referral reward is still being confirmed with the pilot cohort.")
+
+G3_SENT = dgroup("Invitations you have sent", [
+    patient_row("avatar-1.jpg", "Dr. Chuka Eze", "MDCN 60112", "General practice · Wuse Clinic", "Joined", "Inv Chuka", tag="completed"),
+    patient_row("avatar-5.jpg", "Dr. Tunde Bello", "Invited 2 Aug", "Neurology · Asokoro", "Verifying", "Inv Tunde", tag="pending"),
+    patient_row("avatar-3.jpg", "Dr. Kemi Adeyemi", "Invited 28 Jul", "Paediatrics · Maitama", "No reply", "Inv Kemi", tag="missed"),
+], footer="One month credited so far. The colleague is never charged for accepting.")
+
+G3_MSG = dcard(
+    eyerow("The message they get")
+    + f'<Frame w="fill" flex="col" gap={{9}} p={{15}} rounded={{13}} bg="var:state/success-bg">'
+    + T(13, "regular", "var:text/default",
+        "“Dr. Ngozi Okafor invited you to Medra. Patients in Abuja book verified doctors on it, pay before the visit, and carry their own records between clinics. Your first month is free. — medra.ng/i/ngozi-okafor”", w="fill")
+    + '</Frame>'
+    + field("Add a personal line (optional)", "message-square-text", "You mentioned the no-show problem — this fixed it for me."))
+
+add("Start", "G3-invite",
+    dr_desk("Doctor · Start — G3 Invite a Colleague", ["Growth", "Invite a colleague"],
+        f'{dhead([("The doctors you trust,",False),("on the same system",True)],26)}'
+        f'{T(14,"regular","var:text/muted","Referrals are how the supply side of a marketplace actually grows. Yours are tracked here.",w="fill")}'
+        f'{rows_of([stat_tile("user-plus","3","Invited","Since July","teal","Stat invited"),stat_tile("badge-check","1","Joined","Dr. Chuka Eze","ok","Stat joined"),stat_tile("sparkles","1 month","Credited","Practice plan","info","Stat credited"),stat_tile("share-2","2","Patients referred to you","By Dr. Eze","ocean","Stat referred")],4,14)}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{G3_MSG}{G3_SENT}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{G3_HOW}'
+        f'{dcta("Send on WhatsApp","Send invite whatsapp","message-circle")}'
+        f'{dbtn("Copy my invite link","Copy invite link","copy","ghost",full=True)}</Frame></Frame>',
+        NAV["Growth"], PANEL_GROWTH, urgent=0),
+    dr_mob("Doctor · Start — G3 Invite a Colleague · Mobile",
+        dr_head("Invite a colleague", "3 invited · 1 joined",
+                stats=[("3", "Invited"), ("1", "Joined"), ("1 mo", "Credited")]),
+        f'{G3_MSG}{G3_HOW}{G3_SENT}'
+        f'{dcta("Send on WhatsApp","Send invite whatsapp","message-circle")}'
+        f'{dbtn("Copy my invite link","Copy invite link","copy","ghost",full=True)}',
+        MTAB["More"]))
+
+# =====================================================================================
+# 2. TODAY & SCHEDULE
+# =====================================================================================
+NOW = now_card("avatar-2.jpg", "Amara Okeke", "34 · MDR-8842-19 · 4th visit with you",
+               "Hypertension follow-up. Home readings 138/88 for two weeks, afternoon headaches.", "10:30")
+NOW_M = now_card("avatar-2.jpg", "Amara Okeke", "34 · MDR-8842-19 · 4th visit",
+                 "Hypertension follow-up. Home readings 138/88 for two weeks.", "10:30", mobile=True)
+
+Q_CHIDI = dict(time="11:00", avatar="avatar-6.jpg", who="Chidi Okeke",
+               meta="6 years · MDR-8842-20", reason="Cough for four days, no fever",
+               kind="confirmed", vtype="In person", name="Q Chidi",
+               flags=[("baby", "Paediatric", "info"), ("user-check", "Guardian booking", "info")])
+Q_MUSA = dict(time="11:30", avatar="avatar-1.jpg", who="Musa Ibrahim",
+              meta="51 years · MDR-7714-02 · first visit", reason="Chest tightness climbing stairs",
+              kind="confirmed", vtype="Virtual", name="Q Musa",
+              flags=[("triangle-alert", "Possible cardiac — flagged", "err"), ("sparkles", "New patient", "info")])
+Q_GRACE = dict(time="12:00", avatar="avatar-3.jpg", who="Grace Okeke",
+               meta="68 years · MDR-8842-21 · diabetes, hypertension", reason="Review after blood sugar test",
+               kind="confirmed", vtype="In person", name="Q Grace",
+               flags=[("flask-conical", "Result ready to discuss", "warn")])
+Q_TUNDE = dict(time="14:00", avatar="avatar-5.jpg", who="Tunde Bello",
+               meta="44 years · MDR-6620-88", reason="Results discussion",
+               kind="pending", vtype="Virtual", name="Q Tunde",
+               flags=[("credit-card", "Unpaid — slot released 13:30", "warn")])
+
+QUEUE = "".join(queue_row(**q) for q in (Q_CHIDI, Q_MUSA, Q_GRACE, Q_TUNDE))
+QUEUE_M = "".join(queue_row(**q, mobile=True) for q in (Q_CHIDI, Q_MUSA, Q_GRACE, Q_TUNDE))
+
+K1_STATS = rows_of([
+    stat_tile("users", "8", "Booked today", "3 seen · 5 to go", "teal", "Stat today"),
+    stat_tile("clock", "6 min", "Median wait", "You are 4 minutes early", "ok", "Stat wait"),
+    stat_tile("video", "5", "Virtual", "3 in person", "info", "Stat virtual"),
+    stat_tile("banknote", "₦96,000", "Collected today", "In Friday's payout", "navy", "Stat money"),
+], 4, 14)
+
+K1_DONE = dgroup("Already seen", [
+    timeline_entry("09", "00", "check-check", "Fatima Bello", "Signed 09:28 · prescription issued", "Open done 1", "ok", "completed"),
+    timeline_entry("09", "30", "check-check", "Emeka Nwosu", "Signed 09:56 · referred to orthopaedics", "Open done 2", "ok", "completed"),
+    timeline_entry("10", "00", "circle-slash", "Blessing Ade", "Did not arrive · marked no-show 10:12", "Open outcome K5", "warn", "missed"),
+], footer="Marking a no-show releases the slot and tells the member. Two no-shows in 60 days and Medra asks them to prepay.")
+
+K1_LATER = dgroup("Rest of the day", [
+    drow("coffee", "13:00 — Break", value="1 hour", sub="Blocked, nobody can book it", name="Break row", chevron=False),
+    drow("video", "14:00 — Tunde Bello", value="Unpaid", sub="Slot released at 13:30 unless he pays", name="Q Tunde", tone="warn"),
+    drow("circle-plus", "15:00 — Open", sub="Bookable now · offer it to your waiting list", name="Open slot 15"),
+    drow("circle-plus", "15:30 — Open", sub="Bookable now", name="Open slot 1530"),
+    drow("circle-plus", "16:00 — Open", sub="Last slot of the day", name="Open slot 16"),
 ])
 
 add("Today", "K1-today",
-    dr_desk("Doctor · Today — K1 Queue",
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{16}}>{NOW}{K_STATS}'
-        f'<Frame w="fill" flex="col" gap={{11}}>'
+    dr_desk("Doctor · Today — K1 Queue", ["Today", "Thursday 14 August"],
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{NOW}{K1_STATS}'
         f'<Frame w="fill" flex="row" justify="between" items="center">'
-        f'{T(17,"bold","var:text/strong","Waiting")}'
-        f'{mini_btn("See the whole week","Nav Schedule","calendar-days","ghost",grow=False)}</Frame>'
-        f'{QUEUE}</Frame></Frame>'
-        f'<Frame w={{380}} flex="col" gap={{16}}>{K_ATTENTION}{K_TIMELINE}</Frame></Frame>',
-        SIDE["Today"]),
+        f'{T(16,"bold","var:text/strong","Waiting")}'
+        f'<Frame flex="row" gap={{9}} items="center">'
+        f'{dbtn("Requests","Open requests K2","inbox","warn",grow=False,size="sm")}'
+        f'{dbtn("Whole week","Open week K6","calendar-days","ghost",grow=False,size="sm")}</Frame></Frame>'
+        f'{QUEUE}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{K1_LATER}{K1_DONE}</Frame></Frame>',
+        NAV["Today"], PANEL_TODAY, badges=BADGES),
     dr_mob("Doctor · Today — K1 Queue · Mobile",
-        dr_greet()
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{8}}>'
-          f'{NOW}'
-          f'<Frame w="fill" flex="row" justify="between" items="center">'
-          f'{T(16,"bold","var:text/strong","Waiting")}'
-          f'{T(12,"regular","var:text/muted","5 more today")}</Frame>'
-          f'{queue_row_m("11:00","avatar-6.jpg","Chidi Okeke","6 years · MDR-8842-20","Cough for four days, no fever","confirmed","In person","Q Chidi")}'
-          f'{queue_row_m("11:30","avatar-1.jpg","Musa Ibrahim","51 years · first visit","Chest tightness on stairs","confirmed","Virtual","Q Musa")}'
-          f'</Frame>',
-        nav=dr_bottom_nav(TAB["Today"])))
+        dr_head("Thursday 14 Aug", "Dr. Okafor · 4 minutes early", back=False,
+                stats=[("3/8", "Seen"), ("6 min", "Wait"), ("₦96k", "Today")],
+                chips=[("Waiting 5", "Filter waiting", True), ("Done 3", "Filter done", False), ("Requests 3", "Open requests K2", False)]),
+        f'{NOW_M}'
+        f'{rows_of([stat_tile("video","5","Virtual","3 in person","info","Stat virtual"),stat_tile("banknote","₦96,000","Collected","Friday payout","navy","Stat money")],2,10)}'
+        f'{T(15,"bold","var:text/strong","Waiting")}{QUEUE_M}{K1_LATER}{K1_DONE}',
+        MTAB["Today"]))
 
-# ---------------- K2 appointments
-K2_TABS = tabs(["Today", "This week", "Past"], 1, "Appt tab")
-K2_FILTERS = rows_of([
-    mini_btn("All", "Filter appt all", None, "navy"),
-    mini_btn("Virtual", "Filter appt virtual", "video", "ghost"),
-    mini_btn("In person", "Filter appt person", "hospital", "ghost"),
-    mini_btn("Unpaid", "Filter appt unpaid", "credit-card", "ghost"),
-], 4, 9)
+# ---------------- K2 booking requests (PRD D3: confirm / decline)
+def req_actions(name):
+    return [dbtn("Accept", "Accept " + name, "check", "navy", size="sm"),
+            dbtn("Another time", "Suggest " + name, "calendar-clock", "ghost", size="sm"),
+            dbtn("Decline", "Decline " + name, "x", "danger", size="sm")]
 
-WEEK = (f'<Frame w="fill" flex="row" gap={{10}} items="start">'
-        + day_col("Mon", "18", [slot_chip("09:00", "booked"), slot_chip("09:30", "booked"),
-                                slot_chip("10:00", "open"), slot_chip("10:30", "open")])
-        + day_col("Tue", "19", [slot_chip("09:00", "booked"), slot_chip("09:30", "open"),
-                                slot_chip("10:00", "booked"), slot_chip("10:30", "booked")])
-        + day_col("Wed", "20", [slot_chip("09:00", "open"), slot_chip("09:30", "booked"),
-                                slot_chip("10:00", "booked"), slot_chip("10:30", "break")])
-        + day_col("Thu", "21", [slot_chip("09:00", "booked"), slot_chip("09:30", "booked"),
-                                slot_chip("10:00", "booked"), slot_chip("10:30", "booked")], today=True)
-        + day_col("Fri", "22", [slot_chip("09:00", "blocked"), slot_chip("09:30", "blocked"),
-                                slot_chip("10:00", "blocked"), slot_chip("10:30", "blocked")])
-        + day_col("Sat", "23", [slot_chip("10:00", "open"), slot_chip("10:30", "open"),
-                                slot_chip("11:00", "open"), slot_chip("11:30", "open")])
-        + '</Frame>')
+K2_BOOKINGS = dgroup("Booking requests · 3", [
+    request_row("calendar-clock", "Musa Ibrahim · MDR-7714-02",
+                "Fri 22 Aug, 09:00 · virtual · first visit · “Chest tightness when I climb stairs.” · paid ₦20,000",
+                "12 min ago", "Req Musa", "info", req_actions("Musa")),
+    request_row("calendar-clock", "Halima Sani · MDR-9012-44",
+                "Fri 22 Aug, 11:30 · in person · “Blood pressure check, my mother has hypertension.” · paid ₦15,000",
+                "1 hour ago", "Req Halima", "info", req_actions("Halima")),
+    request_row("calendar-clock", "Emeka Nwosu · MDR-4410-07",
+                "Sat 23 Aug, 10:00 · virtual · returning · “Follow-up on the knee.” · paid ₦15,000",
+                "3 hours ago", "Req Emeka", "warn", req_actions("Emeka")),
+], footer="Accepting confirms it instantly for the member. Declining refunds them in full, automatically, and we tell them why in your words.")
 
-K2_LEGEND = (f'<Frame w="fill" flex="row" gap={{18}} items="center">'
-             f'<Frame flex="row" gap={{7}} items="center"><Rect w={{12}} h={{12}} rounded={{4}} image="assets/img/btn-navy.jpg" overflow="hidden" />'
-             f'{T(11,"regular","var:text/muted","Booked")}</Frame>'
-             f'<Frame flex="row" gap={{7}} items="center"><Rect w={{12}} h={{12}} rounded={{4}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}} />'
-             f'{T(11,"regular","var:text/muted","Open")}</Frame>'
-             f'<Frame flex="row" gap={{7}} items="center"><Rect w={{12}} h={{12}} rounded={{4}} bg="var:state/warning-bg" />'
-             f'{T(11,"regular","var:text/muted","Break")}</Frame>'
-             f'<Frame flex="row" gap={{7}} items="center"><Rect w={{12}} h={{12}} rounded={{4}} bg="var:neutral/100" />'
-             f'{T(11,"regular","var:text/muted","Blocked — you are away")}</Frame></Frame>')
+K2_RULES = dgroup("Save yourself this screen", [
+    dtoggle("zap", "Auto-accept when the slot is open", sub="Anything inside your working hours is confirmed without asking you", on=False, name="Auto accept"),
+    dtoggle("user-check", "Auto-accept returning patients only", sub="People you have seen before, in an open slot", on=True, name="Auto returning"),
+    drow("clock", "Decline automatically after", value="24 hours", sub="Nobody is left waiting on you indefinitely", name="Auto decline"),
+], footer="Auto-accept is off by default. Most doctors turn on the returning-patients rule within a week.")
 
-add("Today", "K2-appointments",
-    dr_desk("Doctor · Schedule — K2 Week",
-        f'<Frame w="fill" flex="row" justify="between" items="center">'
-        f'{head_chip([("Week of",False),("18 August",True)],28)}'
-        f'<Frame flex="row" gap={{10}} items="center">'
-        f'{mini_btn("Block time off","Open timeoff K5","calendar-x","ghost",grow=False)}'
-        f'{mini_btn("Edit my hours","Open availability K4","clock","navy",grow=False)}</Frame></Frame>'
-        f'{K2_TABS}{K2_FILTERS}'
-        f'{group_card("", [WEEK, K2_LEGEND], p=20)}'
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{11}}>{T(16,"bold","var:text/strong","Thursday 21 August")}{QUEUE}</Frame>'
-        f'<Frame w={{340}} flex="col" gap={{16}}>'
-        f'{group_card("This week", [list_row("calendar-check","Booked",value="24",name="W booked",chevron=False),list_row("circle-plus","Still open",value="9",name="W open",chevron=False),list_row("circle-x","Cancelled",value="2",sub="Both more than a day ahead",name="W cancelled",chevron=False),list_row("circle-slash","No-shows",value="1",sub="Musa Ibrahim, 12 Aug",name="W noshow",chevron=False)])}'
-        f'{alert_strip("triangle-alert","Friday is fully blocked","You marked 22 August as time off. Nobody can book it — undo from “Block time off”.","warn")}</Frame></Frame>',
-        SIDE["Schedule"]),
-    dr_mob("Doctor · Schedule — K2 Week · Mobile",
-        dr_appbar("Schedule", back=False, right=circle_btn("calendar-x", "Open timeoff K5"))
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{8}}>'
-          f'{K2_TABS}{date_strip(3)}'
-          f'{T(15,"semibold","var:text/default","Thursday 21 August")}'
-          f'{queue_row_m("11:00","avatar-6.jpg","Chidi Okeke","6 years · MDR-8842-20","Cough for four days","confirmed","In person","Q Chidi")}'
-          f'{queue_row_m("11:30","avatar-1.jpg","Musa Ibrahim","51 years · first visit","Chest tightness","confirmed","Virtual","Q Musa")}'
-          f'{queue_row_m("12:00","avatar-3.jpg","Grace Okeke","68 years · diabetes","Blood sugar review","confirmed","In person","Q Grace")}</Frame>',
-        nav=dr_bottom_nav(TAB["Schedule"])))
+K2_OTHER = dgroup("Also waiting", [
+    drow("package", "2 refill requests", sub="Oldest 19 hours — Grace Okeke, metformin", name="Open refills P6", tone="warn"),
+    drow("flask-conical", "3 results to release", sub="One is out of range and should not go out unexplained", name="Open results P7", tone="warn"),
+    drow("message-square-text", "1 access reply", sub="Amara Okeke agreed to share her prescription history", name="Open patients P1", tone="ok"),
+    drow("message-circle", "4 unread messages", sub="Two are about appointments today", name="Open messages P5"),
+])
 
-# ---------------- K3 appointment detail / read the file first
-def stat_cell_dr(ic, big, small):
-    return (f'<Frame grow={{1}} flex="col" gap={{4}} items="center" py={{13}} px={{8}} rounded={{18}} bg="var:bg/subtle">'
-            f'{I(ic,16,A_IC)}{T(14,"bold","var:text/strong",big)}{T(11,"regular","var:text/muted",small)}</Frame>')
+add("Today", "K2-requests",
+    dr_desk("Doctor · Today — K2 Requests", ["Requests", "Booking requests"],
+        f'{dhead([("6 things",False),("need you",True)],26)}'
+        f'{T(14,"regular","var:text/muted","Members are told you reply within a day. Two of these are close to that.",w="fill")}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{K2_BOOKINGS}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{K2_OTHER}{K2_RULES}</Frame></Frame>',
+        NAV["Requests"], PANEL_REQ, urgent=6, badges=BADGES),
+    dr_mob("Doctor · Today — K2 Requests · Mobile",
+        dr_head("Requests", "6 need you", back=False,
+                stats=[("3", "Bookings"), ("2", "Refills"), ("3", "Results")],
+                chips=[("Bookings", "Filter bookings", True), ("Refills", "Open refills P6", False), ("Results", "Open results P7", False)]),
+        f'{K2_BOOKINGS}{K2_OTHER}{K2_RULES}',
+        MTAB["Requests"]))
 
-K3_HEAD = (f'<Frame w="fill" flex="col" gap={{15}} p={{20}} rounded={{28}} bg="var:bg/base" '
-           f'stroke="var:border/subtle" strokeWidth={{1}}>'
-           f'<Frame w="fill" flex="row" justify="between" items="center">{status_pill("soon","Starts in 6 minutes")}'
-           f'<Frame flex="row" gap={{7}} items="center" px={{10}} py={{6}} rounded={{999}} bg="var:state/info-bg">'
-           f'{I("video",12,A_IC)}{T(11,"medium","var:text/default","Virtual")}</Frame></Frame>'
-           f'<Frame w="fill" flex="row" gap={{15}} items="center">'
-           f'<Image image="assets/img/avatar-2.jpg" w={{68}} h={{68}} rounded={{22}} />'
-           f'<Frame grow={{1}} flex="col" gap={{4}}>{T(20,"bold","var:text/strong","Amara Okeke")}'
-           f'<Frame flex="row" gap={{9}} items="center">'
-           f'<Frame flex="row" px={{9}} py={{4}} rounded={{7}} bg="var:bg/muted">'
-           f'{T(11,"semibold","var:text/accent","MDR-8842-19")}</Frame>'
-           f'{T(13,"regular","var:text/muted","34 years · female · Garki, Abuja")}</Frame></Frame>'
-           f'{mini_btn("Open full record","Open record T2","clipboard-list","ghost",grow=False)}</Frame>'
-           f'<Frame w="fill" flex="row" gap={{10}}>'
-           f'{stat_cell_dr("droplet","O+","Blood group")}{stat_cell_dr("activity","AA","Genotype")}'
-           f'{stat_cell_dr("weight","74 kg","Weight")}{stat_cell_dr("history","3","Visits with you")}</Frame></Frame>')
+# ---------------- K3 running late
+K3_PICK = dgroup("How late are you?", [
+    radio_row("10 minutes", sub="Everyone after 11:00 shifts by 10 minutes", name="Late 10"),
+    radio_row("20 minutes", sub="Everyone after 11:00 shifts by 20 minutes", on=True, name="Late 20"),
+    radio_row("45 minutes", sub="We will suggest moving the last two patients", name="Late 45"),
+    radio_row("Something else", sub="Pick a time and we work out the knock-on", name="Late custom"),
+])
+K3_MSG = dcard(eyerow("What they receive")
+    + f'<Frame w="fill" flex="col" gap={{9}} p={{15}} rounded={{13}} bg="var:state/warning-bg">'
+    + T(13, "regular", "var:text/default",
+        "“Dr. Okafor is running about 20 minutes behind this morning. Your 11:00 will start closer to 11:20. Nothing to do — we will message again if it changes.”", w="fill")
+    + '</Frame>'
+    + field("Add a line of your own (optional)", "message-square-text", "An emergency came in first thing — thank you for your patience.")
+    + dtoggle("message-circle", "Send on WhatsApp and SMS", sub="Reaches people already on their way", on=True, name="Late channels"))
 
-K3_HEAD_M = (f'<Frame w="fill" flex="col" gap={{13}} p={{16}} rounded={{24}} bg="var:bg/base" '
-             f'stroke="var:border/subtle" strokeWidth={{1}}>'
-             f'<Frame w="fill" flex="row" justify="between" items="center">{status_pill("soon","In 6 minutes")}'
-             f'<Frame flex="row" gap={{6}} items="center" px={{10}} py={{5}} rounded={{999}} bg="var:state/info-bg">'
-             f'{I("video",11,A_IC)}{T(10,"medium","var:text/default","Virtual")}</Frame></Frame>'
-             f'<Frame w="fill" flex="row" gap={{13}} items="center">'
-             f'<Image image="assets/img/avatar-2.jpg" w={{54}} h={{54}} rounded={{18}} />'
-             f'<Frame grow={{1}} flex="col" gap={{3}}>{T(17,"bold","var:text/strong","Amara Okeke")}'
-             f'<Frame flex="row" px={{8}} py={{3}} rounded={{7}} bg="var:bg/muted">'
-             f'{T(10,"semibold","var:text/accent","MDR-8842-19")}</Frame>'
-             f'{T(11,"regular","var:text/muted","34 · female · O+ · AA",w="fill")}</Frame></Frame></Frame>')
+K3_AFFECTED = dgroup("Who this touches", [
+    patient_row("avatar-6.jpg", "Chidi Okeke", "MDR-8842-20", "11:00 → 11:20 · in person · already left home", "Notify", "Late Chidi", tag="soon"),
+    patient_row("avatar-1.jpg", "Musa Ibrahim", "MDR-7714-02", "11:30 → 11:50 · virtual", "Notify", "Late Musa"),
+    patient_row("avatar-3.jpg", "Grace Okeke", "MDR-8842-21", "12:00 → 12:20 · in person · 68, travelling from Kubwa", "Notify", "Late Grace", tag="soon"),
+], footer="Anyone who has already set out is listed first. They are the ones a message actually helps.")
 
-K3_SAFETY = alert_strip("triangle-alert", "Allergic to penicillin",
-    "Reaction: rash and swelling, recorded Jun 2026. Medra blocks a penicillin prescription for this patient — you can override with a reason.", "err")
+add("Today", "K3-late",
+    dr_desk("Doctor · Today — K3 Running Late", ["Today", "Running late"],
+        f'{dhead([("Tell them before",False),("they wait",True)],26)}'
+        f'{T(14,"regular","var:text/muted","A message costs nothing and is the single biggest thing you can do for a clinic’s rating.",w="fill")}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{K3_PICK}{K3_MSG}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{K3_AFFECTED}'
+        f'{dcta("Tell all three","Send late K3","send")}'
+        f'{dbtn("Never mind","Back today K3","x","ghost",full=True)}</Frame></Frame>',
+        NAV["Today"], PANEL_TODAY, badges=BADGES),
+    dr_mob("Doctor · Today — K3 Running Late · Mobile",
+        dr_head("Running late", "3 patients affected", stats=[("20 min", "Behind"), ("3", "To tell"), ("11:20", "New start")]),
+        f'{K3_PICK}{K3_MSG}{K3_AFFECTED}'
+        f'{dcta("Tell all three","Send late K3","send")}'
+        f'{dbtn("Never mind","Back today K3","x","ghost",full=True)}',
+        MTAB["Today"]))
 
-K3_REASON = group_card("Why they are coming", [
-    note_section("In their words", "“Hypertension follow-up. My home readings have been around 138/88 for two weeks and I get headaches in the afternoon.”", "message-square-text"),
-    note_section("They also told you", "“There is something in my history from 2019 I have kept off my record — I would rather explain it on the call.”", "notebook-pen"),
+# ---------------- K4 the file, before you start
+K4_META = (f'<Frame w="fill" flex="row" justify="between" items="center">'
+           f'{status_pill("soon","Starts in 6 minutes")}'
+           f'<Frame flex="row" gap={{7}} items="center" px={{10}} py={{5}} rounded={{8}} bg="var:state/info-bg">'
+           f'{I("video",12,A_IC)}{T(11,"medium","var:text/default","Virtual · Google Meet")}</Frame></Frame>')
+K4_WHO = (f'<Frame w="fill" flex="row" gap={{14}} items="center">'
+          f'<Image image="assets/img/avatar-2.jpg" w={{62}} h={{62}} rounded={{18}} />'
+          f'<Frame grow={{1}} flex="col" gap={{4}}>{T(19,"bold","var:text/strong","Amara Okeke")}'
+          f'<Frame flex="row" gap={{8}} items="center">'
+          f'<Frame flex="row" px={{8}} py={{3}} rounded={{6}} bg="var:bg/muted">'
+          f'{T(10,"semibold","var:text/accent","MDR-8842-19")}</Frame>'
+          f'{T(12,"regular","var:text/muted","34 · female · Garki, Abuja · +234 801 234 5678")}</Frame></Frame>'
+          f'{dbtn("Open full record","Open record P2","clipboard-list","ghost",grow=False,size="sm")}</Frame>')
+K4_VITALS = rows_of([kv("Blood group", "O+", "droplet"), kv("Genotype", "AA", "activity"),
+                     kv("Weight", "74 kg", "weight"), kv("Visits with you", "3", "history")], 4, 12)
+K4_HEAD = dcard(K4_META + K4_WHO + K4_VITALS, p=18)
+
+K4_SAFETY = alert_strip("triangle-alert", "Allergic to penicillin",
+    "Rash and swelling, recorded June 2026. Medra blocks a penicillin prescription for this patient — overriding needs a written reason and is flagged to the clinic.", "err")
+
+K4_REASON = dgroup("Why she is coming", [
+    note_section("In her words", "“Hypertension follow-up. My home readings have been around 138/88 for two weeks and I get headaches in the afternoon.”", "message-square-text"),
+    note_section("She flagged something", "“There is something in my history from 2019 I have kept off my record — I would rather explain it on the call.”", "notebook-pen"),
 ], footer="Members choose what history to share. If something is missing, ask — and it is recorded that you asked.")
 
-K3_SHARED = group_card("What Amara has shared with you", [
+K4_SHARED = dgroup("What she has shared with you", [
     scope_line("Allergies and current medicines", True, "Always shared — clinical safety"),
-    scope_line("Consultation notes", True, "All 8 visits, including other clinics"),
+    scope_line("Consultation notes", True, "All 8 visits, including two other clinics"),
     scope_line("Lab results", True, "4 results · 1 outside the normal range"),
     scope_line("Prescription history", False, "Not shared — you can ask"),
     scope_line("Home vitals", False, "Not shared — you can ask"),
-], footer="Access ends when this visit is marked complete. Every record you open is logged and visible to the patient.")
+], footer="Access ends when this visit is marked complete. Every record you open is logged and visible to her.")
 
-K3_LAST = group_card("Last time you saw her", [
-    list_row("stethoscope", "Hypertension review", value="12 Jun 2026", sub="Partially controlled, no organ damage", name="Open note last"),
-    list_row("pill", "Amlodipine 5 mg", value="96% taken", sub="She has been consistent — adherence is not the issue", name="Open adherence"),
-    list_row("flask-conical", "Fasting blood sugar", value="Not done", sub="You ordered it in June and it is still outstanding", name="Open outstanding", tint="var:state/warning-bg"),
+K4_LAST = dgroup("Last time you saw her", [
+    drow("stethoscope", "Hypertension review", value="12 Jun", sub="Partially controlled, no organ damage", name="Open note last"),
+    drow("pill", "Amlodipine 5 mg", value="96% taken", sub="Adherence is not the problem here", name="Open adherence"),
+    drow("flask-conical", "Fasting blood sugar", value="Never done", sub="You ordered it in June and it is still outstanding", name="Open tests C4", tone="warn"),
+    drow("activity", "BP trend", value="142/92 → 128/82", sub="Six clinic readings since March", name="Open record P2", tone="ok"),
 ])
 
-add("Today", "K3-appointment",
-    dr_desk("Doctor · Today — K3 Read the File",
+K4_PREP = dgroup("Before you start", [
+    checklist_row(True, "She has paid", "₦15,000 · Paystack PSK-99417-C · 14 Aug", "Prep paid"),
+    checklist_row(True, "Records shared", "Notes and labs, until the visit is marked complete", "Prep shared"),
+    checklist_row(False, "Meeting link tested", "Last checked 2 days ago", "Prep link",
+                  action=dbtn("Test now", "Test link S3", "refresh-cw", "ghost", grow=False, size="sm")),
+])
+
+add("Today", "K4-file",
+    dr_desk("Doctor · Today — K4 Read the File", ["Today", "Amara Okeke"],
         f'<Frame w="fill" flex="row" justify="between" items="center">'
-        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",18,N_IC)}'
-        f'{T(14,"semibold","var:text/default","Today’s queue")}</Frame>'
-        f'<Frame flex="row" gap={{10}} items="center">'
-        f'{mini_btn("Ask for more history","Open access T3","message-square-text","ghost",grow=False)}'
-        f'{mini_btn("Start consultation","Start consult","stethoscope","navy",grow=False)}</Frame></Frame>'
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{16}}>{K3_HEAD}{K3_SAFETY}{K3_REASON}{K3_LAST}</Frame>'
-        f'<Frame w={{380}} flex="col" gap={{16}}>{K3_SHARED}'
-        f'{group_card("The visit", [list_row("calendar-days","Thursday, 21 August",value="10:30",name="K3 when",chevron=False),list_row("clock","30 minutes",sub="Your standard follow-up length",name="K3 length",chevron=False),list_row("credit-card","₦15,000",value="Paid",sub="Paystack ref PSK-99417-C · 14 Aug",name="K3 paid",chevron=False),list_row("video","Google Meet",sub="meet.google.com/kfa-jrqz-nmo",name="Open meeting")])}'
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",17,N_IC)}'
+        f'{T(13,"semibold","var:text/default","Today’s queue")}</Frame>'
+        f'<Frame flex="row" gap={{9}} items="center">'
+        f'{dbtn("Ask for more history","Open access P3","message-square-text","ghost",grow=False,size="sm")}'
+        f'{dbtn("Send the meeting link","Open virtual C10","send","ghost",grow=False,size="sm")}'
+        f'{dbtn("Start consultation","Start consult","stethoscope","navy",grow=False,size="sm")}</Frame></Frame>'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{K4_HEAD}{K4_SAFETY}{K4_REASON}{K4_LAST}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{K4_SHARED}{K4_PREP}'
         f'{dcta("Start consultation","Start consult","stethoscope")}</Frame></Frame>',
-        SIDE["Today"]),
-    dr_mob("Doctor · Today — K3 Read the File · Mobile",
-        dr_appbar("Before you start")
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{10}}>'
-          f'{K3_HEAD_M}{K3_SAFETY}'
-          f'{group_card("Why they are coming", [note_section("In their words","“Hypertension follow-up. Home readings around 138/88 for two weeks, with afternoon headaches.”","message-square-text")], p=16)}'
-          f'<Frame grow={{1}} />{dcta("Start consultation","Start consult","stethoscope")}</Frame>'))
+        NAV["Today"], PANEL_TODAY, badges=BADGES),
+    dr_mob("Doctor · Today — K4 Read the File · Mobile",
+        dr_head("Amara Okeke", "MDR-8842-19 · starts in 6 minutes",
+                stats=[("O+", "Blood"), ("AA", "Genotype"), ("3", "Visits")],
+                right=f'<Frame name="Btn Open record P2" w={{38}} h={{38}} rounded={{12}} bg="#17324D" flex="col" justify="center" items="center">{I("clipboard-list",17,W_IC)}</Frame>'),
+        f'{K4_SAFETY}{K4_REASON}{K4_SHARED}{K4_LAST}{K4_PREP}'
+        f'{dcta("Start consultation","Start consult","stethoscope")}',
+        MTAB["Today"]))
 
-# ---------------- K4 availability
-K4_DAYS = group_card("Your working week", [
-    toggle_row("calendar-days", "Monday", sub="09:00 – 17:00 · 30-minute slots", on=True, name="Day mon"),
-    toggle_row("calendar-days", "Tuesday", sub="09:00 – 17:00 · 30-minute slots", on=True, name="Day tue"),
-    toggle_row("calendar-days", "Wednesday", sub="09:00 – 13:00 · theatre in the afternoon", on=True, name="Day wed"),
-    toggle_row("calendar-days", "Thursday", sub="09:00 – 17:00 · 30-minute slots", on=True, name="Day thu"),
-    toggle_row("calendar-days", "Friday", sub="Not working", on=False, name="Day fri"),
-    toggle_row("calendar-days", "Saturday", sub="10:00 – 14:00 · virtual only", on=True, name="Day sat"),
-    toggle_row("calendar-days", "Sunday", sub="Not working", on=False, name="Day sun"),
+# ---------------- K5 outcome (PRD: mark complete / no-show)
+K5_PICK = dgroup("How did this appointment end?", [
+    outcome_choice("check-check", "Completed", "You saw them. The note goes to their record and the fee is released to you.", "Outcome complete", sel=True, tone="ok"),
+    outcome_choice("circle-slash", "Did not arrive", "15 minutes past and no contact. The slot reopens and they are told.", "Outcome noshow", tone="warn"),
+    outcome_choice("phone-off", "They could not connect", "Video or network failed. Not their fault — full refund, and we offer them your next slot.", "Outcome failed", tone="info"),
+    outcome_choice("calendar-x", "I had to cancel", "Something came up on your side. Full refund and an apology in your words.", "Outcome cancelled", tone="err"),
 ])
-K4_RULES = group_card("Booking rules", [
-    list_row("clock", "Slot length", value="30 minutes", sub="Set a different length per consultation type in Fees", name="Open fees S2"),
-    list_row("hourglass", "Gap between patients", value="0 minutes", sub="Add a buffer if you run over often", name="Rule buffer"),
-    list_row("calendar-clock", "How far ahead can people book?", value="8 weeks", name="Rule horizon"),
-    list_row("timer", "Latest a same-day booking is allowed", value="2 hours before", name="Rule cutoff"),
-    list_row("users", "Maximum patients a day", value="12", sub="Medra stops offering slots once you hit this", name="Rule cap"),
-], footer="These rules are what members see as “real availability”. If a slot shows on Medra, it is genuinely open.")
-K4_BREAKS = group_card("Breaks", [
-    list_row("coffee", "13:00 – 14:00", value="Every working day", sub="Nobody can book it", name="Break daily"),
-    list_row("plus", "Add another break", name="Add break", chevron=False),
+K5_NOSHOW = dgroup("What a no-show means", [
+    drow("banknote", "The fee", value="You keep ₦7,500", sub="Half, per the pilot policy — the other half is refunded", name="Noshow fee", chevron=False),
+    drow("calendar-check", "The slot", value="Reopens now", sub="Anyone can book it within seconds", name="Noshow slot", chevron=False),
+    drow("message-circle", "They are told", sub="With your next three open times, so rebooking is one tap", name="Noshow told", chevron=False),
+    drow("triangle-alert", "Their record", value="1st in 60 days", sub="After a second, Medra asks them to prepay in full", name="Noshow record", tone="warn", chevron=False),
+], footer="The 50% split is a pilot policy and is being tested with the clinics — it is configurable per clinic.")
+K5_NOTE = dcard(eyerow("Anything to add? (optional)")
+    + field("For your own records", "message-square-text", "Called twice, no answer. Rain in Kubwa this morning.")
+    + dtoggle("bell-ring", "Offer her my next open slot", sub="Today 15:00, then Friday 09:00", on=True, name="Offer slot")
+    + dtoggle("shield-check", "Do not count this against her", sub="Use when you know the reason was outside their control", on=False, name="Forgive noshow"))
+
+add("Today", "K5-outcome",
+    dr_desk("Doctor · Today — K5 Appointment Outcome", ["Today", "Blessing Ade", "Outcome"],
+        f'{dhead([("Close off",False),("this appointment",True)],26)}'
+        f'{T(14,"regular","var:text/muted","10:00 · Blessing Ade · MDR-3311-90 · in person. It is 10:12 and she has not arrived.",w="fill")}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{K5_PICK}{K5_NOTE}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{K5_NOSHOW}'
+        f'{dcta("Mark as did not arrive","Save outcome K5","circle-slash")}'
+        f'{dbtn("Give her five more minutes","Wait more K5","clock","ghost",full=True)}</Frame></Frame>',
+        NAV["Today"], PANEL_TODAY, badges=BADGES),
+    dr_mob("Doctor · Today — K5 Appointment Outcome · Mobile",
+        dr_head("Outcome", "Blessing Ade · 10:00 · 12 min late",
+                stats=[("₦7,500", "You keep"), ("1st", "No-show"), ("Now", "Slot reopens")]),
+        f'{K5_PICK}{K5_NOSHOW}{K5_NOTE}'
+        f'{dcta("Mark as did not arrive","Save outcome K5","circle-slash")}'
+        f'{dbtn("Give her five more minutes","Wait more K5","clock","ghost",full=True)}',
+        MTAB["Today"]))
+
+# ---------------- K6 week
+WEEK = (f'<Frame w="fill" flex="row" gap={{9}} items="start">'
+        + day_col("Mon", "18", [slot_chip("09:00","booked"), slot_chip("09:30","booked"), slot_chip("10:00","open"),
+                                slot_chip("10:30","open"), slot_chip("11:00","booked"), slot_chip("13:00","break")])
+        + day_col("Tue", "19", [slot_chip("09:00","booked"), slot_chip("09:30","open"), slot_chip("10:00","booked"),
+                                slot_chip("10:30","booked"), slot_chip("11:00","hold"), slot_chip("13:00","break")])
+        + day_col("Wed", "20", [slot_chip("09:00","open"), slot_chip("09:30","booked"), slot_chip("10:00","booked"),
+                                slot_chip("10:30","blocked"), slot_chip("11:00","blocked"), slot_chip("13:00","blocked")])
+        + day_col("Thu", "21", [slot_chip("09:00","booked"), slot_chip("09:30","booked"), slot_chip("10:00","booked"),
+                                slot_chip("10:30","booked"), slot_chip("11:00","booked"), slot_chip("13:00","break")], today=True)
+        + day_col("Fri", "22", [slot_chip("09:00","blocked"), slot_chip("09:30","blocked"), slot_chip("10:00","blocked"),
+                                slot_chip("10:30","blocked"), slot_chip("11:00","blocked"), slot_chip("13:00","blocked")])
+        + day_col("Sat", "23", [slot_chip("10:00","open"), slot_chip("10:30","open"), slot_chip("11:00","open"),
+                                slot_chip("11:30","open"), slot_chip("12:00","open"), slot_chip("12:30","open")])
+        + '</Frame>')
+LEGEND = (f'<Frame w="fill" flex="row" gap={{16}} items="center">'
+          f'<Frame flex="row" gap={{6}} items="center"><Rect w={{11}} h={{11}} rounded={{4}} image="assets/img/btn-navy.jpg" overflow="hidden" />{T(10,"regular","var:text/muted","Booked")}</Frame>'
+          f'<Frame flex="row" gap={{6}} items="center"><Rect w={{11}} h={{11}} rounded={{4}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}} />{T(10,"regular","var:text/muted","Open")}</Frame>'
+          f'<Frame flex="row" gap={{6}} items="center"><Rect w={{11}} h={{11}} rounded={{4}} bg="var:state/warning-bg" />{T(10,"regular","var:text/muted","Held for payment")}</Frame>'
+          f'<Frame flex="row" gap={{6}} items="center"><Rect w={{11}} h={{11}} rounded={{4}} bg="var:bg/muted" />{T(10,"regular","var:text/muted","Break")}</Frame>'
+          f'<Frame flex="row" gap={{6}} items="center"><Rect w={{11}} h={{11}} rounded={{4}} bg="var:neutral/100" />{T(10,"regular","var:text/muted","Away")}</Frame></Frame>')
+
+K6_SUM = dgroup("This week", [
+    drow("calendar-check", "Booked", value="24", sub="₦366,000 collected", name="W booked", chevron=False),
+    drow("circle-plus", "Still open", value="9", sub="Mostly Saturday — your quietest day", name="W open", chevron=False),
+    drow("circle-x", "Cancelled", value="2", sub="Both more than a day ahead, both refunded", name="W cancelled", chevron=False),
+    drow("circle-slash", "No-shows", value="1", sub="Blessing Ade, Thursday", name="W noshow", tone="warn", chevron=False),
+    drow("repeat", "Returning patients", value="61%", sub="Up from 54% last month", name="W repeat", tone="ok", chevron=False),
 ])
 
-add("Today", "K4-availability",
-    dr_desk("Doctor · Schedule — K4 Availability",
+add("Today", "K6-week",
+    dr_desk("Doctor · Schedule — K6 Week", ["Schedule", "Week of 18 August"],
         f'<Frame w="fill" flex="row" justify="between" items="center">'
-        f'{head_chip([("When you are",False),("available",True)],28)}'
-        f'{mini_btn("Save changes","Save availability K4","check","navy",grow=False)}</Frame>'
-        f'{T(15,"regular","var:text/muted","Change this and the open slots on Medra change with it. Booked appointments are never touched.",w="fill")}'
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{16}}>{K4_DAYS}{K4_BREAKS}</Frame>'
-        f'<Frame w={{400}} flex="col" gap={{16}}>{K4_RULES}'
+        f'{dhead([("Week of",False),("18 August",True)],26)}'
+        f'<Frame flex="row" gap={{9}} items="center">'
+        f'{dbtn("Block time off","Open timeoff K8","calendar-x","ghost",grow=False,size="sm")}'
+        f'{dbtn("Edit my hours","Open availability K7","clock","navy",grow=False,size="sm")}</Frame></Frame>'
+        f'{dcard(WEEK + LEGEND, p=18)}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{12}}>{T(15,"bold","var:text/strong","Thursday 21 August")}{QUEUE}</Frame>'
+        f'<Frame w={{340}} flex="col" gap={{14}}>{K6_SUM}'
+        f'{alert_strip("triangle-alert","Friday is fully blocked","You marked 22 August as time off. Four people had already booked — decide for each from Time off.","warn")}</Frame></Frame>',
+        NAV["Schedule"], PANEL_SCHED, badges=BADGES),
+    dr_mob("Doctor · Schedule — K6 Week · Mobile",
+        dr_head("Schedule", "Week of 18 August", back=False,
+                stats=[("24", "Booked"), ("9", "Open"), ("1", "No-show")],
+                chips=[("Day", "Filter day", False), ("Week", "Filter week", True), ("Month", "Filter month", False)]),
+        f'{dcard(WEEK + LEGEND, p=13)}'
+        f'{date_strip(3)}'
+        f'{T(14,"bold","var:text/strong","Thursday 21 August")}{QUEUE_M}{K6_SUM}',
+        MTAB["Today"]))
+
+# ---------------- K7 availability
+K7_DAYS = dgroup("Your working week", [
+    dtoggle("calendar-days", "Monday", sub="09:00 – 17:00 · 30-minute slots · in person and virtual", on=True, name="Day mon"),
+    dtoggle("calendar-days", "Tuesday", sub="09:00 – 17:00 · 30-minute slots", on=True, name="Day tue"),
+    dtoggle("calendar-days", "Wednesday", sub="09:00 – 13:00 · theatre list in the afternoon", on=True, name="Day wed"),
+    dtoggle("calendar-days", "Thursday", sub="09:00 – 17:00 · 30-minute slots", on=True, name="Day thu"),
+    dtoggle("calendar-days", "Friday", sub="Not working", on=False, name="Day fri"),
+    dtoggle("calendar-days", "Saturday", sub="10:00 – 14:00 · virtual only", on=True, name="Day sat"),
+    dtoggle("calendar-days", "Sunday", sub="Not working", on=False, name="Day sun"),
+])
+K7_RULES = dgroup("Booking rules", [
+    drow("clock", "Default slot length", value="30 minutes", sub="Each consultation type can override this", name="Open fees S2"),
+    drow("hourglass", "Gap between patients", value="0 minutes", sub="Add a buffer if you regularly run over", name="Rule buffer"),
+    drow("calendar-clock", "How far ahead can people book?", value="8 weeks", name="Rule horizon"),
+    drow("timer", "Latest same-day booking", value="2 hours before", name="Rule cutoff"),
+    drow("users", "Maximum patients a day", value="12", sub="Medra stops offering slots once you reach it", name="Rule cap"),
+    drow("credit-card", "Hold an unpaid slot for", value="30 minutes", sub="Then it is released to everyone else", name="Rule hold"),
+], footer="These rules are what makes real availability true on the member side. If a slot shows on Medra, it is genuinely open.")
+K7_BREAKS = dgroup("Breaks and buffers", [
+    drow("coffee", "13:00 – 14:00", value="Every working day", sub="Nobody can book it", name="Break daily"),
+    drow("car", "Travel buffer between sites", value="45 minutes", sub="Garki to Maitama on a Wednesday", name="Break travel"),
+    drow("plus", "Add another break", name="Add break", chevron=False),
+])
+K7_TYPES = dgroup("Where each type can be booked", [
+    dtoggle("hospital", "In person at Garki Medical Centre", sub="Mon, Tue, Thu · 09:00 – 17:00", on=True, name="Where garki"),
+    dtoggle("video", "Virtual", sub="Any working day, plus Saturday morning", on=True, name="Where virtual"),
+    dtoggle("home", "Home visits", sub="Within 10 km · not currently offered", on=False, name="Where home"),
+])
+
+add("Today", "K7-availability",
+    dr_desk("Doctor · Schedule — K7 Availability", ["Schedule", "Availability"],
+        f'<Frame w="fill" flex="row" justify="between" items="center">'
+        f'{dhead([("When you are",False),("available",True)],26)}'
+        f'{dbtn("Save changes","Save availability K7","check","navy",grow=False,size="sm")}</Frame>'
+        f'{T(14,"regular","var:text/muted","Change this and the open slots on Medra change with it. Appointments already booked are never touched.",w="fill")}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{K7_DAYS}{K7_BREAKS}</Frame>'
+        f'<Frame w={{380}} flex="col" gap={{14}}>{K7_RULES}{K7_TYPES}'
         f'{alert_strip("info","4 people have booked Friday 29 August","Turning Friday off will not cancel them. Move or cancel each one yourself so they hear it from you.","info")}</Frame></Frame>',
-        SIDE["Schedule"]),
-    dr_mob("Doctor · Schedule — K4 Availability · Mobile",
-        dr_appbar("Availability", right=circle_btn("check", "Save availability K4"))
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{8}}>'
-          f'{K4_DAYS}</Frame>',
-        nav=dr_bottom_nav(TAB["Schedule"])))
+        NAV["Schedule"], PANEL_SCHED, badges=BADGES),
+    dr_mob("Doctor · Schedule — K7 Availability · Mobile",
+        dr_head("Availability", "Mon–Thu, Sat · 30-minute slots",
+                stats=[("5", "Working days"), ("30m", "Slot"), ("12", "Daily cap")],
+                right=f'<Frame name="Btn Save availability K7" w={{38}} h={{38}} rounded={{12}} bg="#17324D" flex="col" justify="center" items="center">{I("check",17,W_IC)}</Frame>'),
+        f'{K7_DAYS}{K7_RULES}{K7_BREAKS}{K7_TYPES}',
+        MTAB["Today"]))
 
-# ---------------- K5 time off
-K5_FORM = (f'{field_chips("What is this?", ["Leave", "Conference", "Theatre list", "Personal"], 0, "Timeoff type")}'
-           f'<Frame w="fill" flex="row" gap={{14}}>'
-           f'<Frame grow={{1}} flex="col">{field("From","calendar-days","Fri, 22 August",ph=False)}</Frame>'
-           f'<Frame grow={{1}} flex="col">{field("To","calendar-days","Fri, 22 August",ph=False)}</Frame></Frame>'
-           f'{checkbox("All day","Timeoff allday")}'
-           f'{field("Note for your own records (optional)","message-square-text","Cardiology conference in Lagos")}')
-K5_IMPACT = group_card("What this affects", [
-    list_row("calendar-x", "9 open slots close", sub="Nobody can book Friday 22 August", name="Impact slots", chevron=False),
-    list_row("users", "4 patients already booked", sub="They are not cancelled — decide for each one below", name="Impact booked", tint="var:state/warning-bg", chevron=False),
-    list_row("message-circle", "We can message them for you", sub="WhatsApp and SMS, with your next open times", name="Impact message", chevron=False),
-], footer="Medra will never cancel a patient on your behalf without you choosing it here.")
-K5_AFFECTED = group_card("The four already booked", [
-    patient_row("avatar-2.jpg", "Amara Okeke", "MDR-8842-19", "Fri 22 Aug · 09:00 · virtual", "12 Jun", "Move Amara"),
-    patient_row("avatar-6.jpg", "Chidi Okeke", "MDR-8842-20", "Fri 22 Aug · 09:30 · in person", "12 Jun", "Move Chidi"),
-    patient_row("avatar-1.jpg", "Musa Ibrahim", "MDR-7714-02", "Fri 22 Aug · 11:00 · virtual", "First visit", "Move Musa"),
-    patient_row("avatar-3.jpg", "Grace Okeke", "MDR-8842-21", "Fri 22 Aug · 14:00 · in person", "28 Apr", "Move Grace"),
+# ---------------- K8 time off
+K8_FORM = dcard(
+    field_chips("What is this?", ["Leave", "Conference", "Theatre list", "Sick", "Personal"], 0, "Timeoff type")
+    + f'<Frame w="fill" flex="row" gap={{12}}>'
+    + f'<Frame grow={{1}} flex="col">{field("From","calendar-days","Fri, 22 August",ph=False)}</Frame>'
+    + f'<Frame grow={{1}} flex="col">{field("To","calendar-days","Fri, 22 August",ph=False)}</Frame></Frame>'
+    + checkbox("All day", "Timeoff allday")
+    + field("Note for your own records (optional)", "message-square-text", "Cardiology conference in Lagos"))
+
+K8_IMPACT = dgroup("What this affects", [
+    drow("calendar-x", "9 open slots close", sub="Nobody can book Friday 22 August", name="Impact slots", chevron=False),
+    drow("users", "4 patients already booked", sub="They are not cancelled — decide for each below", name="Impact booked", tone="warn", chevron=False),
+    drow("banknote", "₦60,000 already collected", sub="Refunded in full the moment you cancel them", name="Impact money", chevron=False),
+    drow("message-circle", "We can message them for you", sub="WhatsApp and SMS, with your next open times", name="Impact message", chevron=False),
+], footer="Medra never cancels a patient on your behalf without you choosing it here.")
+
+K8_AFFECTED = dgroup("The four already booked", [
+    patient_row("avatar-2.jpg", "Amara Okeke", "MDR-8842-19", "Fri 22 Aug · 09:00 · virtual · paid", "Move", "Move Amara"),
+    patient_row("avatar-6.jpg", "Chidi Okeke", "MDR-8842-20", "Fri 22 Aug · 09:30 · in person · paid", "Move", "Move Chidi"),
+    patient_row("avatar-1.jpg", "Musa Ibrahim", "MDR-7714-02", "Fri 22 Aug · 11:00 · virtual · first visit", "Move", "Move Musa", tag="new"),
+    patient_row("avatar-3.jpg", "Grace Okeke", "MDR-8842-21", "Fri 22 Aug · 14:00 · in person · paid", "Move", "Move Grace"),
 ])
 
-add("Today", "K5-timeoff",
-    dr_desk("Doctor · Schedule — K5 Time Off",
-        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",18,N_IC)}'
-        f'{T(14,"semibold","var:text/default","Schedule")}</Frame>'
-        f'{head_chip([("Block time",False),("off",True)],28)}'
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{16}}>{K5_FORM}{K5_AFFECTED}</Frame>'
-        f'<Frame w={{380}} flex="col" gap={{16}}>{K5_IMPACT}'
-        f'{dcta("Block this time","Save timeoff K5","calendar-x")}'
-        f'{mini_btn("Offer everyone my next open slot","Offer slots K5","repeat","ghost",full=True)}</Frame></Frame>',
-        SIDE["Schedule"]),
-    dr_mob("Doctor · Schedule — K5 Time Off · Mobile",
-        dr_appbar("Time off")
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{10}}>'
-          f'{K5_FORM}'
-          f'{group_card("What this affects", [list_row("calendar-x","9 open slots close",name="Impact slots",chevron=False),list_row("users","4 patients already booked",sub="Decide for each one",name="Impact booked",tint="var:state/warning-bg",chevron=False)], p=16)}'
-          f'<Frame grow={{1}} />'
-          f'{dcta("Block this time","Save timeoff K5","calendar-x")}</Frame>'))
+K8_COVER = dgroup("Or hand them to a colleague", [
+    patient_row("avatar-1.jpg", "Dr. Chuka Eze", "MDCN 60112", "General practice · Wuse Clinic · free that morning", "Ask", "Cover Chuka"),
+    patient_row("avatar-5.jpg", "Dr. Tunde Bello", "MDCN 55208", "Neurology · Asokoro · partially free", "Ask", "Cover Tunde"),
+], footer="They see the reason for each visit and can accept or decline per patient. Your notes are not transferred — only the booking.")
+
+add("Today", "K8-timeoff",
+    dr_desk("Doctor · Schedule — K8 Time Off", ["Schedule", "Time off"],
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",17,N_IC)}'
+        f'{T(13,"semibold","var:text/default","Schedule")}</Frame>'
+        f'{dhead([("Block time",False),("off",True)],26)}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{K8_FORM}{K8_AFFECTED}{K8_COVER}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{K8_IMPACT}'
+        f'{dcta("Block this time","Save timeoff K8","calendar-x")}'
+        f'{dbtn("Offer everyone my next open slot","Offer slots K8","repeat","ghost",full=True)}</Frame></Frame>',
+        NAV["Schedule"], PANEL_SCHED, badges=BADGES),
+    dr_mob("Doctor · Schedule — K8 Time Off · Mobile",
+        dr_head("Time off", "Friday 22 August",
+                stats=[("9", "Slots close"), ("4", "Booked"), ("₦60k", "To refund")]),
+        f'{K8_FORM}{K8_IMPACT}{K8_AFFECTED}{K8_COVER}'
+        f'{dcta("Block this time","Save timeoff K8","calendar-x")}',
+        MTAB["Today"]))
 
 # =====================================================================================
-# CONSULTATION — the spine of the doctor app
+# 3. CONSULTATION — the spine
 # =====================================================================================
-C_PATIENT_STRIP = (f'<Frame w="fill" flex="row" gap={{14}} items="center" p={{16}} rounded={{22}} '
-                   f'bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>'
-                   f'<Image image="assets/img/avatar-2.jpg" w={{48}} h={{48}} rounded={{16}} />'
-                   f'<Frame grow={{1}} flex="col" gap={{3}}>'
-                   f'<Frame flex="row" gap={{9}} items="center">{T(16,"semibold","var:text/strong","Amara Okeke")}'
-                   f'<Frame flex="row" px={{9}} py={{3}} rounded={{7}} bg="var:bg/muted">'
-                   f'{T(10,"semibold","var:text/accent","MDR-8842-19")}</Frame></Frame>'
-                   f'{T(12,"regular","var:text/muted","34 · O+ · AA · allergic to penicillin · hypertension",w="fill")}</Frame>'
-                   f'<Frame flex="row" gap={{8}} items="center" px={{12}} py={{8}} rounded={{999}} bg="var:state/error-bg">'
-                   f'<Ellipse w={{8}} h={{8}} bg="#D14343" />{T(12,"semibold","var:state/error","12:04")}</Frame>'
-                   f'{mini_btn("Open the call","Open meeting","video","navy",grow=False)}</Frame>')
+C_STRIP = (f'<Frame w="fill" flex="row" gap={{13}} items="center" p={{14}} rounded={{15}} bg="var:bg/base" '
+           f'stroke="var:border/subtle" strokeWidth={{1}}>'
+           f'<Image image="assets/img/avatar-2.jpg" w={{44}} h={{44}} rounded={{14}} />'
+           f'<Frame grow={{1}} flex="col" gap={{3}}>'
+           f'<Frame flex="row" gap={{8}} items="center">{T(15,"semibold","var:text/strong","Amara Okeke")}'
+           f'<Frame flex="row" px={{8}} py={{2}} rounded={{6}} bg="var:bg/muted">'
+           f'{T(10,"semibold","var:text/accent","MDR-8842-19")}</Frame></Frame>'
+           f'{T(11,"regular","var:text/muted","34 · O+ · AA · penicillin allergy · hypertension · 74 kg",w="fill")}</Frame>'
+           f'<Frame flex="row" gap={{7}} items="center" px={{11}} py={{7}} rounded={{9}} bg="var:state/error-bg">'
+           f'<Ellipse w={{7}} h={{7}} bg="#D14343" />{T(12,"semibold","var:state/error","12:04")}</Frame>'
+           f'{dbtn("Open the call","Open virtual C10","video","navy",grow=False,size="sm")}'
+           f'{dbtn("Autosaved","Autosave",None,"ok",grow=False,size="sm")}</Frame>')
 
-C_TABS   = tabs(["Note", "Prescription", "Tests", "Files"], 0, "Consult tab")
-C_TABS_M = tabs(["Note", "Rx", "Tests", "Files"], 0, "Consult tab", size=14)
+C_STRIP_M = (f'<Frame w="fill" flex="col" gap={{10}} p={{13}} rounded={{14}} bg="var:bg/base" '
+             f'stroke="var:border/subtle" strokeWidth={{1}}>'
+             f'<Frame w="fill" flex="row" gap={{11}} items="center">'
+             f'<Image image="assets/img/avatar-2.jpg" w={{40}} h={{40}} rounded={{12}} />'
+             f'<Frame grow={{1}} flex="col" gap={{2}}>{T(14,"semibold","var:text/strong","Amara Okeke")}'
+             f'{T(10,"regular","var:text/muted","MDR-8842-19 · penicillin allergy",w="fill")}</Frame>'
+             f'<Frame flex="row" gap={{6}} items="center" px={{10}} py={{6}} rounded={{9}} bg="var:state/error-bg">'
+             f'<Ellipse w={{7}} h={{7}} bg="#D14343" />{T(11,"semibold","var:state/error","12:04")}</Frame></Frame>'
+             f'<Frame w="fill" flex="row" gap={{8}}>'
+             f'{dbtn("Open the call","Open virtual C10","video","navy",size="sm")}'
+             f'{dbtn("Record","Open record P2","clipboard-list","ghost",size="sm")}</Frame></Frame>')
 
-C_NOTE_FIELDS = (note_field("Why they came", "message-square-text",
-    "Hypertension follow-up. Home readings 138/88 for two weeks, afternoon headaches. No chest pain, no breathlessness, no ankle swelling.", "reason")
-    + note_field("Examination", "stethoscope",
-        "BP 136/86 seated, repeated 134/84. Pulse 78 regular. Weight 74 kg. Heart sounds normal, chest clear, no oedema.", "exam", lines=2)
-    + note_field("Assessment", "clipboard-check",
-        "Hypertension, partially controlled. No evidence of end-organ damage. Headaches likely tension-type rather than hypertensive.", "assessment", lines=2)
-    + note_field("Plan", "list-checks",
-        "Continue Amlodipine 5 mg mane. Reduce added salt. 30 minutes walking, five days a week. Fasting blood sugar before next review. Review in 3 months, sooner if BP > 160/100.", "plan", lines=3))
+C_TABS   = tabs(["Note", "Prescription", "Tests", "Files", "Referral"], 0, "Consult tab", size=13)
+C_TABS_M = tabs(["Note", "Rx", "Tests", "Files"], 0, "Consult tab", size=13)
 
-C_AI = (f'<Frame w="fill" flex="row" gap={{12}} items="center" p={{15}} rounded={{20}} bg="var:bg/muted">'
-        f'{I("sparkles",18,A_IC)}'
-        f'<Frame grow={{1}} flex="col" gap={{2}}>{T(13,"semibold","var:text/strong","Transcribe this consultation")}'
-        f'{T(11,"regular","var:text/muted","Phase 2 — Medra listens and drafts the note, you edit and sign. Nothing is stored without the patient agreeing first.",w="fill")}</Frame>'
-        f'<Frame flex="row" px={{10}} py={{5}} rounded={{999}} bg="var:state/warning-bg">'
-        f'{T(10,"semibold","var:state/warning","PHASE 2")}</Frame></Frame>')
+# PRD §7 Module 6 names these fields exactly. Keep them.
+C_NOTE = dgroup("Consultation note", [
+    note_field("Presenting complaint", "message-square-text",
+        "Hypertension follow-up. Home readings 138/88 for two weeks, afternoon headaches. No chest pain, no breathlessness, no ankle swelling.", "complaint", lines=2),
+    note_field("Examination", "stethoscope",
+        "BP 136/86 seated, repeated 134/84. Pulse 78 regular. Weight 74 kg, unchanged. Heart sounds normal, chest clear, no oedema.", "exam", lines=2),
+    note_field("Diagnosis", "clipboard-check",
+        "Hypertension, partially controlled. No evidence of end-organ damage. Headaches likely tension-type rather than hypertensive.", "diagnosis", lines=2),
+    note_field("Treatment plan", "list-checks",
+        "Continue Amlodipine 5 mg mane. Reduce added salt. 30 minutes walking, five days a week. Fasting blood sugar and HbA1c before next review.", "plan", lines=3),
+    note_field("Doctor's comment for the patient", "message-circle",
+        "Your readings are better than June. Keep taking the Amlodipine every morning — it works best at a steady level.", "comment", lines=2),
+    note_field("Private notes", "eye-off",
+        "Mother died of stroke at 61. Anxious about it — worth watching, do not raise unprompted.", "private", lines=2, template=False, private=True),
+], footer="Private notes never appear on the member's phone. They stay in the clinical record for you and the clinic. The member is told a private note exists, not what it says.")
 
-C_HISTORY_ASK = (f'<Frame w="fill" flex="col" gap={{11}} p={{18}} rounded={{22}} bg="var:state/info-bg">'
-                 f'<Frame flex="row" gap={{9}} items="center">{I("notebook-pen",17,A_IC)}'
-                 f'{T(14,"semibold","var:text/strong","She said something is missing from her record")}</Frame>'
-                 f'{T(13,"regular","var:text/default","“There is something in my history from 2019 I have kept off my record.” Ask about it, and record what you were told — or that you were told nothing.",w="fill")}'
-                 f'{note_field("What she told you on the call","message-circle","Treated for a thyroid condition in 2019 at a private clinic in Enugu. No records available. Says it resolved and she takes nothing for it now.","undisclosed",lines=2)}'
-                 f'{checkbox("She declined to give more detail","Declined detail",checked=False)}'
-                 f'{T(11,"regular","var:text/muted","This is stored with the consultation, so it is clear later what you were and were not told.",w="fill")}</Frame>')
+C_AI = alert_strip("sparkles", "Transcribe this consultation",
+    "Phase 2 — Medra drafts the note as you talk, you edit and sign. Nothing is recorded without the member agreeing first.",
+    "info", dbtn("PHASE 2", "Phase2 transcribe", None, "ghost", grow=False, size="sm"))
 
-C_SIDE = group_card("While you talk", [
-    list_row("triangle-alert", "Allergic to penicillin", sub="Rash and swelling · Jun 2026", name="Side allergy", tint="var:state/warning-bg", chevron=False),
-    list_row("pill", "On Amlodipine 5 mg", sub="96% taken on time over 30 days", name="Side meds"),
-    list_row("activity", "BP trend", sub="142/92 in March down to 128/82 this month", name="Side vitals"),
-    list_row("flask-conical", "Outstanding test", sub="Fasting blood sugar, ordered 12 Jun, never done", name="Side outstanding", tint="var:state/warning-bg"),
-    list_row("history", "Previous notes", value="8", sub="3 with you, 5 at other clinics", name="Side notes"),
+C_HISTORY = dcard(
+    f'<Frame flex="row" gap={{9}} items="center">{I("notebook-pen",16,A_IC)}'
+    f'{T(14,"semibold","var:text/strong","She said something is missing from her record")}</Frame>'
+    + T(12, "regular", "var:text/default",
+        "“There is something in my history from 2019 I have kept off my record.” Ask about it, and record what you were told — or that you were told nothing.", w="fill")
+    + note_field("What she told you", "message-circle",
+        "Treated for a thyroid condition in 2019 at a private clinic in Enugu. No records available. Says it resolved; takes nothing for it now.",
+        "undisclosed", lines=2, template=False)
+    + checkbox("She declined to give more detail", "Declined detail", checked=False)
+    + T(11, "regular", "var:text/muted",
+        "Stored with the consultation, so it is always clear what you were and were not told.", w="fill"),
+    bg="var:state/info-bg", stroke=None)
+
+C_SIDE = dgroup("While you talk", [
+    drow("triangle-alert", "Allergic to penicillin", sub="Rash and swelling · Jun 2026", name="Side allergy", tone="err", chevron=False),
+    drow("pill", "On Amlodipine 5 mg", sub="96% taken on time over 30 days", name="Side meds"),
+    drow("activity", "BP trend", sub="142/92 in March down to 128/82 this month", name="Side vitals", tone="ok"),
+    drow("flask-conical", "Outstanding test", sub="Fasting blood sugar, ordered 12 Jun, never done", name="Open tests C4", tone="warn"),
+    drow("history", "Previous notes", value="8", sub="3 with you, 5 at other clinics", name="Open record P2"),
+    drow("users-round", "Family", sub="Chidi (6) and Grace (68) are also your patients", name="Side family"),
 ])
 
-add("Consultation", "C1-room",
-    dr_desk("Doctor · Consultation — C1 In Progress",
-        f'{C_PATIENT_STRIP}'
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{16}}>{C_TABS}{C_AI}'
-        f'{group_card("Consultation note", [C_NOTE_FIELDS], p=20)}'
-        f'{C_HISTORY_ASK}</Frame>'
-        f'<Frame w={{380}} flex="col" gap={{16}}>{C_SIDE}'
-        f'{group_card("Add to this visit", [list_row("pill","Prescribe a medicine",name="Open prescribe C3"),list_row("flask-conical","Order a test",name="Open tests C4"),list_row("upload","Attach a file or result",name="Open upload C5"),list_row("calendar-plus","Book the follow-up now",name="Book followup")])}'
-        f'{dcta("Finish and review","Open sign C6","arrow-right")}</Frame></Frame>',
-        SIDE["Notes"], topbar=False),
-    dr_mob("Doctor · Consultation — C1 In Progress · Mobile",
-        dr_appbar("Consultation", right=circle_btn("video", "Open meeting"))
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{12}} px={{20}} pt={{2}} pb={{10}}>'
-          f'{patient_strip_m()}{C_TABS_M}'
-          f'{note_field("Assessment","clipboard-check","Hypertension, partially controlled. No end-organ damage.","assessment",lines=2)}'
-          f'{note_field("Plan","list-checks","Continue Amlodipine 5 mg mane. Fasting blood sugar. Review in 3 months.","plan",lines=2)}'
-          f'<Frame grow={{1}} />{dcta("Finish and review","Open sign C6","arrow-right")}</Frame>'))
+C_ADD = dgroup("Add to this visit", [
+    drow("pill", "Prescription", value="1", name="Open prescribe C3"),
+    drow("flask-conical", "Test order", value="2", name="Open tests C4"),
+    drow("upload", "Result or file", name="Open upload C5"),
+    drow("share-2", "Refer to a colleague", name="Open refer C6"),
+    drow("calendar-plus", "Follow-up", value="3 months", name="Open followups P4"),
+])
 
-# ---------------- C2 note templates
-C2_TEMPLATES = group_card("Your templates", [
-    list_row("file-text", "Hypertension follow-up", sub="Used 42 times · exam, assessment and plan pre-filled", name="Use template hyp"),
-    list_row("file-text", "New patient — cardiology", sub="Used 18 times", name="Use template new"),
-    list_row("file-text", "Post-discharge review", sub="Used 7 times", name="Use template discharge"),
-    list_row("file-text", "Paediatric fever", sub="Shared by Garki Medical Centre", name="Use template fever"),
-    list_row("plus", "Save this note as a template", sub="Strip the patient details, keep the structure", name="Save template", chevron=False),
-], footer="Templates only fill the boxes. Nothing is submitted for you, and every note still needs your signature.")
-C2_PREVIEW = group_card("Hypertension follow-up", [
-    note_section("Why they came", "Hypertension follow-up. Home readings [__/__] for [__]. Symptoms: [headache / chest pain / breathlessness / ankle swelling / none].", "message-square-text"),
+add("Consult", "C1-room",
+    dr_desk("Doctor · Consult — C1 In Progress", ["Consults", "Amara Okeke", "In progress"],
+        f'{C_STRIP}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{C_TABS}{C_AI}{C_NOTE}{C_HISTORY}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{C_SIDE}{C_ADD}'
+        f'{dcta("Finish and review","Open sign C7","arrow-right")}</Frame></Frame>',
+        NAV["Consults"], PANEL_CONSULT, urgent=0, badges=BADGES),
+    dr_mob("Doctor · Consult — C1 In Progress · Mobile",
+        dr_head("Consultation", "Amara Okeke · 12:04 elapsed",
+                stats=[("30m", "Booked"), ("4th", "Visit"), ("Saved", "Autosave")],
+                chips=[("Note", "Consult tab Note", True), ("Rx", "Open prescribe C3", False),
+                       ("Tests", "Open tests C4", False), ("Files", "Open upload C5", False)]),
+        f'{C_STRIP_M}{C_SIDE}{C_NOTE}{C_HISTORY}{C_ADD}'
+        f'{dcta("Finish and review","Open sign C7","arrow-right")}',
+        MTAB["Consult"]))
+
+# ---------------- C2 templates
+C2_LIST = dgroup("Your templates", [
+    drow("file-text", "Hypertension follow-up", value="42 uses", sub="Exam, diagnosis and plan pre-filled", name="Use template hyp"),
+    drow("file-text", "New patient — cardiology", value="18 uses", name="Use template new"),
+    drow("file-text", "Post-discharge review", value="7 uses", name="Use template discharge"),
+    drow("file-text", "Paediatric fever", value="Shared", sub="From Garki Medical Centre's shared set", name="Use template fever"),
+    drow("file-text", "Diabetes review", value="Shared", sub="From Garki Medical Centre's shared set", name="Use template diabetes"),
+    drow("plus", "Save this note as a template", sub="Strips the patient details, keeps the structure", name="Save template", chevron=False),
+], footer="Templates fill boxes. Nothing is submitted for you, and every note still needs your signature.")
+
+C2_PREVIEW = dgroup("Hypertension follow-up", [
+    note_section("Presenting complaint", "Hypertension follow-up. Home readings [__/__] for [__]. Symptoms: [headache / chest pain / breathlessness / ankle swelling / none].", "message-square-text"),
     note_section("Examination", "BP [__/__] seated, repeated [__/__]. Pulse [__] regular. Weight [__] kg. Heart sounds [__], chest [__], oedema [__].", "stethoscope"),
-    note_section("Assessment", "Hypertension, [controlled / partially controlled / uncontrolled]. [Evidence / no evidence] of end-organ damage.", "clipboard-check"),
-    note_section("Plan", "Continue [__]. Salt reduction. Exercise [__]. Tests: [__]. Review in [__].", "list-checks"),
+    note_section("Diagnosis", "Hypertension, [controlled / partially controlled / uncontrolled]. [Evidence / no evidence] of end-organ damage.", "clipboard-check"),
+    note_section("Treatment plan", "Continue [__]. Salt reduction. Exercise [__]. Tests: [__]. Review in [__].", "list-checks"),
 ])
 
-add("Consultation", "C2-templates",
-    dr_desk("Doctor · Consultation — C2 Note Templates",
-        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",18,N_IC)}'
-        f'{T(14,"semibold","var:text/default","Consultation")}</Frame>'
-        f'{head_chip([("Write less,",False),("say more",True)],28)}'
-        f'{T(15,"regular","var:text/muted","A template fills the structure so your typing goes into what is actually different about this patient.",w="fill")}'
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{16}}>{C2_TEMPLATES}</Frame>'
-        f'<Frame w={{440}} flex="col" gap={{16}}>{eyebrow("PREVIEW")}{C2_PREVIEW}'
+C2_SETTINGS = dgroup("Template settings", [
+    dtoggle("zap", "Suggest a template automatically", sub="Based on the reason for the visit", on=True, name="Tpl auto"),
+    dtoggle("users", "Share mine with the clinic", sub="Colleagues at Garki Medical Centre can use them", on=False, name="Tpl share"),
+    drow("download", "Import a colleague's template", name="Tpl import"),
+])
+
+add("Consult", "C2-templates",
+    dr_desk("Doctor · Consult — C2 Templates", ["Consults", "Templates"],
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",17,N_IC)}'
+        f'{T(13,"semibold","var:text/default","Consultation")}</Frame>'
+        f'{dhead([("Type less,",False),("say more",True)],26)}'
+        f'{T(14,"regular","var:text/muted","A template fills the structure so your typing goes into what is actually different about this patient.",w="fill")}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{C2_LIST}{C2_SETTINGS}</Frame>'
+        f'<Frame w={{420}} flex="col" gap={{14}}>{C2_PREVIEW}'
         f'{dcta("Use this template","Use template hyp","check")}</Frame></Frame>',
-        SIDE["Notes"], topbar=False),
-    dr_mob("Doctor · Consultation — C2 Note Templates · Mobile",
-        dr_appbar("Templates")
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{10}}>'
-          f'{C2_TEMPLATES}<Frame grow={{1}} />'
-          f'{dcta("Use this template","Use template hyp","check")}</Frame>'))
+        NAV["Consults"], PANEL_CONSULT, urgent=0, badges=BADGES),
+    dr_mob("Doctor · Consult — C2 Templates · Mobile",
+        dr_head("Templates", "5 available · 42 uses this year",
+                stats=[("5", "Templates"), ("42", "Uses"), ("2", "Shared")]),
+        f'{C2_LIST}{C2_PREVIEW}{C2_SETTINGS}'
+        f'{dcta("Use this template","Use template hyp","check")}',
+        MTAB["Consult"]))
 
 # ---------------- C3 prescribe
-# "unless there's an open API with the name of drugs and the details ... they can just search"
-C3_SEARCH = (f'{field("Search a medicine","search","amlod",ph=False,focus=True,helper="From the Nigerian essential medicines list plus the NAFDAC register — type three letters.")}'
-             f'<Frame w="fill" flex="col" gap={{9}}>'
-             f'{drug_result("Amlodipine","Tablet · 5 mg, 10 mg","Calcium channel blocker","Pick amlodipine")}'
-             f'{drug_result("Amlodipine / Valsartan","Tablet · 5/80 mg, 10/160 mg","Combination","Pick amlodval")}'
-             f'{drug_result("Amoxicillin","Capsule · 250 mg, 500 mg","Penicillin — patient is allergic","Pick amoxicillin")}</Frame>')
+C3_SEARCH = dcard(
+    field("Search a medicine", "search", "amlod", ph=False, focus=True,
+          helper="Nigerian essential medicines list plus the NAFDAC register — three letters is enough.")
+    + f'<Frame w="fill" flex="col" gap={{8}}>'
+    + drug_result("Amlodipine", "Tablet · 5 mg, 10 mg", "Calcium channel blocker", "Pick amlodipine")
+    + drug_result("Amlodipine / Valsartan", "Tablet · 5/80 mg, 10/160 mg", "Combination", "Pick amlodval")
+    + drug_result("Amoxicillin", "Capsule · 250 mg, 500 mg", "Penicillin class", "Pick amoxicillin", blocked=True)
+    + '</Frame>')
+
 C3_BLOCK = alert_strip("triangle-alert", "Amoxicillin is blocked for this patient",
-    "Amara is allergic to penicillin — rash and swelling, recorded June 2026. Prescribing it needs a written reason and is flagged to the clinic.", "err")
-C3_BUILDER = group_card("Amlodipine", [
-    f'<Frame w="fill" flex="row" gap={{14}}>'
+    "Amara is allergic to penicillin — rash and swelling, June 2026. Prescribing it needs a written reason and is flagged to the clinic's medical director.",
+    "err", dbtn("Override", "Override allergy", "unlock", "danger", grow=False, size="sm"))
+
+C3_BUILDER = dgroup("Amlodipine", [
+    f'<Frame w="fill" flex="row" gap={{12}}>'
     + f'<Frame grow={{1}} flex="col">{field("Strength","pill","5 mg",ph=False,trailing=("chevron-down","Strength dropdown"))}</Frame>'
     + f'<Frame grow={{1}} flex="col">{field("Form","package","Tablet",ph=False,trailing=("chevron-down","Form dropdown"))}</Frame></Frame>',
     field_chips("How often", ["Once daily", "Twice daily", "Three times", "As needed"], 0, "Rx freq"),
     field_chips("When", ["Morning", "Night", "With food", "Any time"], 0, "Rx when"),
-    f'<Frame w="fill" flex="row" gap={{14}}>'
+    f'<Frame w="fill" flex="row" gap={{12}}>'
     + f'<Frame grow={{1}} flex="col">{stepper_ctl("Days",30,"Rx days")}</Frame>'
     + f'<Frame grow={{1}} flex="col">{stepper_ctl("Refills allowed",2,"Rx refills")}</Frame></Frame>',
-    field("Instructions the patient will see", "message-square-text", "One tablet every morning with water. Do not stop without speaking to me.", ph=False),
-], footer="This is written in plain language on the member's phone, with a reminder at the time you set.")
-C3_CURRENT = group_card("On this prescription", [
+    field("Instructions the patient will see", "message-square-text",
+          "One tablet every morning with water. Do not stop without speaking to me.", ph=False),
+    dtoggle("bell-ring", "Set her reminder for 08:00", sub="App, WhatsApp and SMS", on=True, name="Rx remind"),
+], footer="Written in plain language on her phone, with a reminder at the time you set and a refill button when it runs low.")
+
+C3_CURRENT = dgroup("On this prescription", [
     rx_line("Amlodipine", "5 mg", "Once daily, morning", "30 days", "rx1"),
     rx_line("Metformin", "500 mg", "Once daily, evening", "30 days", "rx2"),
-], footer="Both go to the member's Medicines tab and to Garki pharmacy the moment you sign.")
+], footer="Both go to her Medicines tab and to Garki pharmacy the moment you sign.")
 
-add("Consultation", "C3-prescribe",
-    dr_desk("Doctor · Consultation — C3 Prescribe",
-        f'{C_PATIENT_STRIP}'
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{16}}>{C3_SEARCH}{C3_BLOCK}{C3_BUILDER}</Frame>'
-        f'<Frame w={{380}} flex="col" gap={{16}}>{C3_CURRENT}'
-        f'{group_card("Already taking", [list_row("pill","Vitamin D 1000 IU",sub="Over the counter · not prescribed by you",name="Cur vitd",chevron=False),list_row("shield-check","No interactions found",sub="Checked against everything on her record",name="Cur interactions",tint="var:state/success-bg",chevron=False)])}'
-        f'{dcta("Add to the visit","Open sign C6","check")}</Frame></Frame>',
-        SIDE["Notes"], topbar=False),
-    dr_mob("Doctor · Consultation — C3 Prescribe · Mobile",
-        dr_appbar("Prescribe")
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{12}} px={{20}} pt={{2}} pb={{10}}>'
-          f'{patient_strip_m()}'
-          f'{field("Search a medicine","search","amlod",ph=False,focus=True)}'
-          f'{drug_result("Amlodipine","Tablet · 5 mg, 10 mg","Calcium channel blocker","Pick amlodipine")}'
-          f'{drug_result("Amoxicillin","Capsule · 250 mg","Penicillin — allergic","Pick amoxicillin")}'
-          f'{C3_BLOCK}'
-          f'{group_card("On this prescription", [rx_line("Amlodipine","5 mg","Once daily, morning","30 days","rx1")], p=16)}'
-          f'<Frame grow={{1}} />'
-          f'{dcta("Add to the visit","Open sign C6","check")}</Frame>'))
+C3_CHECKS = dgroup("Safety checks", [
+    drow("shield-check", "No interactions found", sub="Checked against everything on her record", name="Chk interactions", tone="ok", chevron=False),
+    drow("triangle-alert", "1 allergy blocked a suggestion", sub="Amoxicillin — penicillin class", name="Chk allergy", tone="err", chevron=False),
+    drow("baby", "Not pregnant or breastfeeding", sub="Recorded 12 Jun — ask again if unsure", name="Chk pregnancy", chevron=False),
+    drow("activity", "Kidney function unknown", sub="No U&E on file. Consider one before increasing the dose.", name="Chk renal", tone="warn", chevron=False),
+    drow("pill", "Also taking Vitamin D 1000 IU", sub="Over the counter, not prescribed by you", name="Chk otc", chevron=False),
+], footer="Automated checks assist, they do not decide. The prescription is your clinical judgement and carries your MDCN number.")
 
-# ---------------- C4 order tests
-C4_PICK = group_card("Order a test", [
+add("Consult", "C3-prescribe",
+    dr_desk("Doctor · Consult — C3 Prescribe", ["Consults", "Amara Okeke", "Prescription"],
+        f'{C_STRIP}{C_TABS}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{C3_SEARCH}{C3_BLOCK}{C3_BUILDER}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{C3_CURRENT}{C3_CHECKS}'
+        f'{dcta("Add to the visit","Open sign C7","check")}</Frame></Frame>',
+        NAV["Consults"], PANEL_CONSULT, urgent=0, badges=BADGES),
+    dr_mob("Doctor · Consult — C3 Prescribe · Mobile",
+        dr_head("Prescribe", "Amara Okeke · 2 on this prescription",
+                stats=[("2", "Medicines"), ("1", "Blocked"), ("0", "Interactions")]),
+        f'{C_STRIP_M}{C3_SEARCH}{C3_BLOCK}{C3_BUILDER}{C3_CURRENT}{C3_CHECKS}'
+        f'{dcta("Add to the visit","Open sign C7","check")}',
+        MTAB["Consult"]))
+
+# ---------------- C4 tests
+C4_PICK = dgroup("Order a test", [
     field("Search tests", "search", "fasting blood", ph=False, focus=True),
-    list_row("flask-conical", "Fasting blood sugar", sub="Already outstanding from 12 June", name="Test fbs", tint="var:state/warning-bg"),
-    list_row("flask-conical", "HbA1c", sub="Three-month average — better than a single reading", name="Test hba1c"),
-    list_row("flask-conical", "Lipid profile", sub="Total cholesterol, HDL, LDL, triglycerides", name="Test lipid"),
-    list_row("flask-conical", "Urea, creatinine and electrolytes", sub="Kidney function on antihypertensives", name="Test uce"),
-    list_row("heart-pulse", "ECG", sub="Available at Garki Medical Centre", name="Test ecg"),
+    drow("flask-conical", "Fasting blood sugar", value="₦3,500", sub="Already outstanding from 12 June", name="Test fbs", tone="warn"),
+    drow("flask-conical", "HbA1c", value="₦5,000", sub="Three-month average — better than a single reading", name="Test hba1c"),
+    drow("flask-conical", "Lipid profile", value="₦7,500", sub="Total cholesterol, HDL, LDL, triglycerides", name="Test lipid"),
+    drow("flask-conical", "Urea, creatinine and electrolytes", value="₦6,000", sub="Kidney function on antihypertensives", name="Test uce"),
+    drow("heart-pulse", "ECG", value="₦12,000", sub="Available at Garki Medical Centre", name="Test ecg"),
+    drow("scan", "Echocardiogram", value="₦45,000", sub="Referral to the imaging centre", name="Test echo"),
 ])
-C4_WHERE = group_card("Where should she go?", [
-    radio_row("Garki Medical Centre laboratory", sub="MLSCN accredited · results usually next day · ₦8,500", on=True, name="Lab garki"),
-    radio_row("Any Medra partner laboratory", sub="She picks what is near her — price varies", name="Lab any"),
+C4_WHERE = dgroup("Where should she go?", [
+    radio_row("Garki Medical Centre laboratory", sub="MLSCN accredited · results usually next day · ₦8,500 total", on=True, name="Lab garki"),
+    radio_row("Any Medra partner laboratory", sub="She picks what is near her — the price varies", name="Lab any"),
     radio_row("She already has a lab in mind", sub="We send her the request to take with her", name="Lab own"),
 ], footer="Whichever she picks, the result comes back into her record and into your Needs-you list.")
-C4_NOTE = group_card("Note for the laboratory", [
+C4_NOTE = dgroup("For the laboratory", [
     field("Clinical details", "file-text", "Hypertension on amlodipine. Screening for diabetes. Fasting sample please.", ph=False),
-    checkbox("Mark as urgent — results the same day", "Test urgent", checked=False),
+    checkbox("Mark as urgent — same-day result", "Test urgent", checked=False),
+    dtoggle("bell-ring", "Remind her if it is not done in 7 days", sub="She never did the June one", on=True, name="Test remind"),
+])
+C4_ORDER = dgroup("On this order", [
+    drow("flask-conical", "Fasting blood sugar", value="₦3,500", name="Ord fbs", chevron=False),
+    drow("flask-conical", "HbA1c", value="₦5,000", name="Ord hba1c", chevron=False),
+    drow("receipt", "She pays the laboratory", value="₦8,500", sub="Medra takes nothing from test fees", name="Ord pay", chevron=False),
 ])
 
-add("Consultation", "C4-tests",
-    dr_desk("Doctor · Consultation — C4 Order Tests",
-        f'{C_PATIENT_STRIP}'
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{16}}>{C4_PICK}{C4_NOTE}</Frame>'
-        f'<Frame w={{380}} flex="col" gap={{16}}>{C4_WHERE}'
-        f'{group_card("On this order", [list_row("flask-conical","Fasting blood sugar",value="₦3,500",name="Ord fbs",chevron=False),list_row("flask-conical","HbA1c",value="₦5,000",name="Ord hba1c",chevron=False),list_row("receipt","She pays the laboratory",sub="Medra does not take a cut of test fees",name="Ord pay",chevron=False)])}'
-        f'{dcta("Add to the visit","Open sign C6","check")}</Frame></Frame>',
-        SIDE["Notes"], topbar=False),
-    dr_mob("Doctor · Consultation — C4 Order Tests · Mobile",
-        dr_appbar("Order tests")
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{12}} px={{20}} pt={{2}} pb={{10}}>'
-          f'{group_card("Order a test", [field("Search tests","search","fasting blood",ph=False,focus=True),list_row("flask-conical","Fasting blood sugar",sub="Outstanding since 12 June",name="Test fbs",tint="var:state/warning-bg"),list_row("flask-conical","HbA1c",name="Test hba1c")], p=16)}'
-          f'<Frame grow={{1}} />{dcta("Add to the visit","Open sign C6","check")}</Frame>'))
+add("Consult", "C4-tests",
+    dr_desk("Doctor · Consult — C4 Order Tests", ["Consults", "Amara Okeke", "Tests"],
+        f'{C_STRIP}{C_TABS}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{C4_PICK}{C4_NOTE}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{C4_WHERE}{C4_ORDER}'
+        f'{dcta("Add to the visit","Open sign C7","check")}</Frame></Frame>',
+        NAV["Consults"], PANEL_CONSULT, urgent=0, badges=BADGES),
+    dr_mob("Doctor · Consult — C4 Order Tests · Mobile",
+        dr_head("Order tests", "Amara Okeke · 2 selected",
+                stats=[("2", "Tests"), ("₦8,500", "She pays"), ("1", "Overdue")]),
+        f'{C_STRIP_M}{C4_PICK}{C4_WHERE}{C4_NOTE}{C4_ORDER}'
+        f'{dcta("Add to the visit","Open sign C7","check")}',
+        MTAB["Consult"]))
 
-# ---------------- C5 upload a result
-# "the doctor can upload the result of that particular test ... or the hospital's lab technician"
-C5_UPLOAD = (f'{upload("Open camera C5", label="Photograph or choose the result")}'
-             f'{field_chips("What is it?", ["Lab result", "Imaging", "Discharge summary", "Referral", "Other"], 0, "Upload kind")}'
-             f'<Frame w="fill" flex="row" gap={{14}}>'
-             f'<Frame grow={{1}} flex="col">{field("Test","flask-conical","Full blood count",ph=False)}</Frame>'
-             f'<Frame grow={{1}} flex="col">{field("Date taken","calendar-days","12 June 2026",ph=False)}</Frame></Frame>'
-             f'{field("Which laboratory?","hospital","Garki Medical Centre Laboratory",ph=False)}')
-C5_READ = group_card("We read this from the page", [
+# ---------------- C5 upload / release a result
+C5_UPLOAD = dcard(
+    upload("Open camera C5", label="Photograph or choose the result")
+    + field_chips("What is it?", ["Lab result", "Imaging", "Discharge summary", "Referral letter", "Other"], 0, "Upload kind")
+    + f'<Frame w="fill" flex="row" gap={{12}}>'
+    + f'<Frame grow={{1}} flex="col">{field("Test","flask-conical","Full blood count",ph=False)}</Frame>'
+    + f'<Frame grow={{1}} flex="col">{field("Date taken","calendar-days","12 June 2026",ph=False)}</Frame></Frame>'
+    + field("Which laboratory?", "hospital", "Garki Medical Centre Laboratory", ph=False))
+
+C5_READ = dgroup("What we read from the page", [
     lab_line("Haemoglobin", "11.2 g/dL", "12.0 – 15.5", "Low"),
     lab_line("White cell count", "6.4 ×10⁹/L", "4.0 – 11.0"),
     lab_line("Platelets", "268 ×10⁹/L", "150 – 400"),
-], footer="Check the numbers before you release them. You are signing for what the patient sees.")
-C5_EXPLAIN = group_card("Add a line the patient will understand", [
-    field("In plain language (optional)", "book-open", "Your haemoglobin is slightly low, which often means low iron. Nothing else is out of range. We will talk about it at your review.", ph=False),
-    toggle_row("bell-ring", "Tell her it has arrived", sub="App, WhatsApp and SMS", on=True, name="Notify result"),
-    toggle_row("eye", "Release it to her now", sub="Turn this off to hold it until you have spoken", on=False, name="Release result"),
-], footer="A result out of range with no explanation frightens people. One sentence from you prevents a panicked call.")
+    lab_line("Haematocrit", "34%", "34 – 45"),
+], footer="Check every number before you release it. You are signing for what the patient reads.")
 
-add("Consultation", "C5-upload",
-    dr_desk("Doctor · Consultation — C5 Upload a Result",
-        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",18,N_IC)}'
-        f'{T(14,"semibold","var:text/default","Consultation")}</Frame>'
-        f'{head_chip([("Add a result to",False),("her record",True)],28)}'
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{16}}>{C5_UPLOAD}{C5_READ}</Frame>'
-        f'<Frame w={{400}} flex="col" gap={{16}}>'
-        f'<Frame w="fill" h={{200}} rounded={{22}} image="assets/img/thumb-lab.jpg" overflow="hidden" />'
-        f'{C5_EXPLAIN}{dcta("Save to her record","Open sign C6","check")}</Frame></Frame>',
-        SIDE["Notes"], topbar=False),
-    dr_mob("Doctor · Consultation — C5 Upload a Result · Mobile",
-        dr_appbar("Upload a result")
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{12}} px={{20}} pt={{2}} pb={{10}}>'
-          f'{upload("Open camera C5", label="Photograph the result")}'
-          f'{field_chips("What is it?", ["Lab result", "Imaging", "Other"], 0, "Upload kind")}'
-          f'{C5_READ}<Frame grow={{1}} />{dcta("Save to her record","Open sign C6","check")}</Frame>'))
+C5_EXPLAIN = dgroup("Before it reaches her", [
+    field("In plain language (optional)", "book-open",
+          "Your haemoglobin is slightly low, which often means low iron. Nothing else is out of range. We will talk about it at your review.", ph=False),
+    dtoggle("eye", "Release it to her now", sub="Turn this off to hold it until you have spoken", on=False, name="Release result"),
+    dtoggle("bell-ring", "Tell her it has arrived", sub="App, WhatsApp and SMS", on=True, name="Notify result"),
+    dtoggle("calendar-plus", "Book a follow-up to discuss it", sub="Suggests your next three open slots", on=True, name="Result followup"),
+], footer="A result out of range with no explanation frightens people. One sentence from you prevents a panicked call at 22:00.")
 
-# ---------------- C6 review, choose what to share, sign
-# "the doctor can pick what they want to share with the patient"
-C6_SHARE = group_card("What Amara sees", [
-    share_toggle("Why she came, in her words", "Share reason"),
+C5_QUEUE = dgroup("Other results waiting on you", [
+    patient_row("avatar-1.jpg", "Musa Ibrahim", "MDR-7714-02", "Troponin · normal · arrived 2 hours ago", "Release", "Rel Musa", tag="new"),
+    patient_row("avatar-3.jpg", "Grace Okeke", "MDR-8842-21", "HbA1c 8.4% · high · arrived yesterday", "Release", "Rel Grace", tag="pending"),
+], footer="Results are never released automatically. Nothing reaches a member until a doctor has looked at it.")
+
+add("Consult", "C5-upload",
+    dr_desk("Doctor · Consult — C5 Result", ["Consults", "Result"],
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",17,N_IC)}'
+        f'{T(13,"semibold","var:text/default","Consultation")}</Frame>'
+        f'{dhead([("Add a result to",False),("her record",True)],26)}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{C5_UPLOAD}{C5_READ}</Frame>'
+        f'<Frame w={{400}} flex="col" gap={{14}}>'
+        f'<Frame w="fill" h={{180}} rounded={{15}} image="assets/img/thumb-lab.jpg" overflow="hidden" />'
+        f'{C5_EXPLAIN}{C5_QUEUE}{dcta("Save to her record","Open sign C7","check")}</Frame></Frame>',
+        NAV["Consults"], PANEL_CONSULT, urgent=3, badges=BADGES),
+    dr_mob("Doctor · Consult — C5 Result · Mobile",
+        dr_head("Add a result", "Full blood count · 12 June",
+                stats=[("1", "Out of range"), ("3", "Waiting"), ("Held", "Release")]),
+        f'{C5_UPLOAD}{C5_READ}{C5_EXPLAIN}{C5_QUEUE}'
+        f'{dcta("Save to her record","Open sign C7","check")}',
+        MTAB["Consult"]))
+
+# ---------------- C6 refer onward
+C6_WHO = dgroup("Refer to", [
+    patient_row("avatar-5.jpg", "Dr. Tunde Bello", "MDCN 55208", "Neurology · Asokoro Specialist · 2.1 km · next slot Tue", "Choose", "Refer Tunde", tag="confirmed"),
+    patient_row("avatar-1.jpg", "Dr. Chuka Eze", "MDCN 60112", "General practice · Wuse Clinic · next slot today", "Choose", "Refer Chuka"),
+    drow("search", "Someone else on Medra", sub="Search by name, specialty or MDCN number", name="Refer search"),
+    drow("hospital", "A hospital or clinic", sub="For admission or a service you do not offer", name="Refer facility"),
+    drow("file-text", "Write a letter instead", sub="For a doctor who is not on Medra — she carries it or you email it", name="Refer letter"),
+])
+C6_LETTER = dgroup("The referral", [
+    field("Reason for referral", "file-text",
+          "Recurrent afternoon headaches on a background of hypertension, partially controlled. Neurological examination normal. Grateful for your assessment.", ph=False),
+    field_chips("Urgency", ["Routine", "Soon — 2 weeks", "Urgent — 48 hours"], 0, "Refer urgency"),
+    checkbox("Share my consultation notes with them", "Refer share notes"),
+    checkbox("Share her lab results", "Refer share labs"),
+    checkbox("Copy the letter to the patient", "Refer copy patient"),
+], footer="She is asked to approve the share before the other doctor can open anything. Her record is hers, not yours to pass on.")
+C6_WHAT = dgroup("What happens", [
+    prep_step(1, "She gets the referral on her phone", "With who, why, and what you want to share"),
+    prep_step(2, "She approves the share", "Or declines it — the referral still stands, just without the history"),
+    prep_step(3, "Dr. Bello sees it in his requests", "He accepts and offers her a time"),
+    prep_step(4, "You get the reply", "His note lands back in your inbox when the visit is done"),
+], footer="Referrals that come back are the loop that keeps a specialist network honest. You always find out what happened.")
+
+add("Consult", "C6-refer",
+    dr_desk("Doctor · Consult — C6 Refer", ["Consults", "Amara Okeke", "Referral"],
+        f'{C_STRIP}{C_TABS}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{C6_WHO}{C6_LETTER}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{C6_WHAT}'
+        f'{dcta("Send the referral","Send refer C6","send")}'
+        f'{dbtn("Save it with the note instead","Save refer C6","file-text","ghost",full=True)}</Frame></Frame>',
+        NAV["Consults"], PANEL_CONSULT, urgent=0, badges=BADGES),
+    dr_mob("Doctor · Consult — C6 Refer · Mobile",
+        dr_head("Refer", "Amara Okeke · neurology",
+                stats=[("Routine", "Urgency"), ("2", "Suggested"), ("Tue", "Next slot")]),
+        f'{C_STRIP_M}{C6_WHO}{C6_LETTER}{C6_WHAT}'
+        f'{dcta("Send the referral","Send refer C6","send")}',
+        MTAB["Consult"]))
+
+# ---------------- C7 review & sign
+C7_SHARE = dgroup("What Amara sees", [
+    share_toggle("Presenting complaint, in her words", "Share complaint"),
     share_toggle("Examination findings", "Share exam"),
-    share_toggle("Assessment and diagnosis", "Share assessment"),
-    share_toggle("Plan and advice", "Share plan"),
+    share_toggle("Diagnosis", "Share diagnosis"),
+    share_toggle("Treatment plan and advice", "Share plan"),
+    share_toggle("Your comment for her", "Share comment"),
     share_toggle("Prescription", "Share rx"),
     share_toggle("Tests ordered", "Share tests"),
-    share_toggle("Your private working notes", "Share private", on=False),
-], footer="Anything switched off stays in the clinical record for you and the clinic, and never appears on her phone. She is told a private note exists — she is not shown what it says.")
-C6_PREVIEW = (f'<Frame w="fill" flex="col" gap={{13}} p={{20}} rounded={{24}} bg="var:bg/base" '
-              f'stroke="var:border/default" strokeWidth={{1}}>'
-              f'<Frame w="fill" flex="row" justify="between" items="center">'
-              f'<Frame flex="row" gap={{8}} items="center" px={{10}} py={{6}} rounded={{999}} bg="var:state/info-bg">'
-              f'{I("stethoscope",13,A_IC)}{T(11,"semibold","var:text/default","Consultation")}</Frame>'
-              f'{T(11,"regular","var:text/muted","How it looks on her phone")}</Frame>'
-              f'{T(18,"bold","var:text/strong","Hypertension review")}'
-              f'{note_section("Assessment","Hypertension, partially controlled. No sign of organ damage.","clipboard-check")}'
-              f'{note_section("Plan","Continue Amlodipine 5 mg every morning. Less added salt. Walk 30 minutes, five days a week. Fasting blood sugar before your next visit. Review in three months.","list-checks")}'
-              f'{hr()}{provenance("Dr. Ngozi Okafor","MDCN 71482","21 Aug 2026, 11:04")}</Frame>')
-C6_SIGN = (f'<Frame w="fill" flex="col" gap={{13}} p={{20}} rounded={{24}} bg="var:state/info-bg">'
-           f'<Frame flex="row" gap={{9}} items="center">{I("shield-check",18,A_IC)}'
-           f'{T(14,"semibold","var:text/strong","Signing makes this permanent")}</Frame>'
-           f'{T(13,"regular","var:text/default","Once signed, this note cannot be edited — only amended with a new, dated entry. That is what makes it worth anything to the next doctor who reads it.",w="fill")}'
-           f'{checkbox("I confirm this is an accurate record of the consultation.","Confirm accurate")}'
-           f'{dcta("Sign and send to Amara","Sign C6","badge-check")}'
-           f'{mini_btn("Save as a draft","Save draft C6","file-text","ghost",full=True)}</Frame>')
+    share_toggle("Referral to Dr. Bello", "Share referral"),
+    share_toggle("Private notes", "Share private", on=False, sub="Always off by default — she is told a private note exists, not what it says"),
+], footer="Anything switched off stays in the clinical record for you and the clinic, and never appears on her phone.")
 
-add("Consultation", "C6-sign",
-    dr_desk("Doctor · Consultation — C6 Review &amp; Sign",
-        f'{C_PATIENT_STRIP}'
-        f'{head_chip([("Check it, then",False),("sign it",True)],28)}'
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{16}}>{C6_SHARE}'
-        f'{group_card("Also going to her", [list_row("pill","Amlodipine 5 mg · 30 days",sub="With reminders at 08:00",name="Sign rx",chevron=False),list_row("flask-conical","Fasting blood sugar, HbA1c",sub="Garki Medical Centre laboratory",name="Sign tests",chevron=False),list_row("calendar-plus","Follow-up in 3 months",sub="She gets a reminder in November",name="Sign followup",chevron=False)])}</Frame>'
-        f'<Frame w={{420}} flex="col" gap={{16}}>{eyebrow("PREVIEW")}{C6_PREVIEW}{C6_SIGN}</Frame></Frame>',
-        SIDE["Notes"], topbar=False),
-    dr_mob("Doctor · Consultation — C6 Review &amp; Sign · Mobile",
-        dr_appbar("Review and sign")
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{12}} px={{20}} pt={{2}} pb={{10}}>'
-          f'{group_card("What Amara sees", [share_toggle("Assessment and diagnosis","Share assessment"),share_toggle("Plan and advice","Share plan"),share_toggle("Prescription","Share rx"),share_toggle("Your private working notes","Share private",on=False)], p=16)}'
-          f'<Frame grow={{1}} />{C6_SIGN}</Frame>'))
+C7_PREVIEW = dcard(
+    f'<Frame w="fill" flex="row" justify="between" items="center">'
+    f'<Frame flex="row" gap={{7}} items="center" px={{9}} py={{5}} rounded={{8}} bg="var:state/info-bg">'
+    f'{I("stethoscope",12,A_IC)}{T(10,"semibold","var:text/default","Consultation")}</Frame>'
+    f'{T(10,"regular","var:text/muted","How it looks on her phone")}</Frame>'
+    + T(17, "bold", "var:text/strong", "Hypertension review")
+    + note_section("Diagnosis", "Hypertension, partially controlled. No sign of organ damage.", "clipboard-check")
+    + note_section("Treatment plan", "Continue Amlodipine 5 mg every morning. Less added salt. Walk 30 minutes, five days a week. Fasting blood sugar before your next visit. Review in three months.", "list-checks")
+    + note_section("From Dr. Okafor", "Your readings are better than June. Keep taking the Amlodipine every morning — it works best at a steady level.", "message-circle")
+    + hr() + provenance("Dr. Ngozi Okafor", "MDCN 71482", "21 Aug 2026, 11:04"))
 
-# ---------------- C7 done
-C7 = (f'<Frame w="fill" flex="col" gap={{16}} items="center">'
-      f'{big_icon("badge-check","ok",96)}'
-      f'{T(23,"bold","var:text/strong","Signed and sent")}'
-      f'{T(15,"regular","var:text/muted","Amara has the note, the prescription and the test request on her phone. The consultation took 14 minutes.",w="fill",align="center")}'
-      f'{group_card("", [list_row("file-text","Consultation note",value="Shared",sub="Private working notes withheld",name="Done note",chevron=False),list_row("pill","Amlodipine 5 mg",value="Sent",sub="Garki pharmacy notified",name="Done rx",chevron=False),list_row("flask-conical","2 tests ordered",value="Sent",sub="Results come back to your Needs-you list",name="Done tests",chevron=False),list_row("banknote","₦15,000",value="Paid",sub="In Friday’s payout",name="Done paid",chevron=False)])}</Frame>')
-C7_NEXT = group_card("Next patient", [
-    patient_row("avatar-6.jpg", "Chidi Okeke", "MDR-8842-20", "11:00 · in person · cough for four days", "12 Jun", "Q Chidi"),
+C7_ALSO = dgroup("Also going to her", [
+    drow("pill", "Amlodipine 5 mg · 30 days", sub="With reminders at 08:00 and a refill button", name="Sign rx", chevron=False),
+    drow("flask-conical", "Fasting blood sugar, HbA1c", sub="Garki Medical Centre laboratory · ₦8,500", name="Sign tests", chevron=False),
+    drow("share-2", "Referral to Dr. Tunde Bello", sub="Neurology · routine · awaiting her approval to share", name="Sign referral", chevron=False),
+    drow("calendar-plus", "Follow-up in 3 months", sub="She gets a reminder in November", name="Sign followup", chevron=False),
+])
+
+C7_SIGN = dcard(
+    f'<Frame flex="row" gap={{9}} items="center">{I("shield-check",17,A_IC)}'
+    f'{T(14,"semibold","var:text/strong","Signing makes this permanent")}</Frame>'
+    + T(12, "regular", "var:text/default",
+        "Once signed, this note cannot be edited — only amended with a new, dated entry. That is what makes it worth anything to the next doctor who reads it.", w="fill")
+    + checkbox("I confirm this is an accurate record of the consultation.", "Confirm accurate")
+    + dcta("Sign and send to Amara", "Sign C7", "badge-check")
+    + dbtn("Save as a draft", "Save draft C7", "file-text", "ghost", full=True)
+    + T(11, "regular", "var:text/muted", "Drafts are kept for 30 days and shown in Unsigned notes. The patient sees nothing until you sign.", w="fill"),
+    bg="var:state/info-bg", stroke=None)
+
+add("Consult", "C7-sign",
+    dr_desk("Doctor · Consult — C7 Review &amp; Sign", ["Consults", "Amara Okeke", "Review"],
+        f'{C_STRIP}'
+        f'{dhead([("Check it, then",False),("sign it",True)],26)}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{C7_SHARE}{C7_ALSO}</Frame>'
+        f'<Frame w={{420}} flex="col" gap={{14}}>{eyerow("Preview")}{C7_PREVIEW}{C7_SIGN}</Frame></Frame>',
+        NAV["Consults"], PANEL_CONSULT, urgent=0, badges=BADGES),
+    dr_mob("Doctor · Consult — C7 Review &amp; Sign · Mobile",
+        dr_head("Review and sign", "Amara Okeke · 14 minutes",
+                stats=[("8", "Shared"), ("1", "Private"), ("4", "Attached")]),
+        f'{C7_SHARE}{C7_ALSO}{eyerow("Preview")}{C7_PREVIEW}{C7_SIGN}',
+        MTAB["Consult"]))
+
+# ---------------- C8 signed
+C8_DONE = dcard(
+    f'<Frame w="fill" flex="col" gap={{13}} items="center">'
+    f'{big_icon("badge-check","ok",84)}'
+    f'{T(22,"bold","var:text/strong","Signed and sent")}'
+    f'{T(14,"regular","var:text/muted","Amara has the note, the prescription and the test request on her phone. The consultation took 14 minutes.",w="fill",align="center")}</Frame>')
+C8_WENT = dgroup("Where everything went", [
+    drow("file-text", "Consultation note", value="Shared", sub="Private notes withheld, as you set", name="Done note", tone="ok", chevron=False),
+    drow("pill", "Amlodipine 5 mg", value="Sent", sub="Garki pharmacy notified · reminder set for 08:00", name="Done rx", tone="ok", chevron=False),
+    drow("flask-conical", "2 tests ordered", value="Sent", sub="Results return to your Needs-you list", name="Done tests", tone="ok", chevron=False),
+    drow("share-2", "Referral to Dr. Bello", value="Awaiting her approval", sub="She decides what history he sees", name="Done referral", tone="warn", chevron=False),
+    drow("banknote", "₦15,000", value="Released", sub="In Friday's payout", name="Done paid", tone="ok", chevron=False),
+])
+C8_NEXT = dgroup("Next patient", [
+    patient_row("avatar-6.jpg", "Chidi Okeke", "MDR-8842-20", "11:00 · in person · cough for four days", "Ready", "Q Chidi", tag="soon"),
 ], footer="You are running four minutes early.")
+C8_RATE = dgroup("Two seconds of feedback", [
+    drow("thumbs-up", "The note template saved me time", name="Fb good", chevron=False),
+    drow("circle-help", "Something slowed me down", sub="Tell us what — this is how the tool gets better", name="Fb bad", chevron=False),
+])
 
-add("Consultation", "C7-done",
-    dr_desk("Doctor · Consultation — C7 Signed",
-        f'<Frame w="fill" flex="row" gap={{20}} justify="center" items="start" pt={{10}}>'
-        f'<Frame w={{560}} flex="col" gap={{16}}>{C7}</Frame>'
-        f'<Frame w={{380}} flex="col" gap={{16}}>{C7_NEXT}'
+add("Consult", "C8-signed",
+    dr_desk("Doctor · Consult — C8 Signed", ["Consults", "Signed"],
+        f'<Frame w="fill" flex="row" gap={{16}} justify="center" items="start" pt={{8}}>'
+        f'<Frame w={{540}} flex="col" gap={{14}}>{C8_DONE}{C8_WENT}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{C8_NEXT}'
         f'{dcta("Start the next consultation","Start consult","stethoscope")}'
-        f'{mini_btn("Back to today","Nav Today","arrow-left","ghost",full=True)}</Frame></Frame>',
-        SIDE["Notes"], topbar=False),
-    dr_mob("Doctor · Consultation — C7 Signed · Mobile",
-        dr_appbar(None, back=False, right=circle_btn("x", "Nav Today"))
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{14}} px={{20}} pt={{6}} pb={{10}}>{C7}'
-          f'<Frame grow={{1}} />{dcta("Start the next consultation","Start consult","stethoscope")}</Frame>'))
+        f'{dbtn("Back to today","Nav Today","arrow-left","ghost",full=True)}{C8_RATE}</Frame></Frame>',
+        NAV["Consults"], PANEL_CONSULT, urgent=0, badges=BADGES),
+    dr_mob("Doctor · Consult — C8 Signed · Mobile",
+        dr_head("Signed", "Amara Okeke · 14 minutes", back=False,
+                stats=[("14m", "Length"), ("₦15k", "Released"), ("4", "Sent")]),
+        f'{C8_DONE}{C8_WENT}{C8_NEXT}'
+        f'{dcta("Start the next consultation","Start consult","stethoscope")}'
+        f'{dbtn("Back to today","Nav Today","arrow-left","ghost",full=True)}',
+        MTAB["Consult"]))
+
+# ---------------- C9 drafts and unsigned
+C9_LIST = dgroup("Unsigned notes · 2", [
+    request_row("notebook-pen", "Chidi Okeke · MDR-8842-20",
+                "Yesterday 16:40 · paediatric review · complaint and examination written, no diagnosis yet",
+                "18 hours", "Draft Chidi", "err",
+                [dbtn("Finish it", "Open room C1", "arrow-right", "navy", size="sm"),
+                 dbtn("Discard", "Discard draft", "trash-2", "danger", size="sm")]),
+    request_row("notebook-pen", "Fatima Bello · MDR-2201-13",
+                "12 Aug · follow-up · complete but unsigned",
+                "2 days", "Draft Fatima", "warn",
+                [dbtn("Review and sign", "Open sign C7", "badge-check", "navy", size="sm"),
+                 dbtn("Discard", "Discard draft", "trash-2", "danger", size="sm")]),
+], footer="A patient cannot see anything until you sign. An unsigned note two days after a visit is the most common complaint a clinic gets.")
+C9_WHY = dgroup("Why this matters", [
+    drow("eye-off", "The patient sees nothing", sub="No diagnosis, no prescription, no test request", name="Why nothing", chevron=False),
+    drow("pill", "The pharmacy has nothing", sub="Chidi's mother cannot collect anything", name="Why pharmacy", tone="warn", chevron=False),
+    drow("banknote", "Your fee is not released", sub="Payment clears to you on signature", name="Why fee", tone="warn", chevron=False),
+    drow("clock", "Drafts expire after 30 days", sub="Then it is gone and the visit has no record", name="Why expire", tone="err", chevron=False),
+])
+C9_RECOVERED = alert_strip("refresh-cw", "We recovered a note you did not save",
+    "Chidi Okeke, yesterday 16:40 — your browser closed mid-consultation. Everything you had typed is here.", "info",
+    dbtn("Open it", "Open room C1", None, "ghost", grow=False, size="sm"))
+
+add("Consult", "C9-drafts",
+    dr_desk("Doctor · Consult — C9 Unsigned Notes", ["Consults", "Unsigned"],
+        f'{dhead([("Two notes",False),("are not signed",True)],26)}'
+        f'{T(14,"regular","var:text/muted","Until you sign, the visit effectively did not happen — for the patient, the pharmacy or your payout.",w="fill")}'
+        f'{C9_RECOVERED}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{C9_LIST}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{C9_WHY}'
+        f'{dgroup("Stop this happening", [dtoggle("bell-ring","Remind me at the end of clinic",sub="17:00 on a working day",on=True,name="Draft remind"),dtoggle("message-circle","And on WhatsApp if still unsigned next morning",on=True,name="Draft remind wa"),dtoggle("zap","Auto-sign a note I have not touched in 48 hours",sub="Off — a signature should be a decision",on=False,name="Draft autosign")])}</Frame></Frame>',
+        NAV["Consults"], PANEL_CONSULT, urgent=2, badges=BADGES),
+    dr_mob("Doctor · Consult — C9 Unsigned Notes · Mobile",
+        dr_head("Unsigned notes", "2 waiting on you", back=False,
+                stats=[("2", "Unsigned"), ("18h", "Oldest"), ("30d", "Expiry")]),
+        f'{C9_RECOVERED}{C9_LIST}{C9_WHY}',
+        MTAB["Consult"]))
+
+# ---------------- C10 virtual visit (PRD D5: doctor sends the room link)
+C10_LINK = dcard(
+    f'<Frame w="fill" flex="row" gap={{12}} items="center">'
+    f'<Frame w={{42}} h={{42}} rounded={{13}} bg="var:state/info-bg" flex="col" justify="center" items="center">'
+    f'{I("video",20,A_IC)}</Frame>'
+    f'<Frame grow={{1}} flex="col" gap={{2}}>{T(14,"semibold","var:text/strong","Google Meet")}'
+    f'{T(11,"regular","var:text/muted","A fresh link for this appointment only",w="fill")}</Frame>'
+    f'{status_pill("ok" if False else "confirmed","Tested 2 min ago")}</Frame>'
+    + f'<Frame w="fill" flex="row" gap={{9}} items="center" px={{13}} py={{11}} rounded={{11}} bg="var:neutral/50">'
+    + I("external-link", 14, M_IC) + T(12, "regular", "var:text/default", "meet.google.com/kfa-jrqz-nmo", w="fill")
+    + f'<Frame name="Btn Copy meet link" flex="row">{I("copy",14,N_IC)}</Frame></Frame>'
+    + f'<Frame w="fill" flex="row" gap={{9}}>'
+    + dbtn("Join the call", "Join call C10", "video", "navy")
+    + dbtn("Send it to her again", "Send link C10", "send", "ghost") + '</Frame>')
+
+C10_SENT = dgroup("How she got the link", [
+    drow("message-circle", "WhatsApp", value="Delivered 09:30", sub="Read 09:31", name="Sent wa", tone="ok", chevron=False),
+    drow("message-square-text", "SMS", value="Delivered 09:30", sub="The backstop when data is down", name="Sent sms", tone="ok", chevron=False),
+    drow("bell-ring", "In-app notification", value="Opened 10:18", sub="She is in the waiting room now", name="Sent app", tone="ok", chevron=False),
+    drow("send", "Send it once more", sub="If she says she cannot find it", name="Send link C10"),
+], footer="PRD D5 at MVP: you send the room link, Medra makes sure it actually reached her by three routes.")
+
+C10_TROUBLE = dgroup("If the video will not work", [
+    drow("phone-call", "Call her instead", value="+234 801 234 5678", sub="The consultation still counts and is still paid", name="Call patient"),
+    drow("volume-2", "Switch to audio only", sub="Works on a much weaker connection", name="Audio only"),
+    drow("calendar-clock", "Move the appointment", sub="Free for her, no penalty, your next slot is 15:00", name="Open week K6"),
+    drow("banknote", "Refund and reschedule", sub="If nothing works, she should not pay for it", name="Refund visit", tone="warn"),
+], footer="A failed video call is not the member's fault. The default is a full refund and your next open slot.")
+
+C10_WAITING = dgroup("Waiting room", [
+    patient_row("avatar-2.jpg", "Amara Okeke", "MDR-8842-19", "Joined 10:18 · camera on · good connection", "Now", "Admit Amara", tag="live"),
+], footer="She can see a holding screen with your name and the wait time, not the previous consultation.")
+
+add("Consult", "C10-virtual",
+    dr_desk("Doctor · Consult — C10 Virtual Visit", ["Consults", "Virtual visit"],
+        f'{C_STRIP}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>'
+        f'<Frame w="fill" h={{300}} rounded={{16}} image="assets/img/call-doctor-d.jpg" overflow="hidden" '
+        f'flex="col" justify="end" p={{16}}>'
+        f'<Frame flex="row" gap={{8}} items="center" px={{11}} py={{7}} rounded={{9}} bg="var:bg/band-2">'
+        f'{I("video",13,T_IC)}{T(12,"medium","var:text/on-dark","Your camera preview")}</Frame></Frame>'
+        f'{C10_LINK}{C10_WAITING}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{C10_SENT}{C10_TROUBLE}'
+        f'{dcta("Admit her and start","Start consult","stethoscope")}</Frame></Frame>',
+        NAV["Consults"], PANEL_CONSULT, urgent=0, badges=BADGES),
+    dr_mob("Doctor · Consult — C10 Virtual Visit · Mobile",
+        dr_head("Virtual visit", "Amara Okeke · waiting since 10:18",
+                stats=[("10:18", "Joined"), ("Good", "Signal"), ("3", "Sent by")]),
+        f'{C10_LINK}{C10_WAITING}{C10_SENT}{C10_TROUBLE}'
+        f'{dcta("Admit her and start","Start consult","stethoscope")}',
+        MTAB["Consult"]))
 
 # =====================================================================================
-# PATIENTS
+# 4. PATIENTS
 # =====================================================================================
-# "the doctor can search for their card based on their user ID ... in a case where they don't
-#  remember their NIN"
-T1_SEARCH = (f'<Frame w="fill" flex="col" gap={{11}}>'
-             f'{field("Find a patient","search","MDR-8842",ph=False,focus=True,helper="Medra ID, full name, or phone number. Partial IDs work.")}'
-             f'<Frame w="fill" flex="row" gap={{9}} items="center">'
-             f'{mini_btn("My patients","Filter mine",None,"navy")}'
-             f'{mini_btn("Seen this week","Filter week",None,"ghost")}'
-             f'{mini_btn("Owing a test","Filter owing","flask-conical","ghost")}'
-             f'{mini_btn("Scan a code","Scan patient","qr-code","ghost")}</Frame></Frame>')
-T1_LIST = group_card("42 patients", [
-    patient_row("avatar-2.jpg", "Amara Okeke", "MDR-8842-19", "34 · hypertension · O+", "Today", "Open Amara", tag="today"),
-    patient_row("avatar-6.jpg", "Chidi Okeke", "MDR-8842-20", "6 · guardian: Amara Okeke", "Today", "Open Chidi", tag="today"),
+P1_SEARCH = dcard(
+    field("Find a patient", "search", "MDR-8842", ph=False, focus=True,
+          helper="Medra ID, full name or phone number. Partial IDs work — MDR-88 is enough.")
+    + rows_of([dbtn("My patients", "Filter mine", None, "navy", size="sm"),
+               dbtn("Seen this week", "Filter week", None, "ghost", size="sm"),
+               dbtn("Owing a test", "Filter owing", "flask-conical", "ghost", size="sm"),
+               dbtn("Due a follow-up", "Open followups P4", "repeat", "ghost", size="sm")], 4, 8)
+    + rows_of([dbtn("Scan their code", "Scan patient", "qr-code", "ghost", size="sm"),
+               dbtn("Add a walk-in", "Add walkin", "user-plus", "ghost", size="sm")], 2, 8))
+
+P1_LIST = dgroup("42 patients", [
+    patient_row("avatar-2.jpg", "Amara Okeke", "MDR-8842-19", "34 · hypertension · O+ · AA", "Today", "Open Amara", tag="today"),
+    patient_row("avatar-6.jpg", "Chidi Okeke", "MDR-8842-20", "6 · guardian Amara Okeke", "Today", "Open Chidi", tag="today"),
     patient_row("avatar-3.jpg", "Grace Okeke", "MDR-8842-21", "68 · diabetes, hypertension", "28 Apr", "Open Grace"),
     patient_row("avatar-1.jpg", "Musa Ibrahim", "MDR-7714-02", "51 · first visit today", "Never", "Open Musa", tag="new"),
     patient_row("avatar-5.jpg", "Tunde Bello", "MDR-6620-88", "44 · awaiting results", "2 Aug", "Open Tunde", tag="pending"),
+    patient_row("avatar-4.jpg", "Fatima Bello", "MDR-2201-13", "29 · asthma", "12 Aug", "Open Fatima"),
+], footer="You see a patient here if they booked you, or if they granted you access. Nobody else.")
+
+P1_CANT = dgroup("Cannot find someone?", [
+    drow("qr-code", "Scan the code on their phone", sub="Or the QR on their printed summary", name="Scan patient"),
+    drow("user-plus", "Add a walk-in", sub="They get a Medra ID and can claim the record later", name="Add walkin"),
+    drow("circle-help", "They may not have shared with you", sub="Medra does not show you patients who have not", name="Why missing", chevron=False),
+    drow("hospital", "Ask reception to look them up", sub="Front desk can search the whole facility", name="Ask reception", chevron=False),
 ])
-T1_RECENT = group_card("You looked at recently", [
-    list_row("clipboard-list", "Amara Okeke", sub="Hypertension review · 12 Jun", name="Open Amara"),
-    list_row("clipboard-list", "Grace Okeke", sub="Blood sugar result · 3 Aug", name="Open Grace"),
-], footer="Every record you open is logged with your name and the time, and the patient can see it.")
 
-add("Patients", "T1-patients",
-    dr_desk("Doctor · Patients — T1 Find a Patient",
-        f'{head_chip([("Your",False),("patients",True)],28)}'
-        f'{T(15,"regular","var:text/muted","Search by Medra ID when someone cannot remember anything else — it is on their phone and on their printed summary.",w="fill")}'
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{16}}>{T1_SEARCH}{T1_LIST}</Frame>'
-        f'<Frame w={{380}} flex="col" gap={{16}}>{T1_RECENT}'
-        f'{group_card("Cannot find someone?", [list_row("qr-code","Scan the code on their phone",sub="Or the QR on their printed summary",name="Scan patient"),list_row("user-plus","Add a walk-in",sub="They get a Medra ID and can claim the record later",name="Add walkin"),list_row("circle-help","They may not have shared with you",sub="You only see patients who booked you or granted access",name="Why missing",chevron=False)])}</Frame></Frame>',
-        SIDE["Patients"]),
-    dr_mob("Doctor · Patients — T1 Find a Patient · Mobile",
-        dr_appbar("Patients", back=False, right=circle_btn("qr-code", "Scan patient"))
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{8}}>'
-          f'{field("Find a patient","search","MDR-8842",ph=False,focus=True)}'
-          f'{group_card("42 patients", [patient_row("avatar-2.jpg","Amara Okeke","MDR-8842-19","34 · hypertension","Today","Open Amara",tag="today"),patient_row("avatar-6.jpg","Chidi Okeke","MDR-8842-20","6 · guardian: Amara","Today","Open Chidi",tag="today"),patient_row("avatar-1.jpg","Musa Ibrahim","MDR-7714-02","51 · first visit","Never","Open Musa",tag="new")], p=16)}</Frame>',
-        nav=dr_bottom_nav(TAB["Patients"])))
+P1_ACCESS = dgroup("Access replies", [
+    audit_row("Amara Okeke", "Agreed to share her prescription history", "12 min ago"),
+    audit_row("Grace Okeke", "Declined to share home vitals", "Yesterday"),
+], footer="Declining is normal and does not affect their care. It is recorded either way.")
 
-# ---------------- T2 patient record (consent-scoped)
-T2_HEAD = (f'<Frame w="fill" flex="col" gap={{15}} p={{20}} rounded={{28}} bg="var:bg/base" '
-           f'stroke="var:border/subtle" strokeWidth={{1}}>'
-           f'<Frame w="fill" flex="row" gap={{15}} items="center">'
-           f'<Image image="assets/img/avatar-2.jpg" w={{68}} h={{68}} rounded={{22}} />'
-           f'<Frame grow={{1}} flex="col" gap={{4}}>{T(20,"bold","var:text/strong","Amara Okeke")}'
-           f'<Frame flex="row" gap={{9}} items="center">'
-           f'<Frame flex="row" px={{9}} py={{4}} rounded={{7}} bg="var:bg/muted">'
-           f'{T(11,"semibold","var:text/accent","MDR-8842-19")}</Frame>'
-           f'{T(13,"regular","var:text/muted","34 · female · +234 801 234 5678")}</Frame></Frame>'
-           f'{status_pill("shared","Access until 21 Aug, 11:00")}</Frame>'
-           f'<Frame w="fill" flex="row" gap={{10}}>'
-           f'{stat_cell_dr("droplet","O+","Blood group")}{stat_cell_dr("activity","AA","Genotype")}'
-           f'{stat_cell_dr("ruler","1.68 m","Height")}{stat_cell_dr("weight","74 kg","Weight")}</Frame></Frame>')
-T2_HEAD_M = (f'<Frame w="fill" flex="row" gap={{13}} items="center" p={{16}} rounded={{24}} bg="var:bg/base" '
-             f'stroke="var:border/subtle" strokeWidth={{1}}>'
-             f'<Image image="assets/img/avatar-2.jpg" w={{54}} h={{54}} rounded={{18}} />'
-             f'<Frame grow={{1}} flex="col" gap={{3}}>{T(17,"bold","var:text/strong","Amara Okeke")}'
-             f'<Frame flex="row" px={{8}} py={{3}} rounded={{7}} bg="var:bg/muted">'
-             f'{T(10,"semibold","var:text/accent","MDR-8842-19")}</Frame>'
-             f'{T(11,"regular","var:text/muted","34 · O+ · AA · 1.68 m · 74 kg",w="fill")}</Frame></Frame>')
+add("Patients", "P1-patients",
+    dr_desk("Doctor · Patients — P1 Find a Patient", ["Patients", "All"],
+        f'{dhead([("Your",False),("patients",True)],26)}'
+        f'{T(14,"regular","var:text/muted","Search by Medra ID when someone cannot remember anything else — it is on their phone and on their printed summary.",w="fill")}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{P1_SEARCH}{P1_LIST}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{P1_ACCESS}{P1_CANT}</Frame></Frame>',
+        NAV["Patients"], PANEL_PATIENTS, badges=BADGES),
+    dr_mob("Doctor · Patients — P1 Find a Patient · Mobile",
+        dr_head("Patients", "42 · 8 seen this week", back=False,
+                stats=[("42", "Total"), ("7", "Follow-up due"), ("5", "Owing a test")],
+                chips=[("All", "Filter mine", True), ("This week", "Filter week", False), ("Follow-up", "Open followups P4", False)],
+                right=f'<Frame name="Btn Scan patient" w={{38}} h={{38}} rounded={{12}} bg="#17324D" flex="col" justify="center" items="center">{I("qr-code",17,W_IC)}</Frame>'),
+        f'{P1_SEARCH}{P1_LIST}{P1_ACCESS}{P1_CANT}',
+        MTAB["Patients"]))
 
-T2_SAFETY = alert_strip("triangle-alert", "Penicillin allergy · hypertension",
-    "Always visible to any doctor treating her, whatever else she has shared.", "warn")
-T2_TIMELINE = group_card("Her history", [
-    list_row("stethoscope", "Hypertension review", value="12 Jun", sub="You · Garki Medical Centre", name="Open note last"),
-    list_row("flask-conical", "Full blood count", value="12 Jun", sub="Haemoglobin low at 11.2", name="Open lab", tint="var:state/warning-bg"),
-    list_row("pill", "Amlodipine 5 mg", value="Active", sub="96% taken on time", name="Open adherence"),
-    list_row("stethoscope", "Malaria — treated", value="28 Apr", sub="Dr. Chuka Eze · Wuse Clinic", name="Open other note"),
-    list_row("syringe", "Yellow fever booster", value="28 Apr", sub="Wuse Clinic", name="Open vaccine"),
-    list_row("file-plus", "Scan of old NHIS card", value="2 Aug", sub="Added by the patient", name="Open upload"),
-])
-T2_LOCKED = group_card("Not shared with you", [
+# ---------------- P2 patient record
+P2_HEAD = dcard(
+    f'<Frame w="fill" flex="row" gap={{14}} items="center">'
+    f'<Image image="assets/img/avatar-2.jpg" w={{62}} h={{62}} rounded={{18}} />'
+    f'<Frame grow={{1}} flex="col" gap={{4}}>{T(19,"bold","var:text/strong","Amara Okeke")}'
+    f'<Frame flex="row" gap={{8}} items="center">'
+    f'<Frame flex="row" px={{8}} py={{3}} rounded={{6}} bg="var:bg/muted">'
+    f'{T(10,"semibold","var:text/accent","MDR-8842-19")}</Frame>'
+    f'{T(12,"regular","var:text/muted","34 · female · +234 801 234 5678 · Garki, Abuja")}</Frame></Frame>'
+    f'{status_pill("shared","Access until 21 Aug, 11:00")}</Frame>'
+    + rows_of([kv("Blood group", "O+", "droplet"), kv("Genotype", "AA", "activity"),
+               kv("Height", "1.68 m", "ruler"), kv("Weight", "74 kg", "weight"),
+               kv("Visits with you", "3", "history"), kv("On Medra since", "Jan 2026", "calendar-days")], 3, 12))
+
+P2_SAFETY = alert_strip("triangle-alert", "Penicillin allergy · hypertension",
+    "Shown to any doctor treating her, whatever else she has shared. Reaction: rash and swelling, June 2026.", "err")
+
+P2_TIMELINE = dgroup("Her history", [
+    timeline_entry("14", "Aug", "activity", "Blood pressure 128/82", "Measured at home — not shared with you", "Open vitals", "muted"),
+    timeline_entry("12", "Jun", "stethoscope", "Hypertension review", "You · Garki Medical Centre · signed 11:42", "Open note last", "info"),
+    timeline_entry("12", "Jun", "pill", "Amlodipine 5 mg · 30 days", "You · 96% taken on time", "Open adherence", "ok"),
+    timeline_entry("12", "Jun", "flask-conical", "Full blood count", "Haemoglobin low at 11.2", "Open lab", "warn", "new"),
+    timeline_entry("28", "Apr", "stethoscope", "Malaria — treated", "Dr. Chuka Eze · Wuse Clinic", "Open other note", "info"),
+    timeline_entry("28", "Apr", "syringe", "Yellow fever booster", "Wuse Clinic · certificate attached", "Open vaccine", "ok"),
+    timeline_entry("02", "Aug", "file-plus", "Scan of an old NHIS card", "Added by the patient — not clinician-verified", "Open upload", "muted"),
+], footer="Records added by the patient are labelled. So are readings they took themselves — you can always tell what a record is worth.")
+
+P2_LOCKED = dgroup("Not shared with you", [
     scope_line("Prescription history from other clinics", False, "She can turn this on from her phone"),
     scope_line("Home vitals", False, "Blood pressure readings she takes herself"),
     scope_line("Records she has marked private", False, "You are told they exist, not what they say"),
-], footer="Asking is a normal part of a consultation. Use “Ask for more history” and she gets a request she can accept or decline.")
-T2_VITALS = group_card("Blood pressure", [
-    chart([("Mar", "142/92", 96, "bad"), ("Apr", "138/88", 86, "warn"), ("May", "136/86", 82, "warn"),
-           ("Jun", "132/84", 74, "ok"), ("Jul", "130/82", 68, "ok"), ("Aug", "128/82", 64, "ok")], 120, "Systolic, mmHg"),
+], footer="Asking is a normal part of a consultation. Use “Ask for more history” — she can accept, part-accept or decline.")
+
+P2_VITALS = dgroup("Blood pressure · clinic readings", [
+    chart([("Mar", "142/92", 92, "bad"), ("Apr", "138/88", 82, "warn"), ("May", "136/86", 78, "warn"),
+           ("Jun", "132/84", 70, "ok"), ("Jul", "130/82", 64, "ok"), ("Aug", "128/82", 60, "ok")], 118, "Systolic, mmHg"),
 ], footer="Clinic readings only. Her home readings are not shared with you.")
 
-add("Patients", "T2-record",
-    dr_desk("Doctor · Patients — T2 Patient Record",
-        f'<Frame w="fill" flex="row" justify="between" items="center">'
-        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",18,N_IC)}'
-        f'{T(14,"semibold","var:text/default","Patients")}</Frame>'
-        f'<Frame flex="row" gap={{10}} items="center">'
-        f'{mini_btn("Ask for more history","Open access T3","message-square-text","ghost",grow=False)}'
-        f'{mini_btn("Start a consultation","Start consult","stethoscope","navy",grow=False)}</Frame></Frame>'
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{16}}>{T2_HEAD}{T2_SAFETY}{T2_TIMELINE}</Frame>'
-        f'<Frame w={{380}} flex="col" gap={{16}}>{T2_VITALS}{T2_LOCKED}</Frame></Frame>',
-        SIDE["Patients"]),
-    dr_mob("Doctor · Patients — T2 Patient Record · Mobile",
-        dr_appbar("Patient", right=circle_btn("stethoscope", "Start consult"))
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{12}} px={{20}} pt={{2}} pb={{8}}>'
-          f'{T2_HEAD_M}{T2_SAFETY}'
-          f'{group_card("Her history", [list_row("stethoscope","Hypertension review",value="12 Jun",name="Open note last"),list_row("flask-conical","Full blood count",value="12 Jun",sub="Haemoglobin low",name="Open lab",tint="var:state/warning-bg"),list_row("pill","Amlodipine 5 mg",value="Active",name="Open adherence")], p=16)}'
-          f'{group_card("Blood pressure", [chart([("Jun","132/84",56,"ok"),("Jul","130/82",50,"ok"),("Aug","128/82",46,"ok")],96,"Clinic readings only")], p=16)}</Frame>',
-        nav=dr_bottom_nav(TAB["Patients"])))
+P2_ACTIONS = dgroup("Do something", [
+    drow("stethoscope", "Start a consultation", sub="Even without a booking — a walk-in counts", name="Start consult"),
+    drow("message-square-text", "Ask for more history", name="Open access P3"),
+    drow("calendar-plus", "Book her a follow-up", name="Open followups P4"),
+    drow("message-circle", "Message her", sub="WhatsApp · she replies most days", name="Open messages P5"),
+    drow("printer", "Print a summary for her file", name="Print summary"),
+])
 
-# ---------------- T3 ask for more access / history
-T3_PICK = group_card("What do you need to see?", [
+add("Patients", "P2-record",
+    dr_desk("Doctor · Patients — P2 Record", ["Patients", "Amara Okeke"],
+        f'<Frame w="fill" flex="row" justify="between" items="center">'
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",17,N_IC)}'
+        f'{T(13,"semibold","var:text/default","Patients")}</Frame>'
+        f'<Frame flex="row" gap={{9}} items="center">'
+        f'{dbtn("Ask for more history","Open access P3","message-square-text","ghost",grow=False,size="sm")}'
+        f'{dbtn("Start a consultation","Start consult","stethoscope","navy",grow=False,size="sm")}</Frame></Frame>'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{P2_HEAD}{P2_SAFETY}{P2_TIMELINE}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{P2_VITALS}{P2_LOCKED}{P2_ACTIONS}</Frame></Frame>',
+        NAV["Patients"], PANEL_PATIENTS, badges=BADGES),
+    dr_mob("Doctor · Patients — P2 Record · Mobile",
+        dr_head("Amara Okeke", "MDR-8842-19 · access until 11:00",
+                stats=[("O+", "Blood"), ("AA", "Genotype"), ("3", "Visits")],
+                right=f'<Frame name="Btn Start consult" w={{38}} h={{38}} rounded={{12}} bg="#17324D" flex="col" justify="center" items="center">{I("stethoscope",17,W_IC)}</Frame>'),
+        f'{P2_SAFETY}{P2_VITALS}{P2_TIMELINE}{P2_LOCKED}{P2_ACTIONS}',
+        MTAB["Patients"]))
+
+# ---------------- P3 ask for more history
+P3_PICK = dgroup("What do you need to see?", [
     consent_row("pill", "Prescription history from other clinics", "What she was given and whether she took it", "Ask rx"),
     consent_row("activity", "Home blood pressure readings", "Her own measurements between visits", "Ask vitals"),
     consent_row("flask-conical", "Older lab results", "Anything before January 2026", "Ask labs", on=False),
     consent_row("file-plus", "Records she uploaded herself", "Scans of paper results", "Ask uploads", on=False),
 ])
-T3_WHY = group_card("Why are you asking?", [
+P3_WHY = dgroup("Why are you asking?", [
     field("She sees this message", "message-square-text",
           "I want to check whether the headaches started before or after we changed your dose. Your older prescriptions would tell me.", ph=False),
     radio_row("Just for this consultation", sub="Access ends when you sign the note", on=True, name="Ask window visit"),
     radio_row("For 7 days", sub="If you are waiting on results", name="Ask window 7d"),
+    radio_row("For 30 days", sub="Ongoing treatment", name="Ask window 30d"),
 ], footer="She can accept, accept part of it, or decline. Declining is recorded and does not affect her care.")
-T3_ASKED = group_card("What you have already asked", [
+P3_ASKED = dgroup("What you have already asked", [
     audit_row("You asked for prescription history", "Declined by the patient · 12 Jun", "2 months ago"),
     audit_row("You asked about undisclosed history", "Answered on the call · 21 Aug", "Today"),
-], footer="Asking is logged so it is always clear what you tried to find out and what you were told.")
-
-add("Patients", "T3-access",
-    dr_desk("Doctor · Patients — T3 Ask for More",
-        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",18,N_IC)}'
-        f'{T(14,"semibold","var:text/default","Amara Okeke")}</Frame>'
-        f'{head_chip([("Ask her for",False),("more history",True)],28)}'
-        f'{T(15,"regular","var:text/muted","She controls her record. You can always ask — and what you asked, and what she answered, is recorded.",w="fill")}'
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{16}}>{T3_PICK}{T3_WHY}</Frame>'
-        f'<Frame w={{380}} flex="col" gap={{16}}>{T3_ASKED}'
-        f'{dcta("Send the request","Send access T3","send")}'
-        f'{alert_strip("info","She gets this on WhatsApp and in the app","Most people answer within a few minutes during a consultation.","info")}</Frame></Frame>',
-        SIDE["Patients"]),
-    dr_mob("Doctor · Patients — T3 Ask for More · Mobile",
-        dr_appbar("Ask for more")
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{12}} px={{20}} pt={{2}} pb={{10}}>'
-          f'{T3_PICK}<Frame grow={{1}} />{dcta("Send the request","Send access T3","send")}</Frame>'))
-
-# =====================================================================================
-# PRACTICE & EARNINGS
-# =====================================================================================
-S1_PROFILE = (f'<Frame w="fill" flex="col" gap={{16}} p={{20}} rounded={{28}} bg="var:bg/base" '
-              f'stroke="var:border/subtle" strokeWidth={{1}}>'
-              f'<Frame w="fill" flex="row" gap={{15}} items="center">'
-              f'<Image image="assets/img/avatar-4.jpg" w={{78}} h={{78}} rounded={{26}} />'
-              f'<Frame grow={{1}} flex="col" gap={{4}}>'
-              f'<Frame flex="row" gap={{8}} items="center">{T(20,"bold","var:text/strong","Dr. Ngozi Okafor")}'
-              f'{I("badge-check",18,T_IC)}</Frame>'
-              f'{T(13,"regular","var:text/muted","Cardiologist · MDCN 71482 · verified 4 Feb 2026")}</Frame>'
-              f'{mini_btn("Change photo","Change photo S1","camera","ghost",grow=False)}</Frame>'
-              f'{field("Short bio","file-text","Consultant cardiologist with 12 years in hypertension, heart failure and preventive cardiology.",ph=False,helper="Members read this before they book. Two sentences beat two paragraphs.")}'
-              f'{field("Specialisation","stethoscope","Cardiology",ph=False,trailing=("chevron-down","Specialty dropdown"),helper="From the Medra list, which the platform team keeps current.")}'
-              f'{field_chips("Languages you consult in",["English","Hausa","Yoruba","Igbo","Pidgin"],0,"Langs")}'
-              f'{field("Where you practise","hospital","Garki Medical Centre, Area 3, Abuja",ph=False)}</Frame>')
-S1_PROFILE_M = (f'<Frame w="fill" flex="col" gap={{14}} p={{18}} rounded={{26}} bg="var:bg/base" '
-                f'stroke="var:border/subtle" strokeWidth={{1}}>'
-                f'<Frame w="fill" flex="row" gap={{13}} items="center">'
-                f'<Image image="assets/img/avatar-4.jpg" w={{62}} h={{62}} rounded={{20}} />'
-                f'<Frame grow={{1}} flex="col" gap={{3}}>'
-                f'<Frame flex="row" gap={{7}} items="center">{T(17,"bold","var:text/strong","Dr. Ngozi Okafor")}'
-                f'{I("badge-check",16,T_IC)}</Frame>'
-                f'{T(11,"regular","var:text/muted","Cardiologist · MDCN 71482 · verified",w="fill")}</Frame>'
-                f'{mini_btn("Photo","Change photo S1","camera","ghost",grow=False)}</Frame>'
-                f'{field("Short bio","file-text","Consultant cardiologist, 12 years in hypertension and heart failure.",ph=False)}'
-                f'{field("Specialisation","stethoscope","Cardiology",ph=False,trailing=("chevron-down","Specialty dropdown"))}</Frame>')
-
-S1_PUBLIC = group_card("How members see you", [
-    list_row("star", "Rating", value="4.9", sub="From 148 completed visits", name="Prof rating", chevron=False),
-    list_row("users", "Patients seen on Medra", value="1,204", name="Prof patients", chevron=False),
-    list_row("clock", "Median wait to be seen", value="6 minutes", sub="Shown on your profile — it is why people pick you", name="Prof wait", chevron=False),
-    list_row("eye", "Preview my public profile", name="Preview profile", ),
+    audit_row("You opened “Hypertension review”", "Logged and visible to her", "Today, 09:12"),
+], footer="Asking is logged, so it is always clear what you tried to find out and what you were told.")
+P3_HOW = dgroup("How she gets it", [
+    drow("bell-ring", "In the app", value="Now", sub="She is in the waiting room, so she will see it", name="Ask app", tone="ok", chevron=False),
+    drow("message-circle", "WhatsApp", value="Now", sub="Most people answer within a few minutes during a consultation", name="Ask wa", tone="ok", chevron=False),
+    drow("message-square-text", "SMS", value="If no reply in 5 min", name="Ask sms", chevron=False),
 ])
 
-add("Practice", "S1-profile",
-    dr_desk("Doctor · Practice — S1 Public Profile",
-        f'<Frame w="fill" flex="row" justify="between" items="center">'
-        f'{head_chip([("What patients",False),("see",True)],28)}'
-        f'{mini_btn("Save changes","Save profile S1","check","navy",grow=False)}</Frame>'
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{16}}>{S1_PROFILE}</Frame>'
-        f'<Frame w={{380}} flex="col" gap={{16}}>{S1_PUBLIC}'
-        f'{group_card("Settings", [list_row("banknote","Consultation types and fees",value="3",name="Open fees S2"),list_row("video","Virtual meeting link",value="Google Meet",name="Open meeting S3"),list_row("message-circle","How patients reach me",value="WhatsApp, email",name="Open contact S4"),list_row("clock","Availability",name="Nav Schedule"),list_row("log-out","Sign out",name="Sign out",chevron=False)])}</Frame></Frame>',
-        SIDE["Settings"]),
-    dr_mob("Doctor · Practice — S1 Public Profile · Mobile",
-        dr_appbar("Profile", back=False, right=circle_btn("check", "Save profile S1"))
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{8}}>'
-          f'{S1_PROFILE_M}'
-          f'{group_card("Settings", [list_row("banknote","Fees",value="3 types",name="Open fees S2"),list_row("video","Meeting link",value="Google Meet",name="Open meeting S3"),list_row("message-circle","How patients reach me",name="Open contact S4")], p=16)}</Frame>',
-        nav=dr_bottom_nav(TAB["Settings"])))
+add("Patients", "P3-access",
+    dr_desk("Doctor · Patients — P3 Ask for More", ["Patients", "Amara Okeke", "Ask for more"],
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",17,N_IC)}'
+        f'{T(13,"semibold","var:text/default","Amara Okeke")}</Frame>'
+        f'{dhead([("Ask her for",False),("more history",True)],26)}'
+        f'{T(14,"regular","var:text/muted","She controls her record. You can always ask — and what you asked, and what she answered, is recorded.",w="fill")}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{P3_PICK}{P3_WHY}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{P3_HOW}{P3_ASKED}'
+        f'{dcta("Send the request","Send access P3","send")}</Frame></Frame>',
+        NAV["Patients"], PANEL_PATIENTS, badges=BADGES),
+    dr_mob("Doctor · Patients — P3 Ask for More · Mobile",
+        dr_head("Ask for more", "Amara Okeke · 2 categories",
+                stats=[("2", "Selected"), ("Visit", "Window"), ("3", "Channels")]),
+        f'{P3_PICK}{P3_WHY}{P3_HOW}{P3_ASKED}'
+        f'{dcta("Send the request","Send access P3","send")}',
+        MTAB["Patients"]))
 
-# ---------------- S2 consultation types & fees
-def fee_card(title, mins, price, desc, name, on=True):
-    sw = (f'<Frame name="Btn Toggle {name}" w={{44}} h={{25}} rounded={{999}} image="assets/img/btn-teal.jpg" '
-          f'overflow="hidden" flex="row" justify="end" items="center" px={{3}}><Ellipse w={{19}} h={{19}} bg="#FFFFFF" /></Frame>'
+# ---------------- P4 follow-ups and recalls  (Retention)
+P4_DUE = dgroup("Due now · 7", [
+    patient_row("avatar-3.jpg", "Grace Okeke", "MDR-8842-21", "3-month review · due 2 weeks ago · diabetes", "Overdue", "Fu Grace", tag="missed"),
+    patient_row("avatar-4.jpg", "Fatima Bello", "MDR-2201-13", "Asthma review · due this week", "Due", "Fu Fatima", tag="soon"),
+    patient_row("avatar-1.jpg", "Musa Ibrahim", "MDR-7714-02", "Post-result discussion · due Friday", "Due", "Fu Musa", tag="soon"),
+    patient_row("avatar-5.jpg", "Tunde Bello", "MDR-6620-88", "Never did the MRI you ordered · 6 weeks", "Overdue", "Fu Tunde", tag="missed"),
+], footer="A recall list is the cheapest retention there is. These are people who already trust you.")
+
+P4_TESTS = dgroup("Ordered but never done · 5", [
+    patient_row("avatar-2.jpg", "Amara Okeke", "MDR-8842-19", "Fasting blood sugar · ordered 12 Jun", "9 weeks", "Test Amara", tag="missed"),
+    patient_row("avatar-6.jpg", "Chidi Okeke", "MDR-8842-20", "Chest X-ray · ordered 2 Aug", "2 weeks", "Test Chidi", tag="pending"),
+], footer="Medra reminds them automatically. This list is who is still ignoring it.")
+
+P4_SEND = dgroup("Send a recall", [
+    field("The message", "message-square-text",
+          "It is time for your three-month review. I have slots on Tuesday and Thursday — booking takes about a minute.", ph=False),
+    dtoggle("message-circle", "WhatsApp", on=True, name="Recall wa"),
+    dtoggle("message-square-text", "SMS", sub="For anyone who has not opened the app in 30 days", on=True, name="Recall sms"),
+    dtoggle("calendar-plus", "Include my next three open slots", sub="One tap to book, which roughly doubles the response", on=True, name="Recall slots"),
+], footer="Recalls are capped at one per patient per month. Medra will not let you become a nuisance.")
+
+P4_RESULT = dgroup("How recalls have gone", [
+    kpi_line("Sent in the last 30 days", "24"),
+    kpi_line("Booked from a recall", "11", "ok"),
+    kpi_line("Response rate", "46%", "ok"),
+    kpi_line("Opted out", "1", "muted"),
+], footer="Indicative pilot figures.")
+
+add("Patients", "P4-followups",
+    dr_desk("Doctor · Patients — P4 Follow-ups", ["Patients", "Follow-ups and recalls"],
+        f'{dhead([("Twelve people",False),("owe you a visit",True)],26)}'
+        f'{T(14,"regular","var:text/muted","Seven are due a review; five never did a test you ordered. Both are easier to convert than a stranger.",w="fill")}'
+        f'{rows_of([stat_tile("repeat","7","Reviews due","2 overdue","warn","Stat due"),stat_tile("flask-conical","5","Tests never done","Oldest 9 weeks","err","Stat tests"),stat_tile("send","24","Recalls sent","Last 30 days","info","Stat sent"),stat_tile("calendar-check","11","Booked from a recall","46% response","ok","Stat booked")],4,14)}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{P4_DUE}{P4_TESTS}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{P4_SEND}{P4_RESULT}'
+        f'{dcta("Send to all 12","Send recall P4","send")}</Frame></Frame>',
+        NAV["Patients"], PANEL_PATIENTS, badges=BADGES),
+    dr_mob("Doctor · Patients — P4 Follow-ups · Mobile",
+        dr_head("Follow-ups", "12 people owe you a visit", back=False,
+                stats=[("7", "Reviews due"), ("5", "Tests undone"), ("46%", "Response")]),
+        f'{P4_DUE}{P4_TESTS}{P4_SEND}{P4_RESULT}'
+        f'{dcta("Send to all 12","Send recall P4","send")}',
+        MTAB["Patients"]))
+
+# ---------------- P5 messages
+P5_LIST = dgroup("Messages · 4 unread", [
+    msg_row("avatar-3.jpg", "Grace Okeke", "“Doctor, the new tablet is making me dizzy in the mornings. Should I stop?”", "8 min", "Msg Grace", unread=True),
+    msg_row("avatar-2.jpg", "Amara Okeke", "“Thank you for today. I have booked the blood test for Saturday.”", "1 h", "Msg Amara", unread=True),
+    msg_row("avatar-1.jpg", "Musa Ibrahim", "“Is the 09:00 on Friday still going ahead?”", "3 h", "Msg Musa", unread=True, channel="email"),
+    msg_row("avatar-4.jpg", "Fatima Bello", "“Sent the inhaler photo you asked for.”", "Yesterday", "Msg Fatima", unread=True),
+    msg_row("avatar-6.jpg", "Amara Okeke (for Chidi)", "“His cough is better, thank you.”", "2 days", "Msg Chidi", channel="inapp"),
+], footer="Only patients you have consulted can message you, on the channels you turned on. Everything is attached to their record.")
+
+P5_URGENT = alert_strip("triangle-alert", "One message mentions a symptom",
+    "Grace Okeke wrote “dizzy in the mornings”. Medra flags possible side effects so they do not sit unread in a busy day.", "err",
+    dbtn("Open it", "Msg Grace", None, "ghost", grow=False, size="sm"))
+
+P5_QUICK = dgroup("Quick replies", [
+    drow("message-square-text", "“Stop it and let us speak today.”", sub="Attaches your next open slot", name="Quick stop"),
+    drow("message-square-text", "“Yes, that appointment is going ahead.”", name="Quick confirm"),
+    drow("message-square-text", "“Please book a visit so I can examine you.”", sub="Attaches your booking link", name="Quick book"),
+    drow("plus", "Write a new quick reply", name="Quick new", chevron=False),
+])
+
+P5_RULES = dgroup("Your boundaries", [
+    drow("clock", "You show as available", value="08:00 – 18:00", sub="Outside this, patients see “replies tomorrow”", name="Msg hours"),
+    dtoggle("moon", "Do not disturb outside those hours", on=True, name="Msg dnd"),
+    drow("triangle-alert", "Emergencies are never handled here", sub="Chest pain, breathlessness or bleeding show an emergency banner instead", name="Msg emergency", chevron=False),
+], footer="Medra tells patients plainly that messages are not for emergencies, and shows them what to do instead.")
+
+add("Patients", "P5-messages",
+    dr_desk("Doctor · Patients — P5 Messages", ["Patients", "Messages"],
+        f'{dhead([("Four people",False),("are waiting",True)],26)}'
+        f'{P5_URGENT}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{P5_LIST}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{P5_QUICK}{P5_RULES}</Frame></Frame>',
+        NAV["Patients"], PANEL_PATIENTS, urgent=4, badges=BADGES),
+    dr_mob("Doctor · Patients — P5 Messages · Mobile",
+        dr_head("Messages", "4 unread · 1 flagged", back=False,
+                stats=[("4", "Unread"), ("1", "Flagged"), ("18:00", "Until")]),
+        f'{P5_URGENT}{P5_LIST}{P5_QUICK}{P5_RULES}',
+        MTAB["Requests"]))
+
+# ---------------- P6 refill requests
+def refill_actions(name):
+    return [dbtn("Approve", "Approve " + name, "check", "navy", size="sm"),
+            dbtn("Change it", "Change " + name, "pencil", "ghost", size="sm"),
+            dbtn("Ask them in", "Visit " + name, "calendar-plus", "warn", size="sm"),
+            dbtn("Decline", "Decline " + name, "x", "danger", size="sm")]
+
+P6_LIST = dgroup("Refill requests · 2", [
+    request_row("package", "Grace Okeke · MDR-8842-21",
+                "Metformin 500 mg · 30 days · 4 days left · collect at Garki pharmacy · “The evening one makes me a little nauseous.”",
+                "19 hours", "Refill Grace", "warn", refill_actions("Grace")),
+    request_row("package", "Fatima Bello · MDR-2201-13",
+                "Salbutamol inhaler · 1 unit · delivery to Wuse II · last review 12 Aug",
+                "4 hours", "Refill Fatima", "info", refill_actions("Fatima")),
+], footer="Approving sends the prescription straight to the pharmacy. Nothing is automatic — a refill is still a clinical decision.")
+
+P6_CONTEXT = dgroup("Before you approve Grace", [
+    drow("history", "Last seen", value="28 Apr", sub="Nearly four months ago", name="Ref lastseen", tone="warn", chevron=False),
+    drow("check-check", "Adherence", value="88%", sub="Taking it, mostly on time", name="Ref adherence", tone="ok", chevron=False),
+    drow("flask-conical", "HbA1c", value="8.4% · high", sub="Arrived yesterday, not yet released to her", name="Ref hba1c", tone="err", chevron=False),
+    drow("message-circle", "She reports nausea", sub="A known effect. Worth a conversation, not just a refill.", name="Ref side", tone="warn", chevron=False),
+    drow("calendar-clock", "Review due", value="Overdue 2 weeks", name="Open followups P4", tone="warn", chevron=False),
+], footer="Medra shows you this so a refill is never a blind renewal. On this one, asking her to come in is probably right.")
+
+P6_RULES = dgroup("Refill rules", [
+    drow("repeat", "Refills allowed without a visit", value="2", sub="Then a review is required", name="Rule refills"),
+    drow("clock", "Reply within", value="24 hours", sub="What members are promised on your profile", name="Rule reply"),
+    dtoggle("zap", "Auto-approve if seen in the last 3 months and refills remain", on=False, name="Rule auto"),
+], footer="Auto-approve stays off by default. It is your MDCN number on the prescription.")
+
+add("Patients", "P6-refills",
+    dr_desk("Doctor · Patients — P6 Refills", ["Requests", "Refills"],
+        f'{dhead([("Two refills",False),("waiting",True)],26)}'
+        f'{T(14,"regular","var:text/muted","The oldest has been waiting 19 hours. Members are told you reply within a day.",w="fill")}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{P6_LIST}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{P6_CONTEXT}{P6_RULES}</Frame></Frame>',
+        NAV["Requests"], PANEL_REQ, urgent=6, badges=BADGES),
+    dr_mob("Doctor · Patients — P6 Refills · Mobile",
+        dr_head("Refills", "2 waiting · oldest 19 hours", back=False,
+                stats=[("2", "Waiting"), ("19h", "Oldest"), ("24h", "Promised")]),
+        f'{P6_LIST}{P6_CONTEXT}{P6_RULES}',
+        MTAB["Requests"]))
+
+# ---------------- P7 results inbox
+def result_actions(name):
+    return [dbtn("Release", "Release " + name, "send", "navy", size="sm"),
+            dbtn("Hold it", "Hold " + name, "eye-off", "warn", size="sm"),
+            dbtn("Book a follow-up", "Book " + name, "calendar-plus", "ghost", size="sm")]
+
+P7_LIST = dgroup("Results waiting on you · 3", [
+    request_row("flask-conical", "Grace Okeke · HbA1c 8.4%",
+                "High · Garki laboratory · arrived yesterday 16:10 · diabetes, on metformin",
+                "18 hours", "Res Grace", "err", result_actions("Grace")),
+    request_row("flask-conical", "Musa Ibrahim · Troponin",
+                "Normal · Garki laboratory · arrived 2 hours ago · ordered after chest tightness",
+                "2 hours", "Res Musa", "ok", result_actions("Musa")),
+    request_row("flask-conical", "Amara Okeke · Full blood count",
+                "Haemoglobin 11.2 low · arrived 13 Jun · everything else normal",
+                "Old", "Res Amara", "warn", result_actions("Amara")),
+], footer="Nothing reaches a member until a doctor has looked at it. A number with no explanation is how people end up in an emergency room at midnight.")
+
+P7_WHY = dgroup("Why a doctor releases results", [
+    drow("eye-off", "No auto-release", sub="Not even normal results — “normal” still needs context", name="Why noauto", chevron=False),
+    drow("book-open", "One line in plain language", sub="Prevents most of the panicked calls", name="Why plain", chevron=False),
+    drow("calendar-plus", "Abnormal results suggest a follow-up", sub="Booked in the same action", name="Why followup", chevron=False),
+    drow("clock", "Held results are chased", sub="We remind you at 48 hours — a held result must not become a forgotten one", name="Why chase", tone="warn", chevron=False),
+])
+
+P7_TREND = dgroup("Grace's HbA1c over time", [
+    chart([("Aug 25", "7.1%", 48, "ok"), ("Feb 26", "7.6%", 60, "warn"), ("May 26", "8.0%", 72, "warn"),
+           ("Aug 26", "8.4%", 88, "bad")], 118, "Target below 7.0%"),
+], footer="Rising for a year. This is a conversation, not a text message.")
+
+add("Patients", "P7-results",
+    dr_desk("Doctor · Patients — P7 Results", ["Requests", "Results"],
+        f'{dhead([("Three results",False),("need a doctor",True)],26)}'
+        f'{T(14,"regular","var:text/muted","One is out of range and rising. It should not go out without you.",w="fill")}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{P7_LIST}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{P7_TREND}{P7_WHY}</Frame></Frame>',
+        NAV["Requests"], PANEL_REQ, urgent=6, badges=BADGES),
+    dr_mob("Doctor · Patients — P7 Results · Mobile",
+        dr_head("Results", "3 waiting · 1 out of range", back=False,
+                stats=[("3", "Waiting"), ("1", "Abnormal"), ("18h", "Oldest")]),
+        f'{P7_LIST}{P7_TREND}{P7_WHY}',
+        MTAB["Requests"]))
+
+# =====================================================================================
+# 5. PRACTICE & MONEY
+# =====================================================================================
+S1_PROFILE = dcard(
+    f'<Frame w="fill" flex="row" gap={{14}} items="center">'
+    f'<Image image="assets/img/avatar-4.jpg" w={{72}} h={{72}} rounded={{20}} />'
+    f'<Frame grow={{1}} flex="col" gap={{4}}>'
+    f'<Frame flex="row" gap={{8}} items="center">{T(19,"bold","var:text/strong","Dr. Ngozi Okafor")}'
+    f'{I("badge-check",17,T_IC)}</Frame>'
+    f'{T(12,"regular","var:text/muted","Cardiologist · MDCN 71482 · verified 4 February 2026")}</Frame>'
+    f'{dbtn("Change photo","Change photo S1","camera","ghost",grow=False,size="sm")}</Frame>'
+    + field("Short bio", "file-text",
+            "Consultant cardiologist with 12 years in hypertension, heart failure and preventive cardiology.",
+            ph=False, helper="Members read this before they book. Two sentences beat two paragraphs.")
+    + field("Specialisation", "stethoscope", "Cardiology", ph=False, trailing=("chevron-down", "Specialty dropdown"),
+            helper="From the Medra list, which the platform team keeps current.")
+    + f'<Frame w="fill" flex="col" gap={{8}}>{T(12,"medium","var:text/default","Also practises")}'
+    + f'<Frame w="fill" flex="row" gap={{8}}>'
+    + f'<Frame name="Btn Spec internal" flex="row" gap={{6}} items="center" px={{11}} py={{7}} rounded={{9}} bg="var:bg/muted">'
+    + T(12, "medium", "var:text/default", "Internal medicine") + I("x", 12, M_IC) + '</Frame>'
+    + f'<Frame name="Btn Add specialty" flex="row" gap={{6}} items="center" px={{11}} py={{7}} rounded={{9}} '
+    + f'bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>' + I("plus", 12, N_IC)
+    + T(12, "medium", "var:text/default", "Add another") + '</Frame></Frame></Frame>'
+    + field_chips("Languages you consult in", ["English", "Hausa", "Yoruba", "Igbo", "Pidgin"], 0, "Langs")
+    + field("Years in practice", "briefcase-medical", "12", ph=False)
+    + field("Where you practise", "hospital", "Garki Medical Centre, Area 3, Abuja", ph=False,
+            trailing=("chevron-down", "Open practice S7")))
+
+S1_PUBLIC = dgroup("How members see you", [
+    drow("star", "Rating", value="4.9", sub="From 148 completed visits", name="Open reviews R2", tone="ok"),
+    drow("users", "Patients seen on Medra", value="1,204", name="Prof patients", chevron=False),
+    drow("clock", "Median wait to be seen", value="6 minutes", sub="Shown on your profile — it is why people pick you", name="Prof wait", chevron=False),
+    drow("repeat", "Patients who come back", value="61%", sub="Well above the pilot average of 43%", name="Prof repeat", tone="ok", chevron=False),
+    drow("eye", "Preview my public profile", sub="Exactly what a member sees before booking", name="Preview profile"),
+])
+
+S1_COMPLETE = dgroup("Profile completeness · 85%", [
+    bar(85, "teal", 10),
+    checklist_row(True, "Photo", "Clear, recent, facing the camera", "Cpl photo"),
+    checklist_row(True, "Bio", "Two sentences", "Cpl bio"),
+    checklist_row(True, "Specialisation and languages", "Cardiology, internal medicine · English", "Cpl spec"),
+    checklist_row(False, "Two more languages", "Hausa and Igbo would reach 40% more searches in Abuja", "Cpl langs"),
+    checklist_row(False, "A photo of where you practise", "Members are more likely to book somewhere they can picture", "Cpl clinic"),
+], footer="Pilot observation, not a promise: complete profiles get roughly twice the bookings of 60% ones.")
+
+add("Practice", "S1-profile",
+    dr_desk("Doctor · Practice — S1 Public Profile", ["Settings", "Public profile"],
+        f'<Frame w="fill" flex="row" justify="between" items="center">'
+        f'{dhead([("What patients",False),("see",True)],26)}'
+        f'{dbtn("Save changes","Save profile S1","check","navy",grow=False,size="sm")}</Frame>'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{S1_PROFILE}</Frame>'
+        f'<Frame w={{380}} flex="col" gap={{14}}>{S1_COMPLETE}{S1_PUBLIC}</Frame></Frame>',
+        NAV["Settings"], PANEL_SETTINGS, urgent=0, badges=BADGES),
+    dr_mob("Doctor · Practice — S1 Public Profile · Mobile",
+        dr_head("Public profile", "Cardiologist · MDCN 71482", back=False,
+                stats=[("85%", "Complete"), ("4.9", "Rating"), ("1,204", "Patients")],
+                right=f'<Frame name="Btn Save profile S1" w={{38}} h={{38}} rounded={{12}} bg="#17324D" flex="col" justify="center" items="center">{I("check",17,W_IC)}</Frame>'),
+        f'{S1_COMPLETE}{S1_PROFILE}{S1_PUBLIC}',
+        MTAB["More"]))
+
+# ---------------- S2 types and fees
+def fee_card(title, mins, price, desc, name, on=True, virtual=True, inperson=True):
+    sw = (f'<Frame name="Btn Toggle {name}" w={{42}} h={{24}} rounded={{999}} image="assets/img/btn-teal.jpg" '
+          f'overflow="hidden" flex="row" justify="end" items="center" px={{3}}><Ellipse w={{18}} h={{18}} bg="#FFFFFF" /></Frame>'
           if on else
-          f'<Frame name="Btn Toggle {name}" w={{44}} h={{25}} rounded={{999}} bg="var:neutral/300" '
-          f'flex="row" justify="start" items="center" px={{3}}><Ellipse w={{19}} h={{19}} bg="#FFFFFF" /></Frame>')
-    return (f'<Frame name="Btn {name}" w="fill" flex="col" gap={{12}} p={{18}} rounded={{22}} bg="var:bg/base" '
-            f'stroke="var:border/subtle" strokeWidth={{1}}>'
-            f'<Frame w="fill" flex="row" justify="between" items="center">'
-            f'<Frame flex="col" gap={{3}}>{T(16,"semibold","var:text/strong",title)}'
-            f'{T(12,"regular","var:text/muted",desc)}</Frame>{sw}</Frame>'
-            f'<Frame w="fill" flex="row" gap={{10}}>'
-            f'<Frame grow={{1}} flex="col" gap={{2}} items="center" py={{12}} rounded={{16}} bg="var:bg/subtle">'
-            f'{T(16,"bold","var:text/strong",mins)}{T(11,"regular","var:text/muted","minutes")}</Frame>'
-            f'<Frame grow={{1}} flex="col" gap={{2}} items="center" py={{12}} rounded={{16}} bg="var:bg/subtle">'
-            f'{T(16,"bold","var:text/strong",price)}{T(11,"regular","var:text/muted","per consultation")}</Frame></Frame></Frame>')
+          f'<Frame name="Btn Toggle {name}" w={{42}} h={{24}} rounded={{999}} bg="var:neutral/300" '
+          f'flex="row" justify="start" items="center" px={{3}}><Ellipse w={{18}} h={{18}} bg="#FFFFFF" /></Frame>')
+    modes = ""
+    for label, ic, active in (("In person", "hospital", inperson), ("Virtual", "video", virtual)):
+        bg = 'bg="var:state/info-bg"' if active else 'bg="var:neutral/100"'
+        col = "var:text/default" if active else "var:text/faint"
+        modes += (f'<Frame name="Btn Mode {name} {label}" flex="row" gap={{5}} items="center" px={{9}} py={{5}} '
+                  f'rounded={{8}} {bg}>{I(ic,11,A_IC if active else M_IC)}{T(10,"medium",col,label)}</Frame>')
+    return dcard(
+        f'<Frame w="fill" flex="row" justify="between" items="center">'
+        f'<Frame flex="col" gap={{3}}>{T(15,"semibold","var:text/strong",title)}'
+        f'{T(11,"regular","var:text/muted",desc)}</Frame>{sw}</Frame>'
+        + f'<Frame w="fill" flex="row" gap={{9}}>'
+        + f'<Frame grow={{1}} flex="col" gap={{2}} items="center" py={{11}} rounded={{12}} bg="var:bg/subtle">'
+        + T(15, "bold", "var:text/strong", mins) + T(10, "regular", "var:text/muted", "minutes") + '</Frame>'
+        + f'<Frame grow={{1}} flex="col" gap={{2}} items="center" py={{11}} rounded={{12}} bg="var:bg/subtle">'
+        + T(15, "bold", "var:text/strong", price) + T(10, "regular", "var:text/muted", "per consultation") + '</Frame></Frame>'
+        + f'<Frame w="fill" flex="row" gap={{7}} items="center">{modes}<Frame grow={{1}} />'
+        + dbtn("Edit", "Edit " + name, "pencil", "ghost", grow=False, size="sm") + '</Frame>', p=15)
 
 S2_TYPES = (fee_card("First visit", "45", "₦20,000", "New patients — more time to take a history", "Fee first")
             + fee_card("Follow-up", "30", "₦15,000", "Someone you have seen before", "Fee followup")
-            + fee_card("Quick video review", "15", "₦8,000", "Results, prescriptions, short questions", "Fee quick")
-            + fee_card("Home visit", "60", "₦45,000", "Within 10 km of Garki", "Fee home", on=False))
-S2_PAYOUT = group_card("What you actually receive", [
-    earn_row("Consultation fee", "What the member pays", "₦15,000"),
-    earn_row("Medra commission", "12% while the pilot runs", "− ₦1,800", "muted"),
+            + fee_card("Quick video review", "15", "₦8,000", "Results, prescriptions, short questions", "Fee quick", inperson=False)
+            + fee_card("Home visit", "60", "₦45,000", "Within 10 km of Garki", "Fee home", on=False, virtual=False))
+
+S2_MONEY = dgroup("What you actually receive", [
+    earn_row("Consultation fee", "What the member pays before the visit", "₦15,000"),
     earn_row("Payment processing", "Paystack, deducted at source", "− ₦225", "muted"),
-    earn_row("You receive", "Paid out every Friday", "₦12,975", "ok"),
-], footer="Commission is set by the Medra team and shown here before any change takes effect. Test and procedure fees are not commissioned.")
+    earn_row("You receive", "Paid out every Friday", "₦14,775", "ok"),
+], footer="Medra earns from your practice subscription, not from a cut of your consultation. See Subscription and billing.")
+
+S2_RULES = dgroup("Fee rules", [
+    drow("banknote", "Payment is taken", value="Before the visit", sub="A booking is not confirmed until it clears", name="Fee when", chevron=False),
+    drow("undo-2", "Cancelled by the member", value="Full refund", sub="If more than 4 hours before", name="Fee refund", chevron=False),
+    drow("circle-slash", "Did not arrive", value="You keep 50%", sub="Pilot policy, configurable per clinic", name="Fee noshow", chevron=False),
+    drow("phone-off", "Video failed", value="Full refund", sub="Never the member's fault", name="Fee failed", chevron=False),
+    drow("calendar-clock", "Late change by the member", value="₦2,000", sub="Inside 4 hours", name="Fee late", chevron=False),
+], footer="Every one of these is shown to the member before they book. Nobody is surprised afterwards.")
 
 add("Practice", "S2-fees",
-    dr_desk("Doctor · Practice — S2 Types &amp; Fees",
+    dr_desk("Doctor · Practice — S2 Types &amp; Fees", ["Settings", "Types and fees"],
         f'<Frame w="fill" flex="row" justify="between" items="center">'
-        f'{head_chip([("What you offer,",False),("and for how much",True)],28)}'
-        f'{mini_btn("Add a type","Add fee type","plus","navy",grow=False)}</Frame>'
-        f'{T(15,"regular","var:text/muted","Each type has its own length, so your calendar blocks correctly. Members see the price before they book — never after.",w="fill")}'
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{16}}>{S2_TYPES}</Frame>'
-        f'<Frame w={{380}} flex="col" gap={{16}}>{S2_PAYOUT}'
-        f'{alert_strip("info","Changing a fee does not change existing bookings","Anyone who already paid keeps the price they paid.","info")}'
+        f'{dhead([("What you offer,",False),("and for how much",True)],26)}'
+        f'{dbtn("Add a type","Add fee type","plus","navy",grow=False,size="sm")}</Frame>'
+        f'{T(14,"regular","var:text/muted","Each type has its own length, so your calendar blocks correctly. Members see the price before they book — never after.",w="fill")}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{S2_TYPES}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{S2_MONEY}{S2_RULES}'
+        f'{alert_strip("info","Changing a fee never changes an existing booking","Anyone who has already paid keeps the price they paid.","info")}'
         f'{dcta("Save fees","Save fees S2","check")}</Frame></Frame>',
-        SIDE["Settings"]),
+        NAV["Settings"], PANEL_SETTINGS, urgent=0, badges=BADGES),
     dr_mob("Doctor · Practice — S2 Types &amp; Fees · Mobile",
-        dr_appbar("Types and fees", right=circle_btn("plus", "Add fee type"))
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{12}} px={{20}} pt={{2}} pb={{10}}>'
-          f'{fee_card("Follow-up","30","₦15,000","Someone you have seen before","Fee followup")}'
-          f'{fee_card("First visit","45","₦20,000","New patients","Fee first")}'
-          f'{fee_card("Quick video review","15","₦8,000","Results and short questions","Fee quick")}'
-          f'<Frame grow={{1}} />{dcta("Save fees","Save fees S2","check")}</Frame>'))
+        dr_head("Types and fees", "4 types · ₦8,000 to ₦45,000", back=False,
+                stats=[("3", "Active"), ("₦15k", "Typical"), ("₦14,775", "You get")],
+                right=f'<Frame name="Btn Add fee type" w={{38}} h={{38}} rounded={{12}} bg="#17324D" flex="col" justify="center" items="center">{I("plus",17,W_IC)}</Frame>'),
+        f'{S2_TYPES}{S2_MONEY}{S2_RULES}{dcta("Save fees","Save fees S2","check")}',
+        MTAB["More"]))
 
-# ---------------- S3 virtual meeting link
-# "the doctor will set up the meeting and add the link ... the link is embedded into the button"
-S3_PROVIDER = group_card("Which app do you use?", [
-    radio_row("Google Meet", sub="A new link is created for every appointment", on=True, name="Provider meet"),
-    radio_row("Zoom", sub="We use your personal meeting room, or a new link per visit", name="Provider zoom"),
+# ---------------- S3 virtual visits
+S3_PROVIDER = dgroup("Which app do you use?", [
+    radio_row("Google Meet", sub="A fresh link is created for every appointment", on=True, name="Provider meet"),
+    radio_row("Zoom", sub="Your personal room, or a new link per visit", name="Provider zoom"),
     radio_row("Microsoft Teams", name="Provider teams"),
-    radio_row("I paste a link myself each time", sub="Slowest, but works with anything", name="Provider manual"),
-], footer="Medra does not host the call in the MVP — it hands the patient a working link at the right moment, and holds their booking and payment around it.")
-S3_SETUP = group_card("Your link", [
-    field("Meeting link", "video", "meet.google.com/kfa-jrqz-nmo", ph=False, trailing=("copy", "Copy meet link"),
-          helper="Sent to the patient one hour before, and again 10 minutes before."),
-    toggle_row("refresh-cw", "New link for every appointment", sub="Safer — nobody wanders into someone else's consultation", on=True, name="New link each"),
-    toggle_row("lock", "Wait in a lobby until I admit them", sub="Strongly recommended", on=True, name="Lobby on"),
-    toggle_row("phone-call", "Offer a phone call if the video fails", sub="The clinic rings them on the number they registered", on=True, name="Phone fallback"),
-])
-S3_TEST = (f'<Frame w="fill" flex="col" gap={{12}} p={{18}} rounded={{22}} bg="var:state/success-bg">'
-           f'<Frame flex="row" gap={{9}} items="center">{I("circle-check",17,OK_IC)}'
-           f'{T(14,"semibold","var:text/strong","Link tested and working")}</Frame>'
-           f'{T(13,"regular","var:text/default","Checked 2 minutes ago. We test it before every virtual appointment and warn you if it breaks.",w="fill")}'
-           f'{mini_btn("Test it again now","Test link S3","refresh-cw","ghost",full=True)}</Frame>')
+    radio_row("WhatsApp video", sub="Common in Nigeria, but it shows the patient your personal number", name="Provider whatsapp"),
+    radio_row("I paste a link myself each time", sub="Slowest, works with anything", name="Provider manual"),
+], footer="Medra does not host the call in the MVP. It creates the booking, takes the payment, delivers the link three ways, and keeps the note — the call itself is yours.")
 
-add("Practice", "S3-meeting",
-    dr_desk("Doctor · Practice — S3 Virtual Visits",
-        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",18,N_IC)}'
-        f'{T(14,"semibold","var:text/default","Practice settings")}</Frame>'
-        f'{head_chip([("How your video",False),("visits happen",True)],28)}'
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{16}}>{S3_PROVIDER}{S3_SETUP}</Frame>'
-        f'<Frame w={{380}} flex="col" gap={{16}}>{S3_TEST}'
-        f'{group_card("Coming later", [list_row("sparkles","Video inside Medra",sub="No third-party app, and the note writes itself as you talk",name="Phase2 video",chevron=False),list_row("type","Automatic transcription",sub="You edit and sign — nothing is stored without the patient agreeing",name="Phase2 transcribe",chevron=False)], footer="Phase 2. The designs exist — ask to see them.")}'
-        f'{dcta("Save","Save meeting S3","check")}</Frame></Frame>',
-        SIDE["Settings"]),
+S3_SETUP = dgroup("Your link", [
+    field("Meeting link", "video", "meet.google.com/kfa-jrqz-nmo", ph=False, trailing=("copy", "Copy meet link"),
+          helper="Sent one hour before, again ten minutes before, and again if they say they cannot find it."),
+    dtoggle("refresh-cw", "New link for every appointment", sub="Safer — nobody wanders into someone else's consultation", on=True, name="New link each"),
+    dtoggle("lock", "Wait in a lobby until I admit them", sub="Strongly recommended", on=True, name="Lobby on"),
+    dtoggle("phone-call", "Offer a phone call if the video fails", sub="The clinic rings the number they registered", on=True, name="Phone fallback"),
+    dtoggle("signal", "Warn me when their connection is poor", sub="Before you both waste five minutes", on=True, name="Signal warn"),
+])
+
+S3_TEST = dcard(
+    f'<Frame flex="row" gap={{9}} items="center">{I("circle-check",16,OK_IC)}'
+    f'{T(14,"semibold","var:text/strong","Link tested and working")}</Frame>'
+    + T(12, "regular", "var:text/default",
+        "Checked 2 minutes ago. Medra tests it before every virtual appointment and warns you the moment it breaks.", w="fill")
+    + dbtn("Test it again now", "Test link S3", "refresh-cw", "ghost", full=True, size="sm"),
+    bg="var:state/success-bg", stroke=None)
+
+S3_PHASE2 = dgroup("Coming later", [
+    drow("sparkles", "Video inside Medra", sub="No third-party app, and no link to send", name="Phase2 video", chevron=False),
+    drow("type", "Automatic transcription", sub="Medra drafts the note as you talk; you edit and sign", name="Phase2 transcribe", chevron=False),
+    drow("shield-check", "Consent recorded first", sub="Nothing is transcribed without the member agreeing on screen", name="Phase2 consent", chevron=False),
+], footer="Phase 2. The member-side designs already exist — ask to see them.")
+
+add("Practice", "S3-virtual",
+    dr_desk("Doctor · Practice — S3 Virtual Visits", ["Settings", "Virtual visits"],
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",17,N_IC)}'
+        f'{T(13,"semibold","var:text/default","Settings")}</Frame>'
+        f'{dhead([("How your video",False),("visits happen",True)],26)}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{S3_PROVIDER}{S3_SETUP}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{S3_TEST}{S3_PHASE2}'
+        f'{dcta("Save","Save virtual S3","check")}</Frame></Frame>',
+        NAV["Settings"], PANEL_SETTINGS, urgent=0, badges=BADGES),
     dr_mob("Doctor · Practice — S3 Virtual Visits · Mobile",
-        dr_appbar("Virtual visits", right=circle_btn("check", "Save meeting S3"))
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{12}} px={{20}} pt={{2}} pb={{10}}>'
-          f'{S3_PROVIDER}{S3_TEST}</Frame>'))
+        dr_head("Virtual visits", "Google Meet · tested 2 min ago", back=False,
+                stats=[("Meet", "Provider"), ("On", "Lobby"), ("3", "Delivery routes")],
+                right=f'<Frame name="Btn Save virtual S3" w={{38}} h={{38}} rounded={{12}} bg="#17324D" flex="col" justify="center" items="center">{I("check",17,W_IC)}</Frame>'),
+        f'{S3_TEST}{S3_PROVIDER}{S3_SETUP}{S3_PHASE2}',
+        MTAB["More"]))
 
 # ---------------- S4 contact channels
-# "allow patient contact via either email, phone number or WhatsApp"
-S4_CHANNELS = group_card("How patients can reach you between visits", [
-    toggle_row("message-circle", "WhatsApp", sub="+234 803 555 0110 — the number most people will actually use", on=True, name="Contact whatsapp"),
-    toggle_row("mail", "Work email", sub="dr.okafor@clinic.ng", on=True, name="Contact email"),
-    toggle_row("phone-call", "Phone call", sub="They can ring you directly", on=False, name="Contact phone"),
-    toggle_row("message-square-text", "Messages inside Medra", sub="Kept with the patient's record — the only channel that is", on=True, name="Contact inapp"),
-], footer="Only patients you have actually consulted see these. Turn any of them off and it disappears from their screen immediately.")
-S4_LIMITS = group_card("Protect your evenings", [
-    list_row("clock", "Show as available", value="08:00 – 18:00", sub="Outside this, patients see “replies tomorrow”", name="Contact hours"),
-    list_row("calendar-days", "Days", value="Monday to Saturday", name="Contact days"),
-    toggle_row("moon", "Do not disturb outside those hours", sub="Messages still arrive, they just do not ring", on=True, name="Contact dnd"),
-    list_row("triangle-alert", "What counts as urgent", sub="Chest pain, breathlessness, bleeding — these always ring through", name="Contact urgent"),
+S4_CHANNELS = dgroup("How patients can reach you between visits", [
+    dtoggle("message-circle", "WhatsApp", sub="+234 803 555 0110 — the number most people will actually use", on=True, name="Contact whatsapp"),
+    dtoggle("mail", "Work email", sub="dr.okafor@clinic.ng", on=True, name="Contact email"),
+    dtoggle("phone-call", "Phone call", sub="They can ring you directly", on=False, name="Contact phone"),
+    dtoggle("message-square-text", "Messages inside Medra", sub="Kept with the patient's record — the only channel that is", on=True, name="Contact inapp"),
+], footer="Only patients you have actually consulted see these. Turn one off and it disappears from their screen immediately.")
+
+S4_LIMITS = dgroup("Protect your evenings", [
+    drow("clock", "Show as available", value="08:00 – 18:00", sub="Outside this, patients see “replies tomorrow”", name="Contact hours"),
+    drow("calendar-days", "Days", value="Monday to Saturday", name="Contact days"),
+    dtoggle("moon", "Do not disturb outside those hours", sub="Messages still arrive, they just do not ring", on=True, name="Contact dnd"),
+    drow("triangle-alert", "What counts as urgent", sub="Chest pain, breathlessness, bleeding — these always ring through", name="Contact urgent"),
+    drow("timer", "Auto-reply when you are consulting", value="On", sub="“In clinic — I will reply this evening”", name="Contact autoreply"),
 ], footer="Medra tells patients plainly that these channels are not for emergencies, and shows them what to do instead.")
-S4_PREVIEW = (f'<Frame w="fill" flex="col" gap={{13}} p={{20}} rounded={{24}} bg="var:bg/base" '
-              f'stroke="var:border/default" strokeWidth={{1}}>'
-              f'{eyebrow("HOW IT LOOKS ON HER PHONE")}'
-              f'{T(16,"bold","var:text/strong","Contact Dr. Okafor")}'
-              f'{list_row("message-circle","WhatsApp",sub="Usually replies within a few hours",name="Prev whatsapp")}'
-              f'{list_row("mail","Email",sub="dr.okafor@clinic.ng",name="Prev email")}'
-              f'{note("triangle-alert","For chest pain, breathlessness or bleeding, do not message — go to the nearest emergency department or call 112.","warn")}</Frame>')
+
+S4_PREVIEW = dcard(
+    eyerow("How it looks on her phone")
+    + T(15, "bold", "var:text/strong", "Contact Dr. Okafor")
+    + drow("message-circle", "WhatsApp", sub="Usually replies within a few hours", name="Prev whatsapp")
+    + drow("mail", "Email", sub="dr.okafor@clinic.ng", name="Prev email")
+    + note("triangle-alert", "For chest pain, breathlessness or bleeding, do not message — go to the nearest emergency department or call 112.", "warn"))
 
 add("Practice", "S4-contact",
-    dr_desk("Doctor · Practice — S4 How Patients Reach You",
-        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",18,N_IC)}'
-        f'{T(14,"semibold","var:text/default","Practice settings")}</Frame>'
-        f'{head_chip([("Reachable, but",False),("on your terms",True)],28)}'
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{16}}>{S4_CHANNELS}{S4_LIMITS}</Frame>'
-        f'<Frame w={{400}} flex="col" gap={{16}}>{S4_PREVIEW}{dcta("Save","Save contact S4","check")}</Frame></Frame>',
-        SIDE["Settings"]),
-    dr_mob("Doctor · Practice — S4 How Patients Reach You · Mobile",
-        dr_appbar("Contact channels", right=circle_btn("check", "Save contact S4"))
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{12}} px={{20}} pt={{2}} pb={{10}}>'
-          f'{S4_CHANNELS}</Frame>'))
+    dr_desk("Doctor · Practice — S4 Contact Channels", ["Settings", "How patients reach me"],
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",17,N_IC)}'
+        f'{T(13,"semibold","var:text/default","Settings")}</Frame>'
+        f'{dhead([("Reachable, but",False),("on your terms",True)],26)}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{S4_CHANNELS}{S4_LIMITS}</Frame>'
+        f'<Frame w={{380}} flex="col" gap={{14}}>{S4_PREVIEW}{dcta("Save","Save contact S4","check")}</Frame></Frame>',
+        NAV["Settings"], PANEL_SETTINGS, urgent=0, badges=BADGES),
+    dr_mob("Doctor · Practice — S4 Contact Channels · Mobile",
+        dr_head("How patients reach me", "3 channels on", back=False,
+                stats=[("3", "Channels"), ("08–18", "Hours"), ("On", "Do not disturb")],
+                right=f'<Frame name="Btn Save contact S4" w={{38}} h={{38}} rounded={{12}} bg="#17324D" flex="col" justify="center" items="center">{I("check",17,W_IC)}</Frame>'),
+        f'{S4_CHANNELS}{S4_LIMITS}{S4_PREVIEW}',
+        MTAB["More"]))
 
 # ---------------- S5 earnings
 S5_STATS = rows_of([
-    stat_card("banknote", "₦486,000", "This month", "32 consultations", "tint-teal.jpg"),
-    stat_card("wallet", "₦129,750", "Next payout", "Friday 22 August", "tint-mint.jpg"),
-    stat_card("trending-up", "+18%", "Vs last month", "More follow-ups", "tint-ocean.jpg"),
-    stat_card("circle-slash", "₦15,000", "Refunded", "1 cancellation by you", "tint-amber.jpg"),
-], 4, 16)
-S5_BREAKDOWN = group_card("August so far", [
+    stat_tile("banknote", "₦486,000", "Collected this month", "32 consultations", "teal", "Stat month"),
+    stat_tile("wallet", "₦129,750", "Next payout", "Friday 22 August", "ok", "Stat payout"),
+    stat_tile("trending-up", "+18%", "Vs last month", "More follow-ups", "ocean", "Stat trend"),
+    stat_tile("circle-slash", "₦15,000", "Refunded", "1 cancellation by you", "warn", "Stat refund"),
+], 4, 14)
+
+S5_BREAKDOWN = dgroup("August so far", [
     earn_row("22 follow-ups", "₦15,000 each", "₦330,000"),
     earn_row("6 first visits", "₦20,000 each", "₦120,000"),
     earn_row("4 quick video reviews", "₦8,000 each", "₦32,000"),
-    earn_row("1 refund", "You cancelled — Amara Okeke, 8 Aug", "− ₦15,000", "muted"),
-    earn_row("Medra commission and fees", "12% plus processing", "− ₦58,320", "muted"),
-    earn_row("Your total", "Before tax", "₦408,680", "ok"),
+    earn_row("1 no-show", "Blessing Ade, 14 Aug — you kept half", "₦7,500"),
+    earn_row("1 refund", "You cancelled — Amara Okeke, 8 Aug", "− ₦15,000", "err"),
+    earn_row("Payment processing", "Paystack, 1.5% capped", "− ₦7,290", "muted"),
+    earn_row("Your total", "Before tax", "₦467,210", "ok"),
 ], footer="Medra reports what it pays you to FIRS. Keeping your own records is still your responsibility.")
-S5_PAYOUTS = group_card("Payouts", [
-    list_row("building-2", "Zenith Bank · ****4421", sub="Ngozi Okafor · verified", name="Payout account"),
-    list_row("calendar-days", "Every Friday", sub="Anything completed by Thursday midnight", name="Payout schedule"),
-    list_row("download", "Download statements", sub="Monthly PDF and CSV", name="Payout statements"),
-    list_row("receipt", "Tax summary for the year", value="2026", name="Payout tax"),
+
+S5_CHART = dgroup("Last six months", [
+    chart([("Mar", "₦280k", 58, "slate"), ("Apr", "₦310k", 66, "slate"), ("May", "₦356k", 76, "navy"),
+           ("Jun", "₦402k", 86, "navy"), ("Jul", "₦412k", 88, "ok"), ("Aug", "₦486k", 104, "ok")], 128, "Collected per month"),
+])
+
+S5_PAYOUTS = dgroup("Payouts", [
+    drow("building-2", "Zenith Bank · ****4421", sub="Ngozi Okafor · verified 6 Feb", name="Payout account", tone="ok"),
+    drow("calendar-days", "Every Friday", sub="Everything completed by Thursday midnight", name="Payout schedule"),
+    drow("clock", "Held for", value="24 hours", sub="After a consultation is signed, in case of a dispute", name="Payout hold"),
+    drow("download", "Download statements", sub="Monthly PDF and CSV", name="Payout statements"),
+    drow("receipt", "Tax summary for the year", value="2026", name="Payout tax"),
+    drow("history", "Payout history", value="14 payouts", name="Payout history"),
 ])
 
 add("Practice", "S5-earnings",
-    dr_desk("Doctor · Practice — S5 Earnings",
-        f'{head_chip([("What you have",False),("earned",True)],28)}{S5_STATS}'
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{16}}>{S5_BREAKDOWN}</Frame>'
-        f'<Frame w={{380}} flex="col" gap={{16}}>{S5_PAYOUTS}'
-        f'{alert_strip("wallet","Next payout ₦129,750 on Friday","Sent to Zenith Bank ****4421. It usually lands the same day.","ok")}</Frame></Frame>',
-        SIDE["Earnings"]),
+    dr_desk("Doctor · Practice — S5 Earnings", ["Money", "Earnings"],
+        f'{dhead([("What you have",False),("earned",True)],26)}{S5_STATS}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{S5_CHART}{S5_BREAKDOWN}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{S5_PAYOUTS}'
+        f'{alert_strip("wallet","Next payout ₦129,750 on Friday","Sent to Zenith ****4421. It usually lands the same day.","ok")}</Frame></Frame>',
+        NAV["Money"], PANEL_MONEY, urgent=0, badges=BADGES),
     dr_mob("Doctor · Practice — S5 Earnings · Mobile",
-        dr_appbar("Earnings", back=False, right=circle_btn("download", "Payout statements"))
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{8}}>'
-          f'{rows_of([stat_card("banknote","₦486,000","This month","32 consultations","tint-teal.jpg"),stat_card("wallet","₦129,750","Next payout","Friday","tint-mint.jpg")],2,12)}'
-          f'{group_card("August so far", [earn_row("22 follow-ups","₦15,000 each","₦330,000"),earn_row("6 first visits","₦20,000 each","₦120,000"),earn_row("Commission and fees","12% plus processing","− ₦58,320","muted"),earn_row("Your total","Before tax","₦408,680","ok")], p=16)}</Frame>',
-        nav=dr_bottom_nav(TAB["Earnings"])))
+        dr_head("Earnings", "August · ₦486,000 collected", back=False,
+                stats=[("₦486k", "This month"), ("₦129.8k", "Next payout"), ("+18%", "Vs July")]),
+        f'{S5_CHART}{S5_BREAKDOWN}{S5_PAYOUTS}',
+        MTAB["More"]))
 
-# =====================================================================================
-# STATES
-# =====================================================================================
-X1_STEPS = group_card("Where your application is", [
-    prep_step(1, "Details received", "4 February, 09:12", done=True),
-    prep_step(2, "MDCN register checked", "4 February, 11:40 — MDCN 71482 found and active", done=True),
-    prep_step(3, "Identity confirmed", "A Medra reviewer is checking your ID against the register"),
-    prep_step(4, "Profile goes live", "Usually within 48 hours of step 3"),
-], footer="We check every doctor by hand. It is slower, and it is the reason members trust a Medra booking.")
-X1_MEANWHILE = group_card("What you can do now", [
-    list_row("circle-user", "Finish your public profile", sub="Photo, bio, languages — the parts members read first", name="Open profile S1"),
-    list_row("banknote", "Set your consultation types and fees", name="Open fees S2"),
-    list_row("clock", "Set your working hours", sub="Nothing is bookable until you are verified", name="Nav Schedule"),
-    list_row("video", "Connect your meeting link", name="Open meeting S3"),
-], footer="Everything you set up now goes live the moment you are verified — no second setup.")
+# ---------------- S6 subscription (PRD §7 Module 8)
+S6_TRIAL = dcard(
+    f'<Frame w="fill" flex="row" justify="between" items="center">'
+    f'{T(11,"semibold","var:brand/teal","FREE TRIAL")}{status_pill("pending","12 days left")}</Frame>'
+    + T(26, "bold", "var:text/on-dark", "Your trial ends on 26 August")
+    + T(14, "regular", "var:text/on-dark-muted",
+        "Everything is unlocked until then. Add a card before the 26th and nothing changes; do not, and your dashboard locks while your patients keep their records.", w="fill")
+    + bar(60, "teal", 10)
+    + f'<Frame w="fill" flex="row" gap={{9}}>'
+    + dbtn("Add a card now", "Add card S6", "credit-card", "teal")
+    + dbtn("Compare plans", "Compare plans S6", "list-checks", "dark") + '</Frame>',
+    bg="var:bg/band", stroke=None, p=22, r=18)
 
-add("States", "X1-verifying",
-    dr_desk("Doctor · States — X1 Verification Pending",
-        f'<Frame w="fill" flex="col" gap={{14}} p={{26}} rounded={{28}} image="assets/img/btn-navy.jpg" overflow="hidden">'
+def plan_card(name, price, sub, feats, sel=False, badge=None):
+    bd = "var:border/accent" if sel else "var:border/subtle"
+    bw = 2 if sel else 1
+    b = (f'<Frame flex="row" px={{9}} py={{4}} rounded={{7}} bg="var:state/info-bg">'
+         f'{T(10,"semibold","var:text/accent",badge)}</Frame>') if badge else ''
+    return dcard(
         f'<Frame w="fill" flex="row" justify="between" items="center">'
-        f'{eyebrow("VERIFICATION IN PROGRESS","var:brand/teal")}{status_pill("pending","Step 3 of 4")}</Frame>'
-        f'{T(28,"bold","var:text/on-dark","We are checking your licence")}'
-        f'{T(15,"regular","var:text/on-dark-muted","You can set everything up while you wait. Your profile appears to members the moment a reviewer signs it off.",w="fill")}</Frame>'
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{16}}>{X1_STEPS}</Frame>'
-        f'<Frame w={{400}} flex="col" gap={{16}}>{X1_MEANWHILE}'
-        f'{alert_strip("info","Entered the wrong MDCN number?","Fix it now and we restart the check straight away — it does not go to the back of the queue.","info")}'
-        f'{mini_btn("Contact the Medra team","Contact support","message-square-text","ghost",full=True)}</Frame></Frame>',
-        SIDE["Today"], topbar=False),
-    dr_mob("Doctor · States — X1 Verification Pending · Mobile",
-        dr_appbar("Verification", back=False)
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{8}}>'
-          f'{X1_STEPS}'
-          f'{group_card("What you can do now", [list_row("circle-user","Finish your public profile",name="Open profile S1"),list_row("banknote","Set your fees",name="Open fees S2"),list_row("clock","Set your hours",name="Nav Schedule")], p=16)}</Frame>',
-        nav=dr_bottom_nav(TAB["Today"])))
+        f'{T(15,"semibold","var:text/strong",name)}{b}</Frame>'
+        + f'<Frame flex="row" gap={{5}} items="end">{T(26,"bold","var:text/strong",price)}'
+        + T(12, "regular", "var:text/muted", "/month") + '</Frame>'
+        + T(11, "regular", "var:text/muted", sub, w="fill") + hr()
+        + "".join(f'<Frame w="fill" flex="row" gap={{8}} items="start" py={{4}}>{I("check",13,OK_IC)}'
+                  f'{T(12,"regular","var:text/default",f,w="fill")}</Frame>' for f in feats)
+        + dbtn("Choose " + name, "Choose " + name, None, "navy" if sel else "ghost", full=True, size="sm"),
+        p=16, stroke=bd, sw=bw)
 
-# ---------------- X2 nothing booked
+S6_PLAN_CARDS = [
+    plan_card("Solo", "₦12,000", "One practitioner, one location",
+              ["Unlimited bookings", "Records and notes", "SMS and WhatsApp to patients", "Weekly payouts"]),
+    plan_card("Practice", "₦28,000", "One practitioner, up to 3 locations",
+              ["Everything in Solo", "Recalls and follow-up lists", "Templates and shared templates", "Insights and reviews"],
+              sel=True, badge="RECOMMENDED"),
+    plan_card("Group", "₦75,000", "Up to 5 practitioners under one account",
+              ["Everything in Practice", "Shared patient list", "Cover for a colleague", "One invoice"]),
+]
+S6_PLANS   = rows_of(S6_PLAN_CARDS, 3, 14)
+S6_PLANS_M = rows_of(S6_PLAN_CARDS, 1, 12)
+
+S6_INVOICES = dgroup("Invoices", [
+    drow("receipt", "August 2026", value="₦0", sub="Free trial", name="Inv aug", chevron=False),
+    drow("receipt", "Card on file", value="None yet", sub="Add one before 26 August", name="Add card S6", tone="warn"),
+    drow("download", "Download invoices", sub="PDF, for your accountant", name="Inv download"),
+    drow("building-2", "Billing details", sub="Name, address and TIN for the invoice", name="Inv details"),
+])
+
+S6_WHAT = dgroup("What happens if you do not subscribe", [
+    drow("lock", "Your dashboard locks", sub="No queue, no new bookings, no note writing", name="Lock dash", tone="err", chevron=False),
+    drow("clipboard-list", "Your patients keep their records", sub="Everything you signed stays theirs — that is not held hostage", name="Lock records", tone="ok", chevron=False),
+    drow("calendar-x", "Bookings already made are honoured", sub="You can still see anyone who booked before the lock", name="Lock booked", chevron=False),
+    drow("undo-2", "Unlock any time", sub="Add a card and everything comes back exactly as it was", name="Lock undo", chevron=False),
+], footer="A doctor's unpaid invoice must never cost a patient their medical history. That is a design rule, not a policy setting.")
+
+add("Practice", "S6-billing",
+    dr_desk("Doctor · Practice — S6 Subscription", ["Money", "Subscription and billing"],
+        f'{S6_TRIAL}'
+        f'{T(15,"bold","var:text/strong","Plans")}{S6_PLANS}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{S6_INVOICES}</Frame>'
+        f'<Frame w={{380}} flex="col" gap={{14}}>{S6_WHAT}</Frame></Frame>',
+        NAV["Money"], PANEL_MONEY, urgent=0, badges=BADGES),
+    dr_mob("Doctor · Practice — S6 Subscription · Mobile",
+        dr_head("Subscription", "Free trial · 12 days left", back=False,
+                stats=[("12", "Days left"), ("₦28k", "Recommended"), ("None", "Card")]),
+        f'{S6_TRIAL}{S6_PLANS_M}{S6_INVOICES}{S6_WHAT}',
+        MTAB["More"]))
+
+# ---------------- S7 where I practise
+S7_PLACES = dgroup("Where you see patients", [
+    drow("hospital", "Garki Medical Centre", value="Primary", sub="Area 3, Garki · Mon, Tue, Thu · you are staff here", name="Place garki", tone="ok"),
+    drow("hospital", "Maitama Specialist", value="Visiting", sub="Wednesdays · you are a visiting consultant", name="Place maitama"),
+    drow("video", "Virtual only", value="Anywhere", sub="Saturdays 10:00 – 14:00", name="Place virtual"),
+    drow("plus", "Add somewhere else", name="Place add", chevron=False),
+], footer="Members see which location a slot is at before they book, and get directions to the right one.")
+
+S7_FACILITY = dgroup("Your link with Garki Medical Centre", [
+    drow("building-2", "Facility admin", value="Yusuf Bello", sub="Medical Director · he manages staff and billing", name="Fac admin", chevron=False),
+    drow("shield-check", "What the facility can see", sub="Your schedule and appointment counts. Not your consultation notes.", name="Fac sees", chevron=False),
+    drow("banknote", "Who is paid", value="You directly", sub="Garki invoices you for rooms separately — Medra is not involved", name="Fac paid", chevron=False),
+    drow("users", "Cover arrangements", sub="Dr. Chuka Eze can be offered your patients when you are away", name="Fac cover"),
+    drow("log-out", "Leave this facility", sub="Your patients and records stay with you", name="Fac leave", tone="warn"),
+], footer="An independent practitioner can ignore all of this. Medra works either way — that is what §11.4 of the PRD asks for.")
+
+S7_MODE = dgroup("How you practise", [
+    radio_row("Independent practitioner", sub="You are your own practice. You keep everything.", name="Mode indep"),
+    radio_row("Attached to a facility", sub="Garki Medical Centre manages your rooms; Medra manages your bookings", on=True, name="Mode facility"),
+    radio_row("Both", sub="Facility on some days, independent on others", name="Mode both"),
+])
+
+add("Practice", "S7-practice",
+    dr_desk("Doctor · Practice — S7 Where I Practise", ["Settings", "Where I practise"],
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",17,N_IC)}'
+        f'{T(13,"semibold","var:text/default","Settings")}</Frame>'
+        f'{dhead([("Where you",False),("see patients",True)],26)}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{S7_MODE}{S7_PLACES}</Frame>'
+        f'<Frame w={{380}} flex="col" gap={{14}}>{S7_FACILITY}{dcta("Save","Save practice S7","check")}</Frame></Frame>',
+        NAV["Settings"], PANEL_SETTINGS, urgent=0, badges=BADGES),
+    dr_mob("Doctor · Practice — S7 Where I Practise · Mobile",
+        dr_head("Where I practise", "2 locations + virtual", back=False,
+                stats=[("2", "Locations"), ("1", "Facility"), ("Sat", "Virtual only")]),
+        f'{S7_MODE}{S7_PLACES}{S7_FACILITY}',
+        MTAB["More"]))
+
+# ---------------- S8 account and security
+S8_DEVICES = dgroup("Where you are signed in", [
+    drow("laptop", "Windows laptop · Chrome", value="This device", sub="Garki Medical Centre · active now", name="Dev laptop", tone="ok", chevron=False),
+    drow("smartphone", "iPhone 13", sub="Abuja · last used 40 minutes ago", name="Dev phone",
+         right=dbtn("Sign out", "Signout phone", None, "ghost", grow=False, size="sm")),
+    drow("monitor", "Clinic desktop · reception", sub="Shared machine — last used yesterday", name="Dev clinic", tone="warn",
+         right=dbtn("Sign out", "Signout clinic", None, "ghost", grow=False, size="sm")),
+], footer="A shared clinic machine should never stay signed in. Medra signs you out of one automatically after 15 minutes idle.")
+
+S8_SECURITY = dgroup("Getting in", [
+    drow("key", "Password", value="Changed 4 Feb", name="Sec password"),
+    dtoggle("shield-check", "Two-factor on a new device", sub="Required — a doctor account opens medical records", on=True, name="Sec 2fa"),
+    dtoggle("fingerprint", "Fingerprint on my phone", on=True, name="Sec bio"),
+    dtoggle("timer", "Sign me out after 15 minutes idle", sub="On a shared machine this is not optional", on=True, name="Sec idle"),
+    dtoggle("bell", "Tell me when someone signs in", sub="WhatsApp and email", on=True, name="Sec alert"),
+])
+
+S8_AUDIT = dgroup("Recent activity", [
+    audit_row("Signed in", "Chrome · Windows · Garki Medical Centre", "Today, 07:58"),
+    audit_row("Opened a record", "Amara Okeke · MDR-8842-19", "Today, 09:12"),
+    audit_row("Signed a note", "Fatima Bello · MDR-2201-13", "Today, 09:28"),
+    audit_row("Sign-in blocked", "Unknown device · Lagos · wrong code", "8 Aug, 23:14"),
+], footer="Everything you do with a patient record is logged with your name — and the patient can see the part that concerns them.")
+
+S8_DANGER = dcard(
+    f'<Frame flex="row" gap={{9}} items="center">{I("triangle-alert",16,ERR_IC)}'
+    f'{T(14,"semibold","var:state/error","Leaving Medra")}</Frame>'
+    + T(12, "regular", "var:text/default",
+        "You can pause your listing and keep everything, or close the account. Notes you have signed stay with the patient and with the clinic — they are not yours to withdraw.", w="fill")
+    + f'<Frame w="fill" flex="row" gap={{9}}>'
+    + dbtn("Pause my listing", "Pause listing", "moon", "ghost")
+    + dbtn("Close my account", "Close account", "trash-2", "danger") + '</Frame>',
+    bg="var:state/error-bg", stroke=None)
+
+add("Practice", "S8-security",
+    dr_desk("Doctor · Practice — S8 Account &amp; Security", ["Settings", "Account and security"],
+        f'<Frame w="fill" flex="row" justify="between" items="center">'
+        f'{dhead([("Your account,",False),("and who can use it",True)],26)}'
+        f'<Frame name="Btn Sign out all" flex="row" gap={{7}} items="center" px={{13}} py={{9}} rounded={{11}} bg="var:state/error-bg">'
+        f'{I("log-out",14,ERR_IC)}{T(12,"semibold","var:state/error","Sign out everywhere")}</Frame></Frame>'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{S8_DEVICES}{S8_AUDIT}</Frame>'
+        f'<Frame w={{380}} flex="col" gap={{14}}>{S8_SECURITY}{S8_DANGER}</Frame></Frame>',
+        NAV["Settings"], PANEL_SETTINGS, urgent=0, badges=BADGES),
+    dr_mob("Doctor · Practice — S8 Account &amp; Security · Mobile",
+        dr_head("Account and security", "3 devices signed in", back=False,
+                stats=[("3", "Devices"), ("On", "2FA"), ("15m", "Idle timeout")]),
+        f'{S8_DEVICES}{S8_SECURITY}{S8_AUDIT}{S8_DANGER}',
+        MTAB["More"]))
+
+# =====================================================================================
+# 6. GROWTH — the AARRR screens a supply side actually needs
+# =====================================================================================
+R1_STATS = rows_of([
+    stat_tile("eye", "486", "Profile views", "Last 30 days · +22%", "info", "Ins views"),
+    stat_tile("calendar-check", "32", "Booked", "6.6% of views", "teal", "Ins booked"),
+    stat_tile("repeat", "61%", "Came back", "Pilot average is 43%", "ok", "Ins repeat"),
+    stat_tile("circle-slash", "3%", "No-show rate", "Pilot average is 11%", "ok", "Ins noshow"),
+], 4, 14)
+
+R1_FUNNEL = dgroup("From search to signed note", [
+    progress_row("Appeared in a search", "1,840", 100, "navy"),
+    progress_row("Opened your profile", "486", 44, "navy"),
+    progress_row("Started a booking", "58", 20, "teal"),
+    progress_row("Paid and confirmed", "34", 14, "teal"),
+    progress_row("Attended", "33", 13, "mint"),
+    progress_row("Signed note within a day", "31", 12, "mint"),
+], footer="The two biggest losses are search → profile and profile → booking. Both are profile problems, not clinical ones.")
+
+R1_WHY = dgroup("What is costing you bookings", [
+    drow("languages", "You only list English", value="−40% reach", sub="Hausa and Igbo are the two most searched in Abuja", name="Fix langs", tone="warn"),
+    drow("clock", "No slots before 09:00 or after 17:00", value="−18%", sub="07:00 and 19:00 are the most searched times", name="Fix hours", tone="warn"),
+    drow("camera", "No photo of your clinic", value="−9%", sub="Members book somewhere they can picture", name="Fix photo"),
+    drow("video", "Virtual only on Saturday", value="−12%", sub="Video visits are booked three times as often as in-person", name="Fix virtual", tone="warn"),
+], footer="Observations from the pilot cohort, not promises. Every one is a setting you control.")
+
+R1_TIME = dgroup("When people look for you", [
+    chart([("6am", "12", 22, "slate"), ("9am", "68", 74, "navy"), ("12pm", "51", 58, "navy"),
+           ("3pm", "44", 50, "navy"), ("6pm", "89", 96, "ok"), ("9pm", "62", 68, "ok")], 120, "Searches by hour"),
+], footer="Most searches happen after work — when you have no open slots.")
+
+add("Growth", "R1-insights",
+    dr_desk("Doctor · Growth — R1 Insights", ["Growth", "Insights"],
+        f'{dhead([("Where your bookings",False),("come from",True)],26)}'
+        f'{T(14,"regular","var:text/muted","Thirty days. The point of this screen is the four fixable things on the right.",w="fill")}'
+        f'{R1_STATS}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{R1_FUNNEL}{R1_TIME}</Frame>'
+        f'<Frame w={{380}} flex="col" gap={{14}}>{R1_WHY}'
+        f'{dcta("Open more evening slots","Open availability K7","clock")}</Frame></Frame>',
+        NAV["Growth"], PANEL_GROWTH, urgent=0, badges=BADGES),
+    dr_mob("Doctor · Growth — R1 Insights · Mobile",
+        dr_head("Insights", "Last 30 days", back=False,
+                stats=[("486", "Views"), ("32", "Booked"), ("6.6%", "Conversion")]),
+        f'{R1_STATS}{R1_FUNNEL}{R1_WHY}{R1_TIME}'
+        f'{dcta("Open more evening slots","Open availability K7","clock")}',
+        MTAB["More"]))
+
+# ---------------- R2 reviews
+R2_SUMMARY = dcard(
+    f'<Frame w="fill" flex="row" gap={{20}} items="center">'
+    f'<Frame flex="col" gap={{4}} items="center">{T(40,"bold","var:text/strong","4.9")}'
+    f'<Frame flex="row" gap={{2}}>{"".join(I("star",13,"#E0A32E") for _ in range(5))}</Frame>'
+    f'{T(11,"regular","var:text/muted","148 ratings")}</Frame>'
+    f'<Frame grow={{1}} flex="col" gap={{6}}>'
+    f'{progress_row("5 stars","131",89,"teal")}{progress_row("4 stars","12",8,"teal")}'
+    f'{progress_row("3 stars","3",2,"amber")}{progress_row("2 stars","1",1,"red")}'
+    f'{progress_row("1 star","1",1,"red")}</Frame></Frame>')
+
+R2_SUMMARY_M = dcard(
+    f'<Frame w="fill" flex="row" gap={{16}} items="center">'
+    f'<Frame flex="col" gap={{3}} items="center">{T(34,"bold","var:text/strong","4.9")}'
+    f'<Frame flex="row" gap={{2}}>{"".join(I("star",11,"#E0A32E") for _ in range(5))}</Frame>'
+    f'{T(10,"regular","var:text/muted","148 ratings")}</Frame>'
+    f'<Frame grow={{1}} flex="col" gap={{4}}>'
+    f'{progress_row("5 stars","131",89,"teal")}{progress_row("4 stars","12",8,"teal")}'
+    f'{progress_row("3 stars","3",2,"amber")}</Frame></Frame>')
+
+R2_THEMES = dgroup("What people mention", [
+    drow("message-square-text", "“Explained everything”", value="41 times", name="Theme explain", tone="ok", chevron=False),
+    drow("clock", "“Did not keep me waiting”", value="28 times", name="Theme wait", tone="ok", chevron=False),
+    drow("heart-handshake", "“Did not rush me”", value="22 times", name="Theme rush", tone="ok", chevron=False),
+    drow("video", "“Video call kept dropping”", value="4 times", name="Theme video", tone="warn", chevron=False),
+    drow("banknote", "“Expensive”", value="3 times", name="Theme price", chevron=False),
+], footer="Pulled from the free-text comments. The video complaints all came from one week in June.")
+
+R2_LIST = dgroup("Recent", [
+    review_row(5, "“She explained everything and did not rush me. First doctor in Abuja who actually looked at my old results.”", "Verified visit · 12 Aug", "2 days ago"),
+    review_row(5, "“Booked at 9pm, seen the next morning. My mother now uses her too.”", "Verified visit · 9 Aug", "5 days ago"),
+    review_row(3, "“Good doctor but the video kept freezing and we had to move to a phone call.”", "Verified visit · 2 Aug",
+               "12 days ago", reply="You replied: “Sorry about that — I have since switched to a new link for every call, which fixed it.”"),
+    review_row(5, "“Sent my prescription straight to the pharmacy. I did not have to go back to the clinic at all.”", "Verified visit · 28 Jul", "3 weeks ago"),
+], footer="Only a member with a completed, paid visit can leave a rating. Nobody can review a doctor they never saw.")
+
+R2_RULES = dgroup("How ratings work", [
+    drow("badge-check", "Verified visits only", sub="No anonymous drive-by reviews", name="Rev verified", chevron=False),
+    drow("eye-off", "The rating is anonymous to you", sub="You see the words, not who wrote them", name="Rev anon", chevron=False),
+    drow("corner-down-right", "You can reply once", sub="Publicly, under the review", name="Rev reply", chevron=False),
+    drow("flag", "Report an unfair review", sub="A person reads it — abuse and identifying details are removed", name="Rev report"),
+], footer="Medra does not delete a review because a doctor dislikes it. It removes abuse, and it removes anything that identifies a patient.")
+
+add("Growth", "R2-reviews",
+    dr_desk("Doctor · Growth — R2 Ratings", ["Growth", "Ratings and reviews"],
+        f'{dhead([("What patients",False),("say about you",True)],26)}'
+        f'{R2_SUMMARY}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{R2_LIST}</Frame>'
+        f'<Frame w={{380}} flex="col" gap={{14}}>{R2_THEMES}{R2_RULES}</Frame></Frame>',
+        NAV["Growth"], PANEL_GROWTH, urgent=0, badges=BADGES),
+    dr_mob("Doctor · Growth — R2 Ratings · Mobile",
+        dr_head("Ratings", "4.9 from 148 visits", back=False,
+                stats=[("4.9", "Rating"), ("148", "Ratings"), ("1", "To reply")]),
+        f'{R2_SUMMARY_M}{R2_THEMES}{R2_LIST}{R2_RULES}',
+        MTAB["More"]))
+
+# ---------------- R3 booking link and promotion
+R3_LINK = dcard(
+    eyerow("Your booking link")
+    + f'<Frame w="fill" flex="row" gap={{9}} items="center" px={{14}} py={{12}} rounded={{12}} bg="var:neutral/50">'
+    + I("link", 15, M_IC) + T(13, "regular", "var:text/strong", "medra.ng/dr-ngozi-okafor", w="fill")
+    + f'<Frame name="Btn Copy booking link" flex="row">{I("copy",15,N_IC)}</Frame></Frame>'
+    + T(11, "regular", "var:text/muted",
+        "Anyone with this link books straight into your calendar — no searching, no app store, works on any phone.", w="fill")
+    + f'<Frame w="fill" flex="row" gap={{9}}>'
+    + dbtn("Share on WhatsApp", "Share wa R3", "message-circle", "navy")
+    + dbtn("Copy", "Copy booking link", "copy", "ghost") + '</Frame>')
+
+R3_QR = dcard(
+    f'<Frame w="fill" flex="col" gap={{12}} items="center">'
+    f'<Frame w={{132}} h={{132}} rounded={{14}} bg="var:neutral/50" flex="col" justify="center" items="center">'
+    f'{I("qr-code",76,N_IC)}</Frame>'
+    f'{T(14,"semibold","var:text/strong","A poster for your waiting room")}'
+    f'{T(11,"regular","var:text/muted","A4, your name, your QR code. Print it and put it on the wall — the cheapest acquisition channel you have.",w="fill",align="center")}'
+    f'{dbtn("Download the poster","Download poster R3","printer","ghost",full=True,size="sm")}</Frame>')
+
+R3_IMPORT = dgroup("Bring your existing patients across", [
+    drow("upload", "Upload a list", sub="Name and phone number, CSV or a photo of your book", name="Import list"),
+    drow("message-circle", "Invite them on WhatsApp", sub="One message each, with your booking link", name="Import wa"),
+    drow("printer", "Give them a card at the desk", sub="Your QR code, wallet sized", name="Import card"),
+    drow("hospital", "Ask reception to hand out the link", sub="Works for everyone who walks in", name="Import reception"),
+], footer="Members you invite still choose whether to share their history with you. Importing a phone number does not import a record.")
+
+R3_PERF = dgroup("Where your bookings came from", [
+    kpi_line("Medra search", "18"),
+    kpi_line("Your booking link", "9", "ok"),
+    kpi_line("Waiting-room QR code", "4", "ok"),
+    kpi_line("Referred by another doctor", "2"),
+    kpi_line("Facility page", "1"),
+], footer="Thirteen of thirty-four came from something you shared yourself.")
+
+add("Growth", "R3-link",
+    dr_desk("Doctor · Growth — R3 Booking Link", ["Growth", "Booking link"],
+        f'{dhead([("Send people",False),("straight to your calendar",True)],26)}'
+        f'{T(14,"regular","var:text/muted","Search brings you strangers. Your own link brings you the patients you already have.",w="fill")}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{R3_LINK}{R3_IMPORT}</Frame>'
+        f'<Frame w={{380}} flex="col" gap={{14}}>{R3_QR}{R3_PERF}</Frame></Frame>',
+        NAV["Growth"], PANEL_GROWTH, urgent=0, badges=BADGES),
+    dr_mob("Doctor · Growth — R3 Booking Link · Mobile",
+        dr_head("Booking link", "13 of 34 bookings came from it", back=False,
+                stats=[("9", "From link"), ("4", "From QR"), ("2", "Referred")]),
+        f'{R3_LINK}{R3_QR}{R3_IMPORT}{R3_PERF}',
+        MTAB["More"]))
+
+# =====================================================================================
+# 7. STATES & EDGE CASES
+# =====================================================================================
+X1_LOCK = dcard(
+    f'<Frame w="fill" flex="col" gap={{13}} items="center">'
+    f'<Frame w={{76}} h={{76}} rounded={{999}} bg="var:state/error-bg" flex="col" justify="center" items="center">'
+    f'{I("lock",34,ERR_IC)}</Frame>'
+    f'{T(22,"bold","var:text/strong","Your dashboard is locked")}'
+    f'{T(14,"regular","var:text/muted","The free trial ended on 26 August and no card was added. Add one and everything comes back exactly as you left it.",w="fill",align="center")}'
+    f'{dcta("Add a card and unlock","Add card S6","credit-card")}'
+    f'{dbtn("Compare plans","Compare plans S6","list-checks","ghost",full=True)}</Frame>')
+
+X1_STILL = dgroup("What still works", [
+    drow("clipboard-list", "Your patients keep every record", sub="Everything you signed is theirs. It is not held hostage.", name="Lock records", tone="ok", chevron=False),
+    drow("calendar-check", "Appointments already booked", value="4", sub="You can still see them and write the notes", name="Lock booked", tone="ok", chevron=False),
+    drow("download", "Export your own data", sub="Patient list, notes you authored, earnings — any time", name="Lock export", tone="ok", chevron=False),
+    drow("message-circle", "Messages from existing patients", sub="You can reply, so nobody is left mid-conversation", name="Lock messages", tone="ok", chevron=False),
+])
+X1_STOPPED = dgroup("What has stopped", [
+    drow("search", "You are hidden from search", sub="Nobody new can find or book you", name="Stop search", tone="err", chevron=False),
+    drow("calendar-x", "No new bookings", sub="Your open slots are withdrawn", name="Stop bookings", tone="err", chevron=False),
+    drow("repeat", "Recalls and follow-up reminders", sub="Paused, not deleted", name="Stop recalls", tone="err", chevron=False),
+    drow("trending-up", "Insights and reviews", name="Stop insights", tone="err", chevron=False),
+], footer="Nothing is deleted. Unlock and every list, template and setting is where you left it.")
+
+add("States", "X1-locked",
+    dr_desk("Doctor · States — X1 Subscription Locked", ["Money", "Subscription"],
+        f'<Frame w="fill" flex="row" gap={{16}} justify="center" items="start" pt={{10}}>'
+        f'<Frame w={{520}} flex="col" gap={{14}}>{X1_LOCK}</Frame>'
+        f'<Frame w={{380}} flex="col" gap={{14}}>{X1_STILL}{X1_STOPPED}</Frame></Frame>',
+        NAV["Money"], PANEL_MONEY, urgent=0),
+    dr_mob("Doctor · States — X1 Subscription Locked · Mobile",
+        dr_head("Locked", "Trial ended 26 August", back=False,
+                stats=[("0", "New bookings"), ("4", "Still booked"), ("Safe", "Records")]),
+        f'{X1_LOCK}{X1_STILL}{X1_STOPPED}',
+        MTAB["More"]))
+
 X2_EMPTY = empty_state("calendar-check", "Nothing booked today",
-    "Your hours are set and your profile is live. When someone books you, they appear here — and you get a notification.",
-    primary=dcta("Open more slots", "Open availability K4", "clock"),
-    secondary=mini_btn("Share my booking link", "Share booking link", "share-2", "ghost", full=True), tone="ok")
-X2_WHY = group_card("Getting booked more", [
-    list_row("clock", "Open earlier or later slots", sub="7am and 7pm are the two most-searched times in Abuja", name="Open availability K4"),
-    list_row("video", "Offer virtual visits", sub="Members book 3× more video visits than in-person", name="Open fees S2"),
-    list_row("camera", "Add a photo", sub="Profiles with a photo are booked twice as often", name="Open profile S1"),
-    list_row("share-2", "Share your booking link", sub="Send it to existing patients on WhatsApp", name="Share booking link"),
-], footer="These are observations from the pilot, not promises.")
+    "Your hours are set and your profile is live. When someone books, they appear here and you get a notification.",
+    primary=dcta("Open more slots", "Open availability K7", "clock"),
+    secondary=dbtn("Share my booking link", "Open link R3", "share-2", "ghost", full=True), tone="ok")
+
+X2_WHY = dgroup("Getting booked more", [
+    drow("clock", "Open earlier or later slots", sub="07:00 and 19:00 are the two most-searched times in Abuja", name="Open availability K7"),
+    drow("video", "Offer virtual visits on weekdays", sub="Members book three times as many video visits", name="Open fees S2"),
+    drow("languages", "Add Hausa and Igbo", sub="You are invisible to 40% of searches in your area", name="Open profile S1"),
+    drow("share-2", "Send your link to existing patients", sub="Nine of last month's bookings came from it", name="Open link R3"),
+    drow("user-plus", "Invite a colleague", sub="Their referrals come back to you", name="Open invite G3"),
+], footer="Pilot observations, not promises.")
+
+X2_WEEK = dgroup("The rest of your week", [
+    drow("calendar-check", "Friday", value="2 booked", sub="09:00 and 11:30", name="Open week K6"),
+    drow("calendar-check", "Saturday", value="Fully open", sub="6 virtual slots, nobody has taken one", name="Open week K6", tone="warn"),
+    drow("calendar-x", "Monday", value="Blocked", sub="You marked it as leave", name="Open timeoff K8"),
+])
 
 add("States", "X2-empty",
-    dr_desk("Doctor · States — X2 Nothing Booked",
-        f'<Frame w="fill" flex="row" gap={{18}} items="start" pt={{6}}>'
-        f'<Frame grow={{1}} flex="col" gap={{16}}>{X2_EMPTY}</Frame>'
-        f'<Frame w={{400}} flex="col" gap={{16}}>{X2_WHY}</Frame></Frame>',
-        SIDE["Today"]),
+    dr_desk("Doctor · States — X2 Nothing Booked", ["Today", "Nothing booked"],
+        f'<Frame w="fill" flex="row" gap={{16}} items="start" pt={{6}}>'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{X2_EMPTY}{X2_WEEK}</Frame>'
+        f'<Frame w={{380}} flex="col" gap={{14}}>{X2_WHY}</Frame></Frame>',
+        NAV["Today"], PANEL_TODAY, urgent=0),
     dr_mob("Doctor · States — X2 Nothing Booked · Mobile",
-        dr_greet()
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{8}}>{X2_EMPTY}</Frame>',
-        nav=dr_bottom_nav(TAB["Today"])))
+        dr_head("Thursday 14 Aug", "Nothing booked today", back=False,
+                stats=[("0", "Today"), ("2", "Friday"), ("6", "Open Saturday")]),
+        f'{X2_EMPTY}{X2_WEEK}{X2_WHY}',
+        MTAB["Today"]))
 
-# ---------------- X3 notifications
-X3_TODAY = (f'<Frame w="fill" flex="col" gap={{10}}>{eyebrow("TODAY")}'
-            f'{notif_row("flask-conical","Result back for Musa Ibrahim","Troponin normal. Release it to him or hold it until you speak.","12 min ago","Notif result",unread=True,tone="warn")}'
-            f'{notif_row("package","Refill request from Grace Okeke","Metformin 500 mg · 30 days · she has 4 days left","1h ago","Notif refill",unread=True,tone="info")}'
-            f'{notif_row("calendar-x","Amara Okeke cancelled","Thu 28 Aug, 10:30 — released back to your open slots","3h ago","Notif cancel",unread=True,tone="muted")}'
+X3_TODAY = (f'<Frame w="fill" flex="col" gap={{9}}>{eyerow("Today")}'
+            f'{notif_row("flask-conical","Result back for Musa Ibrahim","Troponin normal. Release it or hold it until you speak.","12 min","Notif result",unread=True,tone="warn")}'
+            f'{notif_row("calendar-clock","New booking request","Halima Sani · Fri 22 Aug 11:30 · paid","1 h","Notif booking",unread=True,tone="info")}'
+            f'{notif_row("package","Refill request from Grace Okeke","Metformin 500 mg · she has 4 days left","1 h","Notif refill",unread=True,tone="info")}'
+            f'{notif_row("calendar-x","Amara Okeke cancelled","Thu 28 Aug 10:30 — released back to your open slots","3 h","Notif cancel",unread=True,tone="muted")}'
             f'{notif_row("notebook-pen","Yesterday’s note is still unsigned","Chidi Okeke, 16:40. He cannot see it until you sign.","This morning","Notif unsigned",tone="warn")}</Frame>')
-X3_EARLIER = (f'<Frame w="fill" flex="col" gap={{10}}>{eyebrow("EARLIER")}'
+X3_EARLIER = (f'<Frame w="fill" flex="col" gap={{9}}>{eyerow("Earlier")}'
               f'{notif_row("message-square-text","Amara Okeke answered your request","She agreed to share her prescription history for this visit.","Tue","Notif access",tone="ok")}'
-              f'{notif_row("banknote","₦129,750 paid out","Zenith Bank ****4421 · 32 consultations","Fri","Notif payout",tone="ok")}'
-              f'{notif_row("star","New rating: 5 stars","“She explained everything and did not rush me.”","Fri","Notif rating",tone="ok")}</Frame>')
+              f'{notif_row("banknote","₦129,750 paid out","Zenith ****4421 · 32 consultations","Fri","Notif payout",tone="ok")}'
+              f'{notif_row("star","New rating: 5 stars","“She explained everything and did not rush me.”","Fri","Notif rating",tone="ok")}'
+              f'{notif_row("user-plus","Dr. Chuka Eze accepted your invitation","Your free month is credited","28 Jul","Notif invite",tone="ok")}</Frame>')
+
+X3_BLOCKING = dgroup("Blocking a patient right now", [
+    drow("flask-conical", "1 result to release", name="Open results P7", tone="warn"),
+    drow("package", "2 refills waiting", name="Open refills P6", tone="warn"),
+    drow("notebook-pen", "1 unsigned note", name="Open drafts C9", tone="err"),
+], footer="Everything else can wait until after clinic.")
+
+X3_CHANNELS = dgroup("How you get told", [
+    dtoggle("bell", "In the app", on=True, name="Dr notif app"),
+    dtoggle("message-circle", "WhatsApp", sub="Urgent only — results, cancellations, new bookings", on=True, name="Dr notif wa"),
+    dtoggle("message-square-text", "SMS", sub="When you have no data", on=False, name="Dr notif sms"),
+    dtoggle("mail", "A daily email summary", sub="07:00, before clinic starts", on=True, name="Dr notif email"),
+    dtoggle("moon", "Nothing between 21:00 and 07:00", sub="Except a cancellation for the next morning", on=True, name="Dr notif quiet"),
+])
 
 add("States", "X3-notifications",
-    dr_desk("Doctor · States — X3 Notifications",
+    dr_desk("Doctor · States — X3 Notifications", ["Requests", "Notifications"],
         f'<Frame w="fill" flex="row" justify="between" items="center">'
-        f'{head_chip([("What needs",False),("your attention",True)],28)}'
-        f'{mini_btn("Mark all read","Mark all read","check-check","ghost",grow=False)}</Frame>'
-        f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{18}}>{X3_TODAY}{X3_EARLIER}</Frame>'
-        f'<Frame w={{380}} flex="col" gap={{16}}>'
-        f'{group_card("Blocking a patient right now", [list_row("flask-conical","1 result to release",name="Notif result",tint="var:state/warning-bg"),list_row("package","2 refills waiting",name="Open refills",tint="var:state/warning-bg"),list_row("notebook-pen","1 unsigned note",name="Notif unsigned",tint="var:state/error-bg")], footer="Everything else can wait until after clinic.")}'
-        f'{group_card("How you get told", [toggle_row("bell","In the app",on=True,name="Dr notif app"),toggle_row("message-circle","WhatsApp",sub="Urgent only — results and cancellations",on=True,name="Dr notif wa"),toggle_row("message-square-text","SMS",sub="If you have no data",on=False,name="Dr notif sms"),toggle_row("mail","A daily email summary",sub="07:00, before clinic",on=True,name="Dr notif email")])}</Frame></Frame>',
-        SIDE["Today"]),
+        f'{dhead([("What needs",False),("your attention",True)],26)}'
+        f'{dbtn("Mark all read","Mark all read","check-check","ghost",grow=False,size="sm")}</Frame>'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{16}}>{X3_TODAY}{X3_EARLIER}</Frame>'
+        f'<Frame w={{380}} flex="col" gap={{14}}>{X3_BLOCKING}{X3_CHANNELS}</Frame></Frame>',
+        NAV["Requests"], PANEL_REQ, urgent=6, badges=BADGES),
     dr_mob("Doctor · States — X3 Notifications · Mobile",
-        dr_appbar("Notifications", right=circle_btn("check-check", "Mark all read"))
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{14}} px={{20}} pt={{4}} pb={{8}}>{X3_TODAY}</Frame>',
-        nav=dr_bottom_nav(TAB["Today"])))
+        dr_head("Notifications", "5 new · 4 blocking a patient", back=False,
+                stats=[("5", "New"), ("4", "Blocking"), ("On", "WhatsApp")]),
+        f'{X3_BLOCKING}{X3_TODAY}{X3_EARLIER}{X3_CHANNELS}',
+        MTAB["Requests"]))
+
+# ---------------- X4 offline
+X4_BANNER = alert_strip("cloud-off", "You are offline",
+    "Showing what was on this device at 09:41. Anything you write is saved here and syncs the moment you are back.", "warn",
+    dbtn("Retry", "Retry X4", "refresh-cw", "ghost", grow=False, size="sm"))
+
+X4_WORKS = dgroup("What still works", [
+    drow("notebook-pen", "Writing a consultation note", sub="Saved on this device, synced later — you never lose a note to a dropped line", name="Off note", tone="ok", chevron=False),
+    drow("clipboard-list", "Reading records you already opened", sub="Today's patients were cached at 09:41", name="Off records", tone="ok", chevron=False),
+    drow("calendar-days", "Today's queue", sub="As it stood at 09:41", name="Off queue", tone="ok", chevron=False),
+    drow("phone-call", "Phone numbers", sub="Every patient's number is on the device", name="Off phones", tone="ok", chevron=False),
+])
+X4_WAITS = dgroup("What has to wait", [
+    drow("badge-check", "Signing a note", sub="A signature needs a trusted timestamp from the server", name="Off sign", tone="err", chevron=False),
+    drow("pill", "Sending a prescription", sub="The pharmacy has to actually receive it", name="Off rx", tone="err", chevron=False),
+    drow("eye", "Releasing a result", name="Off result", tone="err", chevron=False),
+    drow("video", "Starting a video visit", name="Off video", tone="err", chevron=False),
+], footer="Three notes are queued and will sync automatically. Nothing you have typed is at risk.")
+
+X4_QUEUE = dgroup("Waiting to sync · 3", [
+    drow("notebook-pen", "Chidi Okeke — consultation note", value="Draft", sub="Written 10:04, complete", name="Sync 1", chevron=False),
+    drow("activity", "Grace Okeke — BP 148/92 recorded", value="Queued", sub="Written 10:22", name="Sync 2", chevron=False),
+    drow("circle-slash", "Blessing Ade — marked no-show", value="Queued", sub="Written 10:12", name="Sync 3", chevron=False),
+])
+
+add("States", "X4-offline",
+    dr_desk("Doctor · States — X4 Offline", ["Today", "Offline"],
+        f'{X4_BANNER}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{X4_WORKS}{X4_WAITS}</Frame>'
+        f'<Frame w={{380}} flex="col" gap={{14}}>{X4_QUEUE}'
+        f'{alert_strip("info","Records use about 40 MB on this device","Turn caching off in Account and security if the clinic machine is short on space.","info")}</Frame></Frame>',
+        NAV["Today"], PANEL_STATES, urgent=0),
+    dr_mob("Doctor · States — X4 Offline · Mobile",
+        dr_head("Offline", "Last synced 09:41", back=False,
+                stats=[("3", "Queued"), ("09:41", "Synced"), ("8", "Cached")]),
+        f'{X4_BANNER}{X4_QUEUE}{X4_WORKS}{X4_WAITS}',
+        MTAB["Today"]))
+
+# ---------------- X5 error
+X5_MAIN = empty_state("triangle-alert", "Something went wrong on our side",
+    "This is not your device and it is not your data — a Medra service failed to answer. Nothing you have written is affected.",
+    primary=dcta("Try again", "Retry X5", "refresh-cw"),
+    secondary=dbtn("Go to today's queue", "Nav Today", "layout-dashboard", "ghost", full=True), tone="warn")
+
+X5_REF = dcard(
+    f'<Frame w="fill" flex="row" gap={{11}} items="center">{I("copy",16,M_IC)}'
+    f'<Frame grow={{1}} flex="col" gap={{2}}>{T(11,"regular","var:text/muted","Reference for support")}'
+    f'{T(14,"semibold","var:text/strong","ERR-7731-A2 · 14 Aug 09:41 · notes-service")}</Frame>'
+    f'{dbtn("Copy","Copy error ref","copy","ghost",grow=False,size="sm")}</Frame>')
+
+X5_HELP = dgroup("If it keeps happening", [
+    drow("refresh-cw", "Reload the app", name="Retry X5", chevron=False),
+    drow("wifi", "Check the clinic network", sub="Medra needs about 1 Mbps to work properly", name="Err network", chevron=False),
+    drow("message-square-text", "Message Medra with the reference", sub="Median reply 4 minutes during clinic hours", name="Open help"),
+    drow("phone-call", "Call the clinic support line", value="+234 809 112 4477", name="Call clinic", chevron=False),
+], footer="If a patient is in front of you and Medra is down, write on paper and add it afterwards — the note screen accepts a backdated entry.")
+
+X5_SAFE = dgroup("What is safe", [
+    drow("notebook-pen", "Your open note", value="Saved locally", sub="Auto-saved 40 seconds ago", name="Safe note", tone="ok", chevron=False),
+    drow("badge-check", "Everything you have signed", sub="Signed notes are written before you see a confirmation", name="Safe signed", tone="ok", chevron=False),
+    drow("banknote", "Payments already taken", sub="Held by Paystack, not by this service", name="Safe money", tone="ok", chevron=False),
+])
+
+add("States", "X5-error",
+    dr_desk("Doctor · States — X5 Error", ["Today", "Error"],
+        f'<Frame w="fill" flex="row" gap={{16}} justify="center" items="start" pt={{10}}>'
+        f'<Frame w={{520}} flex="col" gap={{14}}>{X5_MAIN}{X5_REF}</Frame>'
+        f'<Frame w={{380}} flex="col" gap={{14}}>{X5_SAFE}{X5_HELP}</Frame></Frame>',
+        NAV["Today"], PANEL_STATES, urgent=0),
+    dr_mob("Doctor · States — X5 Error · Mobile",
+        dr_head("Something went wrong", "ERR-7731-A2", back=False,
+                stats=[("Saved", "Your note"), ("Safe", "Signed"), ("4 min", "Support")]),
+        f'{X5_MAIN}{X5_REF}{X5_SAFE}{X5_HELP}',
+        MTAB["Today"]))
+
+# ---------------- X6 loading
+X6_SKEL_D = (f'{skel(h=110,r=18)}'
+             f'{rows_of([skel(h=104,r=16),skel(h=104,r=16),skel(h=104,r=16),skel(h=104,r=16)],4,14)}'
+             f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+             f'<Frame grow={{1}} flex="col" gap={{12}}>{skel_card(3)}{skel_card(3)}{skel_card(2)}</Frame>'
+             f'<Frame w={{360}} flex="col" gap={{12}}>{skel_card(4,avatar=False)}{skel_card(3,avatar=False)}</Frame></Frame>'
+             f'<Frame w="fill" flex="row" gap={{9}} justify="center" items="center" pt={{4}}>'
+             f'{I("loader",15,M_IC)}{T(12,"regular","var:text/muted","Loading today’s queue…")}</Frame>')
+X6_SKEL_M = (f'{skel(h=104,r=16)}'
+             f'{rows_of([skel(h=88,r=14),skel(h=88,r=14)],2,10)}'
+             f'{skel_card(3)}{skel_card(3)}{skel_card(2)}'
+             f'<Frame w="fill" flex="row" gap={{9}} justify="center" items="center">'
+             f'{I("loader",14,M_IC)}{T(12,"regular","var:text/muted","Loading…")}</Frame>')
+
+add("States", "X6-loading",
+    dr_desk("Doctor · States — X6 Loading", ["Today", "Loading"], X6_SKEL_D, NAV["Today"], PANEL_STATES, urgent=0),
+    dr_mob("Doctor · States — X6 Loading · Mobile",
+        dr_head("Thursday 14 Aug", "Loading…", back=False, stats=[("—", "Seen"), ("—", "Wait"), ("—", "Today")]),
+        X6_SKEL_M, MTAB["Today"]))
 
 # =====================================================================================
-# COMPONENT STATES
+# 8. COMPONENT STATES
 # =====================================================================================
 CMP = []
-def cmp_frame(comp, prop, value, body, w=320, h=None):
+def cmp_frame(comp, prop, value, body, w=320, h=None, dark=False):
     hh = f' minH={{{h}}}' if h else ''
+    bg = "var:bg/band" if dark else "var:bg/base"
     CMP.append((f"cmp/{comp}/{prop}={value}",
-        f'<Frame name="cmp/{comp}/{prop}={value}" w={{{w}}}{hh} flex="col" p={{16}} bg="var:bg/base">{body}</Frame>'))
+        f'<Frame name="cmp/{comp}/{prop}={value}" w={{{w}}}{hh} flex="col" p={{16}} bg="{bg}">{body}</Frame>'))
 
-for st, state in (("Open", "open"), ("Booked", "booked"), ("Blocked", "blocked"), ("Break", "break")):
-    cmp_frame("Slot", "State", st, f'<Frame w="fill" flex="row">{slot_chip("10:30", state)}</Frame>', w=150)
-for st, on in (("Shared", True), ("Withheld", False)):
-    cmp_frame("Share Toggle", "State", st, share_toggle("Assessment and diagnosis", "CShare", on), w=340)
+for st, state in (("Open", "open"), ("Booked", "booked"), ("Held", "hold"), ("Break", "break"), ("Away", "blocked")):
+    cmp_frame("Slot", "State", st, f'<Frame w="fill" flex="row">{slot_chip("10:30", state, "CSlot")}</Frame>', w=150)
+
 cmp_frame("Queue Row", "State", "Waiting",
     queue_row("11:00", "avatar-6.jpg", "Chidi Okeke", "6 years · MDR-8842-20", "Cough for four days",
               "confirmed", "In person", "CQueue"), w=620)
 cmp_frame("Queue Row", "State", "Now",
     queue_row("10:30", "avatar-2.jpg", "Amara Okeke", "34 years · MDR-8842-19", "Hypertension follow-up",
-              "today", "Virtual", "CQueue", now=True), w=620)
-for st, kind in (("Granted", True), ("Locked", False)):
-    cmp_frame("Scope Line", "State", st, scope_line("Lab results", kind, "4 results · 1 out of range"), w=380)
-cmp_frame("Drug Result", "State", "Default", drug_result("Amlodipine", "Tablet · 5 mg, 10 mg", "Calcium channel blocker", "CDrug"), w=420)
-cmp_frame("Drug Result", "State", "Blocked", drug_result("Amoxicillin", "Capsule · 250 mg", "Penicillin — allergic", "CDrug"), w=420)
+              "today", "Virtual", "CQueue", now=True,
+              flags=[("triangle-alert", "Penicillin allergy", "err")]), w=620)
+cmp_frame("Queue Row", "State", "Unpaid",
+    queue_row("14:00", "avatar-5.jpg", "Tunde Bello", "44 years · MDR-6620-88", "Results discussion",
+              "pending", "Virtual", "CQueue",
+              flags=[("credit-card", "Unpaid — released 13:30", "warn")]), w=620)
+
+for st, on in (("Shared", True), ("Withheld", False)):
+    cmp_frame("Share Toggle", "State", st, share_toggle("Diagnosis", "CShare", on), w=340)
+for st, granted in (("Granted", True), ("Locked", False)):
+    cmp_frame("Scope Line", "State", st, scope_line("Lab results", granted, "4 results · 1 out of range"), w=380)
+cmp_frame("Drug Result", "State", "Default",
+    drug_result("Amlodipine", "Tablet · 5 mg, 10 mg", "Calcium channel blocker", "CDrug"), w=420)
+cmp_frame("Drug Result", "State", "Blocked",
+    drug_result("Amoxicillin", "Capsule · 250 mg", "Penicillin class", "CDrug", blocked=True), w=420)
+
+for st, tone in (("Info", "info"), ("Warning", "warn"), ("Danger", "err"), ("Good", "ok")):
+    cmp_frame("Stat Tile", "State", st,
+              f'<Frame w="fill" flex="row">{stat_tile("users","8","Booked today","3 seen · 5 to go",tone,"CTile")}</Frame>', w=260)
+
+cmp_frame("Checklist Row", "State", "Done",
+    checklist_row(True, "Set your working hours", "Mon–Thu 09:00–17:00", "CCheck"), w=440)
+cmp_frame("Checklist Row", "State", "Todo",
+    checklist_row(False, "Connect your video link", "Needed for virtual bookings", "CCheck"), w=440)
+
+cmp_frame("Outcome", "State", "Selected",
+    outcome_choice("check-check", "Completed", "The note goes to their record and the fee is released.", "COut", sel=True, tone="ok"), w=440)
+cmp_frame("Outcome", "State", "Default",
+    outcome_choice("circle-slash", "Did not arrive", "The slot reopens and they are told.", "COut", tone="warn"), w=440)
+
+def rail_item(on):
+    box = ('bg="#17324D" stroke="#2B5B85" strokeWidth={1}' if on else '')
+    return (f'<Frame w={{70}} flex="col" gap={{5}} items="center" py={{10}} rounded={{13}} {box}>'
+            f'{I("calendar-days",20,RAIL_ON if on else RAIL_DIM)}'
+            f'{T(9,"semibold" if on else "medium","var:text/on-dark" if on else "#7FA3BE","Schedule")}</Frame>')
+cmp_frame("Rail Item", "State", "Active", rail_item(True), w=110, dark=True)
+cmp_frame("Rail Item", "State", "Inactive", rail_item(False), w=110, dark=True)
 
 for nm, jsx in CMP:
     fid = nm.replace("cmp/", "CMP-").replace("/", "-").replace("=", "-").replace(" ", "")
@@ -1064,88 +2360,163 @@ open(os.path.join(OUT, "pages.json"), "w").write(json.dumps(manifest, indent=2))
 
 AUTH_DR = ("Auth · Doctor — D6 Log In", "Auth · Doctor — D6 Log In · Mobile")
 
-NAV = {
+NAVMAP = {
   "Btn Nav Today":     NAMES["K1-today"],
-  "Btn Nav Schedule":  NAMES["K2-appointments"],
-  "Btn Nav Patients":  NAMES["T1-patients"],
-  "Btn Nav Notes":     NAMES["C1-room"],
-  "Btn Nav Earnings":  NAMES["S5-earnings"],
+  "Btn Nav Requests":  NAMES["K2-requests"],
+  "Btn Nav Schedule":  NAMES["K6-week"],
+  "Btn Nav Patients":  NAMES["P1-patients"],
+  "Btn Nav Consults":  NAMES["C1-room"],
+  "Btn Nav Money":     NAMES["S5-earnings"],
+  "Btn Nav Growth":    NAMES["R1-insights"],
   "Btn Nav Settings":  NAMES["S1-profile"],
   "Btn Notifications": NAMES["X3-notifications"],
+  "Btn Search patient": NAMES["P1-patients"],
+  "Btn Start consult": NAMES["C1-room"],
+  "Btn Open help":     NAMES["X5-error"],
 }
 
 TRN = [
- # today & schedule
- ("K1-today","Btn Open prep","K3-appointment"),("K1-today","Btn Start consult","C1-room"),
- ("K1-today","Btn Q Chidi","K3-appointment"),("K1-today","Btn Q Musa","K3-appointment"),
- ("K1-today","Btn Q Grace","K3-appointment"),("K1-today","Btn Q Tunde","K3-appointment"),
- ("K1-today","Btn Open Q Chidi","K3-appointment"),("K1-today","Btn Open Q Musa","K3-appointment"),
- ("K1-today","Btn Open Q Grace","K3-appointment"),("K1-today","Btn Open Q Tunde","K3-appointment"),
- ("K1-today","Btn Start Q Chidi","C1-room"),
- ("K1-today","Btn Open results","X3-notifications"),("K1-today","Btn Open refills","X3-notifications"),
- ("K1-today","Btn Open unsigned","C6-sign"),("K1-today","Btn Search patient","T1-patients"),
- ("K2-appointments","Btn Open timeoff K5","K5-timeoff"),("K2-appointments","Btn Open availability K4","K4-availability"),
- ("K2-appointments","Btn Q Chidi","K3-appointment"),("K2-appointments","Btn Open Q Chidi","K3-appointment"),
- ("K2-appointments","Btn Q Musa","K3-appointment"),("K2-appointments","Btn Open Q Musa","K3-appointment"),
- ("K2-appointments","Btn Search patient","T1-patients"),
- ("K3-appointment","Btn Back","K1-today"),("K3-appointment","Btn Start consult","C1-room"),
- ("K3-appointment","Btn Open access T3","T3-access"),("K3-appointment","Btn Open record T2","T2-record"),
- ("K3-appointment","Btn Open note last","T2-record"),("K3-appointment","Btn Open meeting","C1-room"),
- ("K3-appointment","Btn Search patient","T1-patients"),
- ("K4-availability","Btn Save availability K4","K2-appointments"),("K4-availability","Btn Open fees S2","S2-fees"),
- ("K5-timeoff","Btn Back","K2-appointments"),("K5-timeoff","Btn Save timeoff K5","K2-appointments"),
- ("K5-timeoff","Btn Offer slots K5","K2-appointments"),
- ("K5-timeoff","Btn Move Amara","K3-appointment"),("K5-timeoff","Btn Move Chidi","K3-appointment"),
- ("K5-timeoff","Btn Move Musa","K3-appointment"),("K5-timeoff","Btn Move Grace","K3-appointment"),
- # consultation
- ("C1-room","Btn Open sign C6","C6-sign"),("C1-room","Btn Open prescribe C3","C3-prescribe"),
+ # ---- start
+ ("G1-checklist","Btn Open verify G2","G2-verification"),("G1-checklist","Btn Open virtual S3","S3-virtual"),
+ ("G1-checklist","Btn Step video","S3-virtual"),("G1-checklist","Btn Step contact","S4-contact"),
+ ("G1-checklist","Btn Step payout","S5-earnings"),("G1-checklist","Btn Step hours","K7-availability"),
+ ("G1-checklist","Btn Step fees","S2-fees"),("G1-checklist","Btn Step photo","S1-profile"),
+ ("G1-checklist","Btn Do Step video","S3-virtual"),("G1-checklist","Btn Do Step contact","S4-contact"),
+ ("G1-checklist","Btn Do Step payout","S5-earnings"),
+ ("G2-verification","Btn Open profile S1","S1-profile"),("G2-verification","Btn Open virtual S3","S3-virtual"),
+ ("G2-verification","Btn Open contact S4","S4-contact"),("G2-verification","Btn Open earnings S5","S5-earnings"),
+ ("G2-verification","Btn Open help","X5-error"),
+ ("G3-invite","Btn Send invite whatsapp","G3-invite"),("G3-invite","Btn Copy invite link","G3-invite"),
+ # ---- today & schedule
+ ("K1-today","Btn Open prep","K4-file"),("K1-today","Btn Start consult","C1-room"),
+ ("K1-today","Btn Q Chidi","K4-file"),("K1-today","Btn Q Musa","K4-file"),
+ ("K1-today","Btn Q Grace","K4-file"),("K1-today","Btn Q Tunde","K4-file"),
+ ("K1-today","Btn Open Q Chidi","K4-file"),("K1-today","Btn Open Q Musa","K4-file"),
+ ("K1-today","Btn Open Q Grace","K4-file"),("K1-today","Btn Open Q Tunde","K4-file"),
+ ("K1-today","Btn Open requests K2","K2-requests"),("K1-today","Btn Open week K6","K6-week"),
+ ("K1-today","Btn Open results P7","P7-results"),("K1-today","Btn Open refills P6","P6-refills"),
+ ("K1-today","Btn Open drafts C9","C9-drafts"),("K1-today","Btn Open late K3","K3-late"),
+ ("K1-today","Btn Open timeoff K8","K8-timeoff"),("K1-today","Btn Open outcome K5","K5-outcome"),
+ ("K1-today","Btn Open done 1","C8-signed"),("K1-today","Btn Open done 2","C8-signed"),
+ ("K1-today","Btn Open slot 15","K6-week"),("K1-today","Btn Open slot 1530","K6-week"),
+ ("K1-today","Btn Open slot 16","K6-week"),("K1-today","Btn Offer waitlist","K6-week"),
+ ("K2-requests","Btn Accept Musa","K1-today"),("K2-requests","Btn Decline Musa","K2-requests"),
+ ("K2-requests","Btn Suggest Musa","K6-week"),("K2-requests","Btn Accept Halima","K1-today"),
+ ("K2-requests","Btn Accept Emeka","K1-today"),("K2-requests","Btn Open refills P6","P6-refills"),
+ ("K2-requests","Btn Open results P7","P7-results"),("K2-requests","Btn Open messages P5","P5-messages"),
+ ("K2-requests","Btn Open patients P1","P1-patients"),("K2-requests","Btn Req Musa","K4-file"),
+ ("K3-late","Btn Send late K3","K1-today"),("K3-late","Btn Back today K3","K1-today"),
+ ("K3-late","Btn Late Chidi","K4-file"),("K3-late","Btn Late Musa","K4-file"),("K3-late","Btn Late Grace","K4-file"),
+ ("K4-file","Btn Back","K1-today"),("K4-file","Btn Start consult","C1-room"),
+ ("K4-file","Btn Open access P3","P3-access"),("K4-file","Btn Open record P2","P2-record"),
+ ("K4-file","Btn Open note last","P2-record"),("K4-file","Btn Open virtual C10","C10-virtual"),
+ ("K4-file","Btn Open tests C4","C4-tests"),("K4-file","Btn Open adherence","P2-record"),
+ ("K4-file","Btn Test link S3","S3-virtual"),
+ ("K5-outcome","Btn Save outcome K5","K1-today"),("K5-outcome","Btn Wait more K5","K1-today"),
+ ("K6-week","Btn Open timeoff K8","K8-timeoff"),("K6-week","Btn Open availability K7","K7-availability"),
+ ("K6-week","Btn Q Chidi","K4-file"),("K6-week","Btn Q Musa","K4-file"),
+ ("K6-week","Btn Open Q Chidi","K4-file"),("K6-week","Btn Open Q Musa","K4-file"),
+ ("K7-availability","Btn Save availability K7","K6-week"),("K7-availability","Btn Open fees S2","S2-fees"),
+ ("K8-timeoff","Btn Back","K6-week"),("K8-timeoff","Btn Save timeoff K8","K6-week"),
+ ("K8-timeoff","Btn Offer slots K8","K6-week"),
+ ("K8-timeoff","Btn Move Amara","K4-file"),("K8-timeoff","Btn Move Chidi","K4-file"),
+ ("K8-timeoff","Btn Move Musa","K4-file"),("K8-timeoff","Btn Move Grace","K4-file"),
+ ("K8-timeoff","Btn Cover Chuka","K8-timeoff"),("K8-timeoff","Btn Cover Tunde","K8-timeoff"),
+ # ---- consultation
+ ("C1-room","Btn Open sign C7","C7-sign"),("C1-room","Btn Open prescribe C3","C3-prescribe"),
  ("C1-room","Btn Open tests C4","C4-tests"),("C1-room","Btn Open upload C5","C5-upload"),
- ("C1-room","Btn Back","K3-appointment"),("C1-room","Btn Book followup","K2-appointments"),
- ("C1-room","Btn Side notes","T2-record"),("C1-room","Btn Side meds","T2-record"),
- ("C1-room","Btn Side vitals","T2-record"),("C1-room","Btn Side outstanding","C4-tests"),
- ("C1-room","Btn Template reason","C2-templates"),("C1-room","Btn Template exam","C2-templates"),
- ("C1-room","Btn Template assessment","C2-templates"),("C1-room","Btn Template plan","C2-templates"),
+ ("C1-room","Btn Open refer C6","C6-refer"),("C1-room","Btn Open followups P4","P4-followups"),
+ ("C1-room","Btn Open virtual C10","C10-virtual"),("C1-room","Btn Open record P2","P2-record"),
+ ("C1-room","Btn Side meds","P2-record"),("C1-room","Btn Side vitals","P2-record"),
+ ("C1-room","Btn Side family","P1-patients"),
+ ("C1-room","Btn Template complaint","C2-templates"),("C1-room","Btn Template exam","C2-templates"),
+ ("C1-room","Btn Template diagnosis","C2-templates"),("C1-room","Btn Template plan","C2-templates"),
+ ("C1-room","Btn Template comment","C2-templates"),
  ("C1-room","Btn Consult tab Prescription","C3-prescribe"),("C1-room","Btn Consult tab Tests","C4-tests"),
- ("C1-room","Btn Consult tab Files","C5-upload"),
+ ("C1-room","Btn Consult tab Files","C5-upload"),("C1-room","Btn Consult tab Referral","C6-refer"),
+ ("C1-room","Btn Phase2 transcribe","C1-room"),
  ("C2-templates","Btn Back","C1-room"),("C2-templates","Btn Use template hyp","C1-room"),
  ("C2-templates","Btn Use template new","C1-room"),("C2-templates","Btn Use template discharge","C1-room"),
- ("C2-templates","Btn Use template fever","C1-room"),
- ("C3-prescribe","Btn Open sign C6","C6-sign"),("C3-prescribe","Btn Back","C1-room"),
- ("C3-prescribe","Btn Consult tab Note","C1-room"),
- ("C4-tests","Btn Open sign C6","C6-sign"),("C4-tests","Btn Back","C1-room"),
- ("C5-upload","Btn Open sign C6","C6-sign"),("C5-upload","Btn Back","C1-room"),
- ("C5-upload","Btn Open camera C5","C5-upload"),
- ("C6-sign","Btn Sign C6","C7-done"),("C6-sign","Btn Save draft C6","C1-room"),
- ("C6-sign","Btn Back","C1-room"),
- ("C7-done","Btn Start consult","C1-room"),("C7-done","Btn Nav Today","K1-today"),
- ("C7-done","Btn Q Chidi","K3-appointment"),("C7-done","Btn Open Q Chidi","K3-appointment"),
- # patients
- ("T1-patients","Btn Open Amara","T2-record"),("T1-patients","Btn Open Chidi","T2-record"),
- ("T1-patients","Btn Open Grace","T2-record"),("T1-patients","Btn Open Musa","T2-record"),
- ("T1-patients","Btn Open Tunde","T2-record"),("T1-patients","Btn Scan patient","T2-record"),
- ("T1-patients","Btn Add walkin","T2-record"),
- ("T2-record","Btn Back","T1-patients"),("T2-record","Btn Start consult","C1-room"),
- ("T2-record","Btn Open access T3","T3-access"),("T2-record","Btn Open note last","C6-sign"),
- ("T2-record","Btn Open lab","C5-upload"),("T2-record","Btn Open other note","C6-sign"),
- ("T3-access","Btn Back","T2-record"),("T3-access","Btn Send access T3","T2-record"),
- # practice
- ("S1-profile","Btn Open fees S2","S2-fees"),("S1-profile","Btn Open meeting S3","S3-meeting"),
+ ("C2-templates","Btn Use template fever","C1-room"),("C2-templates","Btn Use template diabetes","C1-room"),
+ ("C3-prescribe","Btn Open sign C7","C7-sign"),("C3-prescribe","Btn Consult tab Note","C1-room"),
+ ("C3-prescribe","Btn Consult tab Tests","C4-tests"),("C3-prescribe","Btn Override allergy","C3-prescribe"),
+ ("C4-tests","Btn Open sign C7","C7-sign"),("C4-tests","Btn Consult tab Note","C1-room"),
+ ("C5-upload","Btn Open sign C7","C7-sign"),("C5-upload","Btn Back","C1-room"),
+ ("C5-upload","Btn Open camera C5","C5-upload"),("C5-upload","Btn Rel Musa","P7-results"),
+ ("C5-upload","Btn Rel Grace","P7-results"),
+ ("C6-refer","Btn Send refer C6","C7-sign"),("C6-refer","Btn Save refer C6","C1-room"),
+ ("C6-refer","Btn Consult tab Note","C1-room"),("C6-refer","Btn Refer Tunde","C6-refer"),
+ ("C6-refer","Btn Refer Chuka","C6-refer"),
+ ("C7-sign","Btn Sign C7","C8-signed"),("C7-sign","Btn Save draft C7","C9-drafts"),
+ ("C7-sign","Btn Back","C1-room"),
+ ("C8-signed","Btn Start consult","C1-room"),("C8-signed","Btn Nav Today","K1-today"),
+ ("C8-signed","Btn Q Chidi","K4-file"),("C8-signed","Btn Open Q Chidi","K4-file"),
+ ("C9-drafts","Btn Open room C1","C1-room"),("C9-drafts","Btn Open sign C7","C7-sign"),
+ ("C9-drafts","Btn Draft Chidi","C1-room"),("C9-drafts","Btn Draft Fatima","C7-sign"),
+ ("C10-virtual","Btn Join call C10","C1-room"),("C10-virtual","Btn Start consult","C1-room"),
+ ("C10-virtual","Btn Send link C10","C10-virtual"),("C10-virtual","Btn Open week K6","K6-week"),
+ ("C10-virtual","Btn Admit Amara","C1-room"),("C10-virtual","Btn Refund visit","K5-outcome"),
+ # ---- patients
+ ("P1-patients","Btn Open Amara","P2-record"),("P1-patients","Btn Open Chidi","P2-record"),
+ ("P1-patients","Btn Open Grace","P2-record"),("P1-patients","Btn Open Musa","P2-record"),
+ ("P1-patients","Btn Open Tunde","P2-record"),("P1-patients","Btn Open Fatima","P2-record"),
+ ("P1-patients","Btn Scan patient","P2-record"),("P1-patients","Btn Add walkin","P2-record"),
+ ("P1-patients","Btn Open followups P4","P4-followups"),
+ ("P2-record","Btn Back","P1-patients"),("P2-record","Btn Start consult","C1-room"),
+ ("P2-record","Btn Open access P3","P3-access"),("P2-record","Btn Open note last","C8-signed"),
+ ("P2-record","Btn Open lab","C5-upload"),("P2-record","Btn Open other note","C8-signed"),
+ ("P2-record","Btn Open followups P4","P4-followups"),("P2-record","Btn Open messages P5","P5-messages"),
+ ("P3-access","Btn Back","P2-record"),("P3-access","Btn Send access P3","P2-record"),
+ ("P4-followups","Btn Send recall P4","P4-followups"),
+ ("P4-followups","Btn Fu Grace","P2-record"),("P4-followups","Btn Fu Fatima","P2-record"),
+ ("P4-followups","Btn Fu Musa","P2-record"),("P4-followups","Btn Fu Tunde","P2-record"),
+ ("P4-followups","Btn Test Amara","P2-record"),("P4-followups","Btn Test Chidi","P2-record"),
+ ("P5-messages","Btn Msg Grace","P2-record"),("P5-messages","Btn Msg Amara","P2-record"),
+ ("P5-messages","Btn Msg Musa","P2-record"),("P5-messages","Btn Msg Fatima","P2-record"),
+ ("P5-messages","Btn Msg Chidi","P2-record"),
+ ("P6-refills","Btn Approve Grace","P6-refills"),("P6-refills","Btn Visit Grace","P4-followups"),
+ ("P6-refills","Btn Change Grace","C3-prescribe"),("P6-refills","Btn Decline Grace","P6-refills"),
+ ("P6-refills","Btn Approve Fatima","P6-refills"),("P6-refills","Btn Refill Grace","P2-record"),
+ ("P6-refills","Btn Open followups P4","P4-followups"),
+ ("P7-results","Btn Release Grace","C5-upload"),("P7-results","Btn Hold Grace","P7-results"),
+ ("P7-results","Btn Book Grace","P4-followups"),("P7-results","Btn Release Musa","C5-upload"),
+ ("P7-results","Btn Release Amara","C5-upload"),("P7-results","Btn Res Grace","C5-upload"),
+ # ---- practice
+ ("S1-profile","Btn Open fees S2","S2-fees"),("S1-profile","Btn Open virtual S3","S3-virtual"),
  ("S1-profile","Btn Open contact S4","S4-contact"),("S1-profile","Btn Save profile S1","S1-profile"),
- ("S1-profile","Btn Sign out","AUTH"),("S1-profile","Btn Preview profile","S1-profile"),
+ ("S1-profile","Btn Open reviews R2","R2-reviews"),("S1-profile","Btn Preview profile","S1-profile"),
+ ("S1-profile","Btn Open practice S7","S7-practice"),("S1-profile","Btn Sign out","AUTH"),
  ("S2-fees","Btn Save fees S2","S1-profile"),("S2-fees","Btn Back","S1-profile"),
- ("S3-meeting","Btn Save meeting S3","S1-profile"),("S3-meeting","Btn Back","S1-profile"),
+ ("S3-virtual","Btn Save virtual S3","S1-profile"),("S3-virtual","Btn Back","S1-profile"),
  ("S4-contact","Btn Save contact S4","S1-profile"),("S4-contact","Btn Back","S1-profile"),
- ("S5-earnings","Btn Payout statements","S5-earnings"),
- # states
- ("X1-verifying","Btn Open profile S1","S1-profile"),("X1-verifying","Btn Open fees S2","S2-fees"),
- ("X1-verifying","Btn Open meeting S3","S3-meeting"),("X1-verifying","Btn Contact support","X1-verifying"),
- ("X2-empty","Btn Open availability K4","K4-availability"),("X2-empty","Btn Open fees S2","S2-fees"),
- ("X2-empty","Btn Open profile S1","S1-profile"),
- ("X3-notifications","Btn Notif result","C5-upload"),("X3-notifications","Btn Notif refill","T2-record"),
- ("X3-notifications","Btn Notif cancel","K2-appointments"),("X3-notifications","Btn Notif unsigned","C6-sign"),
- ("X3-notifications","Btn Notif access","T2-record"),("X3-notifications","Btn Notif payout","S5-earnings"),
- ("X3-notifications","Btn Notif rating","S1-profile"),("X3-notifications","Btn Open refills","T2-record"),
- ("X3-notifications","Btn Mark all read","X3-notifications"),
+ ("S5-earnings","Btn Payout statements","S5-earnings"),("S5-earnings","Btn Open billing S6","S6-billing"),
+ ("S6-billing","Btn Add card S6","S6-billing"),("S6-billing","Btn Compare plans S6","S6-billing"),
+ ("S6-billing","Btn Choose Solo","S6-billing"),("S6-billing","Btn Choose Practice","S6-billing"),
+ ("S6-billing","Btn Choose Group","S6-billing"),
+ ("S7-practice","Btn Back","S1-profile"),("S7-practice","Btn Save practice S7","S1-profile"),
+ ("S8-security","Btn Sign out all","AUTH"),("S8-security","Btn Close account","AUTH"),
+ # ---- growth
+ ("R1-insights","Btn Open availability K7","K7-availability"),("R1-insights","Btn Fix hours","K7-availability"),
+ ("R1-insights","Btn Fix langs","S1-profile"),("R1-insights","Btn Fix photo","S1-profile"),
+ ("R1-insights","Btn Fix virtual","S2-fees"),
+ ("R2-reviews","Btn Rev report","R2-reviews"),
+ ("R3-link","Btn Share wa R3","R3-link"),("R3-link","Btn Copy booking link","R3-link"),
+ ("R3-link","Btn Download poster R3","R3-link"),("R3-link","Btn Import list","R3-link"),
+ ("R3-link","Btn Open link R3","R3-link"),
+ # ---- states
+ ("X1-locked","Btn Add card S6","S6-billing"),("X1-locked","Btn Compare plans S6","S6-billing"),
+ ("X2-empty","Btn Open availability K7","K7-availability"),("X2-empty","Btn Open link R3","R3-link"),
+ ("X2-empty","Btn Open fees S2","S2-fees"),("X2-empty","Btn Open profile S1","S1-profile"),
+ ("X2-empty","Btn Open invite G3","G3-invite"),("X2-empty","Btn Open week K6","K6-week"),
+ ("X2-empty","Btn Open timeoff K8","K8-timeoff"),
+ ("X3-notifications","Btn Notif result","P7-results"),("X3-notifications","Btn Notif refill","P6-refills"),
+ ("X3-notifications","Btn Notif cancel","K6-week"),("X3-notifications","Btn Notif unsigned","C9-drafts"),
+ ("X3-notifications","Btn Notif access","P2-record"),("X3-notifications","Btn Notif payout","S5-earnings"),
+ ("X3-notifications","Btn Notif rating","R2-reviews"),("X3-notifications","Btn Notif booking","K2-requests"),
+ ("X3-notifications","Btn Notif invite","G3-invite"),("X3-notifications","Btn Open results P7","P7-results"),
+ ("X3-notifications","Btn Open refills P6","P6-refills"),("X3-notifications","Btn Open drafts C9","C9-drafts"),
+ ("X4-offline","Btn Retry X4","K1-today"),
+ ("X5-error","Btn Retry X5","K1-today"),("X5-error","Btn Open help","X5-error"),
 ]
 
 def resolve(target, side):
@@ -1161,7 +2532,7 @@ for fid, hot, target in TRN:
 nav_jobs = []
 for fid, pair in NAMES.items():
     for side in (0, 1):
-        for hot, target in NAV.items():
+        for hot, target in NAVMAP.items():
             nav_jobs.append([pair[side], hot, target[side]])
 
 order_js, starts_js = {}, {}
@@ -1171,23 +2542,26 @@ for page, fids in ORDER.items():
     starts_js[PAGE_FIGMA[page]] = NAMES[fids[0]][0]
 
 MOTION = json.dumps({
-  "default":  {"type": "SMART_ANIMATE", "easing": "GENTLE", "duration": 0.28},
-  "push":     {"type": "MOVE_IN",  "direction": "LEFT",   "easing": "GENTLE",  "duration": 0.26},
-  "pop":      {"type": "MOVE_OUT", "direction": "RIGHT",  "easing": "EASE_IN", "duration": 0.22},
-  "sheet":    {"type": "MOVE_IN",  "direction": "BOTTOM", "easing": "GENTLE",  "duration": 0.32},
-  "instant":  {"type": "SMART_ANIMATE", "easing": "LINEAR", "duration": 0.01},
+  "default": {"type": "SMART_ANIMATE", "easing": "GENTLE", "duration": 0.26},
+  "push":    {"type": "MOVE_IN",  "direction": "LEFT",   "easing": "GENTLE",  "duration": 0.24},
+  "pop":     {"type": "MOVE_OUT", "direction": "RIGHT",  "easing": "EASE_IN", "duration": 0.20},
+  "sheet":   {"type": "MOVE_IN",  "direction": "BOTTOM", "easing": "GENTLE",  "duration": 0.30},
+  "instant": {"type": "SMART_ANIMATE", "easing": "LINEAR", "duration": 0.01},
 })
-PUSH = json.dumps(["Btn Open prep", "Btn Open record T2", "Btn Open access T3", "Btn Open fees S2",
-                   "Btn Open meeting S3", "Btn Open contact S4", "Btn Open profile S1",
-                   "Btn Open availability K4", "Btn Open timeoff K5", "Btn Open note last",
-                   "Btn Open Amara", "Btn Open Chidi", "Btn Open Grace", "Btn Open Musa", "Btn Open Tunde"])
+PUSH = json.dumps(["Btn Open prep", "Btn Open record P2", "Btn Open access P3", "Btn Open fees S2",
+                   "Btn Open virtual S3", "Btn Open contact S4", "Btn Open profile S1", "Btn Open billing S6",
+                   "Btn Open availability K7", "Btn Open timeoff K8", "Btn Open note last", "Btn Open practice S7",
+                   "Btn Open Amara", "Btn Open Chidi", "Btn Open Grace", "Btn Open Musa", "Btn Open Tunde",
+                   "Btn Open Fatima", "Btn Open verify G2", "Btn Open reviews R2", "Btn Open link R3"])
 POP  = json.dumps(["Btn Back"])
-SHEET = json.dumps(["Btn Open prescribe C3", "Btn Open tests C4", "Btn Open upload C5",
-                    "Btn Template reason", "Btn Template exam", "Btn Template assessment", "Btn Template plan"])
+SHEET = json.dumps(["Btn Open prescribe C3", "Btn Open tests C4", "Btn Open upload C5", "Btn Open refer C6",
+                    "Btn Open late K3", "Btn Open outcome K5", "Btn Template complaint", "Btn Template exam",
+                    "Btn Template diagnosis", "Btn Template plan", "Btn Template comment"])
 
 linker = ("(async () => {\n"
- "  // Medra Doctor — wire the prototype, close the nav, arrange the canvas.\n"
- "  // Run after the auth bundle so the sign-out link resolves.\n"
+ "  // Medra Doctor — wire the prototype, close the navigation, arrange the canvas.\n"
+ "  // Doctor-module only. It touches nothing outside the eight 'Medra Doctor —' pages, except\n"
+ "  // one cross-link: Sign out goes to the auth bundle's doctor login if that page exists.\n"
  "  if (figma.loadAllPagesAsync) await figma.loadAllPagesAsync();\n"
  "  const norm = s => (s||'').replace(/&amp;/g,'&').replace(/\\s+/g,' ').trim();\n"
  "  const pages = figma.root.children.filter(n => n.type==='PAGE');\n"
@@ -1212,18 +2586,22 @@ linker = ("(async () => {\n"
  "  const go = async (nd,to,spec) => { await nd.setReactionsAsync([{ trigger:{type:'ON_CLICK'},\n"
  "      actions:[{ type:'NODE', destinationId:to.id, navigation:'NAVIGATE', transition: mk(spec) }] }]);\n"
  "      wired.add(nd.id); linked++; };\n"
+ "  // 1. explicit screen-to-screen transitions\n"
  "  for (const [fromN,hot,toN] of TRN){ const fr=F(fromN), to=F(toN);\n"
  "    if(!fr||!to){ missing.push(fromN+' -> '+hot+' -> '+toN); continue; }\n"
  "    const nodes=findAll(fr,hot); if(!nodes.length){ missing.push(fromN+' -> '+hot); continue; }\n"
  "    for (const nd of nodes) await go(nd,to,specFor(hot)); }\n"
+ "  // 2. the rail, the tab bar and the command strip, on every doctor frame\n"
  "  let navLinked = 0;\n"
  "  for (const [fromN,hot,toN] of NAVJOBS){ const fr=F(fromN), to=F(toN); if(!fr||!to) continue;\n"
  "    for (const nd of findAll(fr,hot)){ if (wired.has(nd.id)) continue; await go(nd,to,M.default); navLinked++; } }\n"
+ "  // 3. no dead hotspots: anything still named \"Btn …\" stays on its own screen\n"
  "  let stay = 0;\n"
  "  for (const fn of OWN){ const fr=F(fn); if(!fr) continue;\n"
  "    for (const nd of allBtns(fr)){ if (wired.has(nd.id)) continue;\n"
  "      if (nd.reactions && nd.reactions.length) { wired.add(nd.id); continue; }\n"
  "      await go(nd,fr,M.instant); stay++; } }\n"
+ "  // 4. arrange: desktop row on top, matching mobile row beneath, in flow order\n"
  "  const GX=170, GY=150;\n"
  "  for (const pg of pages){ const ord=ORDER[pg.name]; if(!ord) continue; let x=0, rowH=0;\n"
  "    for (const [dn] of ord){ const df=F(dn); if(df){ df.x=x; df.y=0; x+=df.width+GX; rowH=Math.max(rowH,df.height);} }\n"
@@ -1233,11 +2611,124 @@ linker = ("(async () => {\n"
  "})();\n")
 open(os.path.join(OUT, "link-doctor.js"), "w").write(linker)
 
-ps = ["# Medra Doctor app — render + wire (Figma Desktop open + connected).",
-      "# Render the auth bundle first if you want the sign-out link to resolve.",
+# ---- components script -------------------------------------------------------------
+components = """(async () => {
+  // Medra Doctor — turn the cmp/* frames on the doctor components page into component sets.
+  // Doctor-module only: it looks at one page and removes only the sets it owns.
+  if (figma.loadAllPagesAsync) await figma.loadAllPagesAsync();
+  const PAGE = 'Medra Doctor — 8 Components';
+  let page = figma.root.children.find(n => n.name === PAGE);
+  if (!page) return { error: `page "${PAGE}" not found — render the cmp/* frames first` };
+  await figma.setCurrentPageAsync(page);
+
+  const re = /^cmp\\/(.+?)\\/(.+?)=(.+)$/;
+  const groups = {};
+  for (const node of [...page.children]) {
+    if (node.type !== 'FRAME') continue;
+    const m = re.exec((node.name || '').trim());
+    if (!m) continue;
+    const [, comp, prop, value] = m;
+    groups[comp] = groups[comp] || { prop, variants: {} };
+    groups[comp].variants[value] = node;
+  }
+  if (!Object.keys(groups).length) return { error: 'no cmp/* frames found on the page' };
+
+  const OWNED = new Set(Object.keys(groups).map(c => `Medra Doctor/${c}`));
+  for (const node of [...page.children]) {
+    if (node.type === 'COMPONENT_SET' && OWNED.has(node.name)) node.remove();
+  }
+
+  const REST = { 'Slot':'Open', 'Queue Row':'Waiting', 'Share Toggle':'Shared', 'Scope Line':'Granted',
+                 'Drug Result':'Default', 'Stat Tile':'Info', 'Checklist Row':'Todo',
+                 'Outcome':'Default', 'Rail Item':'Inactive' };
+  const WIRING = {
+    'Slot':          [['ON_CLICK','Booked']],
+    'Queue Row':     [['ON_HOVER','Now']],
+    'Share Toggle':  [['ON_CLICK','Withheld']],
+    'Checklist Row': [['ON_CLICK','Done']],
+    'Outcome':       [['ON_CLICK','Selected']],
+    'Rail Item':     [['ON_HOVER','Active']],
+  };
+  const BACK = {
+    'Slot':          [['ON_CLICK','Open']],
+    'Queue Row':     [['ON_HOVER','Waiting']],
+    'Share Toggle':  [['ON_CLICK','Shared']],
+    'Outcome':       [['ON_CLICK','Default']],
+    'Rail Item':     [['ON_HOVER','Inactive']],
+  };
+  const smart = (d = 0.16) => ({ type:'SMART_ANIMATE', easing:{type:'GENTLE'}, duration:d });
+  const changeTo = id => ({ type:'NODE', destinationId:id, navigation:'CHANGE_TO', transition:smart() });
+
+  const report = { sets:0, variants:0, reactions:0, components:[], notes:[] };
+  let cursorX = 0, cursorY = 0, rowH = 0;
+
+  for (const [comp, { prop, variants }] of Object.entries(groups)) {
+    try {
+      const comps = [];
+      for (const [value, frame] of Object.entries(variants)) {
+        const c = figma.createComponentFromNode(frame);
+        c.name = `${prop}=${value}`;
+        comps.push([value, c]);
+      }
+      const set = figma.combineAsVariants(comps.map(([, c]) => c), page);
+      set.name = `Medra Doctor/${comp}`;
+      set.layoutMode = 'HORIZONTAL';
+      set.itemSpacing = 24;
+      set.paddingLeft = set.paddingRight = set.paddingTop = set.paddingBottom = 24;
+      set.primaryAxisSizingMode = 'AUTO';
+      set.counterAxisSizingMode = 'AUTO';
+      set.x = cursorX; set.y = cursorY;
+      cursorX += set.width + 80;
+      rowH = Math.max(rowH, set.height);
+      if (cursorX > 2600) { cursorX = 0; cursorY += rowH + 80; rowH = 0; }
+
+      const byValue = Object.fromEntries(comps);
+      const rest = REST[comp];
+      if (rest && byValue[rest]) {
+        for (const [trigger, target] of (WIRING[comp] || [])) {
+          if (!byValue[target]) continue;
+          const existing = byValue[rest].reactions ? [...byValue[rest].reactions] : [];
+          existing.push({ trigger:{ type:trigger }, actions:[changeTo(byValue[target].id)] });
+          await byValue[rest].setReactionsAsync(existing);
+          report.reactions++;
+        }
+        for (const [value, node] of comps) {
+          if (value === rest) continue;
+          for (const [trigger, target] of (BACK[comp] || [])) {
+            if (!byValue[target] || value === target) continue;
+            const existing = node.reactions ? [...node.reactions] : [];
+            existing.push({ trigger:{ type:trigger }, actions:[changeTo(byValue[target].id)] });
+            await node.setReactionsAsync(existing);
+            report.reactions++;
+          }
+        }
+      }
+      report.sets++; report.variants += comps.length;
+      report.components.push(`Medra Doctor/${comp} (${comps.map(([v]) => v).join(', ')})`);
+    } catch (e) { report.notes.push(`${comp}: ${e.message}`); }
+  }
+  return report;
+})();
+"""
+open(os.path.join(OUT, "components-doctor.js"), "w").write(components)
+
+# ---- render script (DOCTOR MODULE ONLY) --------------------------------------------
+ps = ["# ============================================================================",
+      "# Medra — DOCTOR MODULE ONLY.",
+      "# Renders the eight 'Medra Doctor —' pages and nothing else. It does not touch the",
+      "# design-system, authentication or member pages: it creates its own pages, renders",
+      "# into them, and wires only frames whose names begin with 'Doctor · '.",
+      "# Requires: Figma Desktop open, the file open, figma-ds-cli connected.",
+      "# ============================================================================",
+      "",
+      "# 1. prime the offline icon cache (safe to re-run)",
       'New-Item -ItemType Directory -Force "$HOME\\.figma-ds-cli\\icon-cache" | Out-Null',
       'Copy-Item .\\assets\\icon-cache\\*.svg "$HOME\\.figma-ds-cli\\icon-cache\\" -Force',
-      "figma-cli tokens import-design-md .\\DESIGN.md", ""]
+      "",
+      "# 2. tokens — the same 41 tokens as every other Medra bundle, so this is a no-op",
+      "#    if you have already imported them. It never removes or renames anything.",
+      "figma-cli tokens import-design-md .\\DESIGN.md",
+      ""]
 for p, fids in ORDER.items():
     pg = PAGE_FIGMA[p].replace("&amp;", "&")
     ps.append(f'# ---- {pg} ----')
@@ -1248,8 +2739,14 @@ for p, fids in ORDER.items():
         lst = ", ".join("'" + f + "'" for fid in fids for f in (fid + "-d.jsx", fid + "-m.jsx"))
     ps.append(f'foreach ($f in @({lst})) {{ figma-cli render (Get-Content $f -Raw) }}')
     ps.append("")
-ps.append("# Wire the prototype with motion and arrange the canvas")
+ps.append("# 3. turn the cmp/* frames into interactive component sets (doctor page only)")
+ps.append("figma-cli run .\\components-doctor.js")
+ps.append("")
+ps.append("# 4. wire the prototype, close the navigation, arrange the canvas")
 ps.append("figma-cli run .\\link-doctor.js")
+ps.append("")
+ps.append("# Expected: link-doctor.js returns { linked, navLinked, stayOnScreen, framesFound, missing }.")
+ps.append("# A non-empty 'missing' means that frame did not render — re-render that one .jsx and re-run step 4.")
 open(os.path.join(OUT, "render-doctor.ps1"), "w").write("\n".join(ps))
 
 print(f"{len(frames)} frames · {len(manifest)} pages · {len(resolved)} screen links "

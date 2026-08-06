@@ -408,7 +408,7 @@ Screen groups expand into individual screens plus states (empty, loading, error,
 | Authentication (all four roles) | 35 | 70 | 4 | Done |
 | Member app, batch 1 — Find & Book | 11 | 46 | 2 | Done |
 | Member app, batch 2 — Visits · Records · Medicines · Profile | 44 | 108 | 6 | Done |
-| Doctor app, batch 1 — Queue · Consultation · Patients · Practice | 23 | 58 | 6 | Done |
+| Doctor app — full module (rebuilt) | 45 | 114 | 8 | Done |
 | Institution admin portal | — | — | — | Not started |
 | Platform admin | — | — | — | Not started |
 
@@ -514,6 +514,59 @@ the five bundles are now clean, and the validator rejects it permanently.
 **Still open, by agreement:** a medical doctor reviews the clinical screens before build; legal
 opinion on what an institution must supply at verification; a drug-reference API for prescribing;
 and confirmation of the commission and family-plan prices with the pilot clinics.
+
+### 15.4 Doctor module — second pass
+
+The first doctor build was judged too basic, with mobile screens carrying less than desktop and
+a look too close to the member app. It was rebuilt rather than patched.
+
+**A separate visual system.** The doctor app now uses an **88px icon rail plus a 236px
+contextual panel** instead of the member's single sidebar, a **graph-paper ground** instead of
+the soft mesh, 14–18px corners instead of 24–28px, a **dark command strip** carrying the day's
+progress and the urgent count, and on mobile a **navy header block** with a raised centre
+action in the tab bar. It is recognisable as a different product at a glance, on the same brand.
+
+**Mobile parity.** Every mobile screen now carries the same cards as its desktop twin, with the
+desktop side-rail folded in underneath and the panel's key numbers absorbed into the header.
+They are scrolling frames; what is guaranteed is no horizontal overflow at 390 and the primary
+action inside the first viewport.
+
+**Requirements this pass closed that the first build had missed:**
+- **Confirm or decline a booking request** (§7 Module 4, §10.2 D3) — screen K2.
+- **Mark complete or no-show** (§7 Module 4) — screen K5, with the fee, slot and record
+  consequences stated.
+- **The PRD's exact note fields** (§7 Module 6): presenting complaint, examination, diagnosis,
+  treatment plan, doctor's comment and **private notes** — screen C1, with per-field share
+  switches on C7.
+- **Send the room link for a virtual booking** (§7 Module 7, D5) — screen C10, with proof of
+  delivery on three channels and four fallbacks.
+- **Subscription, 30-day trial countdown, Paystack, and the expired-locked state**
+  (§7 Module 8) — screens S6 and X1.
+- **The independent practitioner who has no institution** (§11.4) — screen S7.
+
+**AARRR on the supply side**, which had no representation at all before: acquisition (booking
+link, waiting-room QR poster, patient import, colleague invitations), activation (a setup
+checklist with a real "you are not bookable yet" gate), retention (recall and follow-up lists,
+messages, insights, reviews), referral (invite a colleague, refer a patient onward), and revenue
+(fees, payouts, subscription).
+
+**Edge cases now designed:** running late · no-show with a fee split · doctor cancels · video
+fails · unpaid slot released · booking declined with a refund · time off with patients already
+booked · handing patients to a colleague · an allergy blocking a prescription · an out-of-range
+result held back · a refill that should be a visit · an unsigned note · a note recovered after a
+crash · offline with queued writes · a service error mid-consultation · trial expiry and lock ·
+a shared clinic machine left signed in · a patient declining an access request.
+
+**One contradiction this surfaced, needing a decision before build.** §4 of this document says
+practitioners pay a **subscription** and patients pay providers **directly**. The 1 August review
+added **payment before booking**, which means Medra collects the fee and pays the doctor out.
+Both are now designed — S6 for the subscription and trial, S5 for payouts — and S2 states that
+Medra earns from the subscription rather than a commission. If the answer is "both", that needs
+justifying to doctors, because it is two charges on the same transaction.
+
+Still open by agreement: a medical doctor reviews every clinical string before build; the 50%
+no-show split is a pilot policy; referral rewards are indicative; the institution admin portal
+and a lab technician's own screen are separate modules.
 
 ---
 
