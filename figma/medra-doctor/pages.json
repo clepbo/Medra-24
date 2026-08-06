@@ -23,7 +23,9 @@
     "K7-availability-d.jsx",
     "K7-availability-m.jsx",
     "K8-timeoff-d.jsx",
-    "K8-timeoff-m.jsx"
+    "K8-timeoff-m.jsx",
+    "K9-more-d.jsx",
+    "K9-more-m.jsx"
   ],
   "Consult": [
     "C1-room-d.jsx",

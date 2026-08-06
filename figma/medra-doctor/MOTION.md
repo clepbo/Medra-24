@@ -8,11 +8,14 @@ should never be watching an animation finish.
 
 | Transition | Type | Direction | Duration | Used for |
 |---|---|---|---|---|
-| Default | Smart Animate | — | **260 ms** | Rail, tab bar, command strip, everything not listed below |
+| Default | Smart Animate | — | **260 ms** | Sidebar, tab bar, top bar, right rail, everything not listed below |
 | Push into detail | Move In | Left | **240 ms** | Opening a patient record, a settings page, the file before a consultation |
 | Pop back | Move Out | Right | **200 ms** | Every `Btn Back` |
 | Attach to a visit | Move In | Bottom | **300 ms** | Prescribe, order tests, upload a result, refer, templates, running late, outcome |
 | Stay on screen | Smart Animate | — | **10 ms** | Toggles, radios, filters — controls whose real behaviour is state, not navigation |
+
+The state switcher on the States page uses the default 260 ms Smart Animate. It is a review
+control, not a real one — it exists so the page can be clicked through.
 
 The patient's avatar, name and Medra ID keep the same layer names from the queue → the file →
 the consultation room → review → signed, so Figma tweens them across the whole spine. That
@@ -48,8 +51,12 @@ prescribing screen that difference is a safety property, not a style choice.
   jolt is warranted.
 - **Signing** — the button fills left to right over the network round trip, then the note card
   settles with the signature block fading in. Signing is irreversible; it should feel like it.
-- **Offline** — the command strip slides down 32 px into an amber offline bar and stays. Queued
-  items count up in place.
+- **Offline** — an amber bar slides down 32 px beneath the top bar and stays. Queued items count
+  up in place.
+- **Right rail** — the month calendar and "Next up" cards cross-fade (200 ms) when the section
+  changes; they never slide, because the rail is a fixed column and sliding reads as navigation.
+- **Progress bars and the donut** (K1) — animate from 0 on first paint of the day only, 600 ms,
+  then never again. A bar that re-animates on every return is noise.
 - **Skeletons** — pulse `neutral/200 → neutral/100` over 1.2 s.
 - **Reduce motion** — everything above drops to a 120 ms cross-fade; the shake and the timer
   colour change stay, because they are information rather than decoration.

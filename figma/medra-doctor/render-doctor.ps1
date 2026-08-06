@@ -20,7 +20,7 @@ foreach ($f in @('G1-checklist-d.jsx', 'G1-checklist-m.jsx', 'G2-verification-d.
 
 # ---- Medra Doctor — 2 Today & Schedule ----
 figma-cli eval "(async()=>{const t='Medra Doctor — 2 Today & Schedule';let p=figma.root.children.find(n=>n.name===t);if(!p){p=figma.createPage();p.name=t;}await figma.setCurrentPageAsync(p);return p.name;})()"
-foreach ($f in @('K1-today-d.jsx', 'K1-today-m.jsx', 'K2-requests-d.jsx', 'K2-requests-m.jsx', 'K3-late-d.jsx', 'K3-late-m.jsx', 'K4-file-d.jsx', 'K4-file-m.jsx', 'K5-outcome-d.jsx', 'K5-outcome-m.jsx', 'K6-week-d.jsx', 'K6-week-m.jsx', 'K7-availability-d.jsx', 'K7-availability-m.jsx', 'K8-timeoff-d.jsx', 'K8-timeoff-m.jsx')) { figma-cli render (Get-Content $f -Raw) }
+foreach ($f in @('K1-today-d.jsx', 'K1-today-m.jsx', 'K2-requests-d.jsx', 'K2-requests-m.jsx', 'K3-late-d.jsx', 'K3-late-m.jsx', 'K4-file-d.jsx', 'K4-file-m.jsx', 'K5-outcome-d.jsx', 'K5-outcome-m.jsx', 'K6-week-d.jsx', 'K6-week-m.jsx', 'K7-availability-d.jsx', 'K7-availability-m.jsx', 'K8-timeoff-d.jsx', 'K8-timeoff-m.jsx', 'K9-more-d.jsx', 'K9-more-m.jsx')) { figma-cli render (Get-Content $f -Raw) }
 
 # ---- Medra Doctor — 3 Consultation ----
 figma-cli eval "(async()=>{const t='Medra Doctor — 3 Consultation';let p=figma.root.children.find(n=>n.name===t);if(!p){p=figma.createPage();p.name=t;}await figma.setCurrentPageAsync(p);return p.name;})()"

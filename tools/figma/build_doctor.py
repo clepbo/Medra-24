@@ -47,14 +47,21 @@ BADGES = {"Requests": 6, "Consults": 2}
 # CONTEXTUAL PANELS — one per section. This column is the reason the app can be dense
 # without being cluttered: it always holds what that section needs next.
 # =====================================================================================
+UPCOMING = (upcoming_card("Amara Okeke", "Thu 10:30 – 11:00 · virtual",
+                          ["avatar-2.jpg", "avatar-6.jpg"], "Q Amara", "teal")
+            + upcoming_card("Chidi Okeke", "Thu 11:00 – 11:30 · in person",
+                            ["avatar-6.jpg", "avatar-2.jpg"], "Q Chidi", "coral")
+            + upcoming_card("Musa Ibrahim", "Thu 11:30 – 12:00 · virtual",
+                            ["avatar-1.jpg"], "Q Musa", "navy"))
+
+SIGNED_TODAY = (task_row("stethoscope", "mint", "Fatima Bello — signed", "Prescription issued · 09:28", "Open done 1")
+                + task_row("stethoscope", "blue", "Emeka Nwosu — signed", "Referred to orthopaedics · 09:56", "Open done 2")
+                + task_row("circle-slash", "amber", "Blessing Ade — no-show", "Marked 10:12 · slot reopened", "Open outcome K5"))
+
 PANEL_TODAY = panel("Thursday 14 Aug",
-    dcard(progress_row("Clinic progress", "3 of 8", 38, "teal")
-          + kpi_line("Running", "4 min early", "ok") + kpi_line("Median wait", "6 min")
-          + kpi_line("Finish by", "16:40"), p=14, gap=4)
-    + dcard(eyerow("Needs you")
-            + drow("flask-conical", "Results to release", value="3", name="Open results P7", tone="warn", chevron=False)
-            + drow("package", "Refill requests", value="2", name="Open refills P6", tone="warn", chevron=False)
-            + drow("notebook-pen", "Unsigned notes", value="1", name="Open drafts C9", tone="err", chevron=False), p=14, gap=2),
+    month_cal()
+    + rail_section("Next up", UPCOMING, "View all", "Open week K6")
+    + rail_section("Done today", SIGNED_TODAY, "View all", "Nav Consults"),
     foot=dbtn("I am running late", "Open late K3", "timer", "warn", full=True, size="sm")
          + dbtn("Block the next 15 min", "Open timeoff K8", "calendar-x", "ghost", full=True, size="sm"))
 
@@ -322,25 +329,88 @@ K1_LATER = dgroup("Rest of the day", [
     drow("circle-plus", "16:00 — Open", sub="Last slot of the day", name="Open slot 16"),
 ])
 
+# The panel carried refills and unsigned notes on Requests but not on Today, so the two
+# things most likely to be forgotten had no route off the busiest screen.
+K1_ALSO = dgroup("Also waiting on you", [
+    drow("package", "2 refill requests", sub="Oldest 19 hours — Grace Okeke, metformin", name="Open refills P6", tone="warn"),
+    drow("notebook-pen", "2 unsigned notes", sub="Chidi Okeke from yesterday · your fee is held until you sign", name="Open drafts C9", tone="err"),
+    drow("flask-conical", "3 results to release", sub="One is out of range and should not go out unexplained", name="Open results P7", tone="warn"),
+    drow("calendar-clock", "3 booking requests", sub="Two are close to the day you promise members", name="Open requests K2", tone="info"),
+], footer="Everything here is something a patient is waiting on. It clears as you work through it.")
+
+K1_WAITLIST = alert_strip("repeat", "Three open slots today",
+    "Six people asked for a cardiology appointment this week and took a later date. Offer them today's gaps and most of them fill within the hour.",
+    "info", dbtn("Offer them to my waiting list", "Offer waitlist", "send", "navy", grow=False, size="sm"))
+
+K1_WELCOME = welcome("Good morning,", "Dr. Okafor",
+    "Eight patients today, three already seen. You are running four minutes early.",
+    actions=dbtn("Start next consultation", "Start consult", "stethoscope", "navy", grow=False)
+            + dbtn("Read the file first", "Open prep", "clipboard-list", "ghost", grow=False),
+    stats=[("3 of 8", "Seen", "teal"), ("6 min", "Median wait", "ok"),
+           ("₦96,000", "Collected", "coral"), ("16:40", "Finish by", "warn")])
+
+K1_PROGRESS = dcard(
+    eyerow("Today's patients", f'<Frame name="Btn Open week K6" flex="row">{T(11,"semibold","var:text/accent","View all")}</Frame>')
+    + person_progress("avatar-2.jpg", "Amara Okeke", 96, "teal", "Q Amara")
+    + person_progress("avatar-6.jpg", "Chidi Okeke", 62, "coral", "Q Chidi")
+    + person_progress("avatar-1.jpg", "Musa Ibrahim", 38, "amber", "Q Musa")
+    + person_progress("avatar-3.jpg", "Grace Okeke", 84, "navy", "Q Grace"),
+    p=18, gap=4)
+
+K1_DONUT = donut_card(38, "Clinic progress",
+                      [("Seen", "teal"), ("Still to see", "navy")],
+                      "Three of eight done. At this rate you finish at 16:40.")
+
+K1_MEDIA = dcard(
+    eyerow("Shared with your patients", f'<Frame name="Btn Nav Patients" flex="row">{T(11,"semibold","var:text/accent","View all")}</Frame>')
+    + file_row("Rx", "mint", "Amara Okeke", "Amlodipine 5 mg · 30 days", "Sent to pharmacy", "ok", "1 member", "Today", "File rx")
+    + hr()
+    + file_row("Lab", "blue", "Grace Okeke", "HbA1c result.pdf", "Held — not released", "warn", "1 member", "Yesterday", "Open results P7")
+    + hr()
+    + file_row("Ref", "coral", "Amara Okeke", "Referral to Dr. Bello.pdf", "Awaiting her consent", "warn", "2 members", "Today", "File ref")
+    + hr()
+    + file_row("Note", "lilac", "Fatima Bello", "Consultation note.pdf", "Shared", "ok", "1 member", "09:28", "Open done 1"),
+    p=18, gap=4)
+
+K1_MEDIA_M = dcard(
+    eyerow("Shared with your patients")
+    + file_row("Rx", "mint", "Amara Okeke", "Amlodipine 5 mg · 30 days", "Sent to pharmacy", "ok", "1", "Today", "File rx", mobile=True)
+    + hr()
+    + file_row("Lab", "blue", "Grace Okeke", "HbA1c result.pdf", "Held — not released", "warn", "1", "Yesterday", "Open results P7", mobile=True)
+    + hr()
+    + file_row("Ref", "coral", "Amara Okeke", "Referral to Dr. Bello.pdf", "Awaiting consent", "warn", "2", "Today", "File ref", mobile=True),
+    p=16, gap=4)
+
 add("Today", "K1-today",
     dr_desk("Doctor · Today — K1 Queue", ["Today", "Thursday 14 August"],
+        f'{K1_WELCOME}'
         f'<Frame w="fill" flex="row" gap={{16}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{14}}>{NOW}{K1_STATS}'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{K1_PROGRESS}</Frame>'
+        f'<Frame w={{300}} flex="col">{K1_DONUT}</Frame></Frame>'
+        f'{NOW}'
         f'<Frame w="fill" flex="row" justify="between" items="center">'
         f'{T(16,"bold","var:text/strong","Waiting")}'
         f'<Frame flex="row" gap={{9}} items="center">'
         f'{dbtn("Requests","Open requests K2","inbox","warn",grow=False,size="sm")}'
         f'{dbtn("Whole week","Open week K6","calendar-days","ghost",grow=False,size="sm")}</Frame></Frame>'
-        f'{QUEUE}</Frame>'
-        f'<Frame w={{360}} flex="col" gap={{14}}>{K1_LATER}{K1_DONE}</Frame></Frame>',
+        f'{QUEUE}{K1_ALSO}{K1_MEDIA}{K1_LATER}{K1_WAITLIST}{K1_DONE}',
         NAV["Today"], PANEL_TODAY, badges=BADGES),
     dr_mob("Doctor · Today — K1 Queue · Mobile",
-        dr_head("Thursday 14 Aug", "Dr. Okafor · 4 minutes early", back=False,
+        dr_head("Good morning, Dr. Okafor", "Eight patients today · 4 minutes early", back=False, illo=True,
                 stats=[("3/8", "Seen"), ("6 min", "Wait"), ("₦96k", "Today")],
                 chips=[("Waiting 5", "Filter waiting", True), ("Done 3", "Filter done", False), ("Requests 3", "Open requests K2", False)]),
         f'{NOW_M}'
+        # The two things you reach for mid-clinic belong near the top, not five screens down.
+        f'<Frame w="fill" flex="row" gap={{9}}>'
+        f'{dbtn("I am running late","Open late K3","timer","warn",size="sm")}'
+        f'{dbtn("Block 15 min","Open timeoff K8","calendar-x","ghost",size="sm")}</Frame>'
+        f'{donut_card(38,"Clinic progress",[("Seen","teal"),("Still to see","navy")],"Three of eight done.",size=150)}'
+        f'{K1_PROGRESS}'
         f'{rows_of([stat_tile("video","5","Virtual","3 in person","info","Stat virtual"),stat_tile("banknote","₦96,000","Collected","Friday payout","navy","Stat money")],2,10)}'
-        f'{T(15,"bold","var:text/strong","Waiting")}{QUEUE_M}{K1_LATER}{K1_DONE}',
+        f'{T(15,"bold","var:text/strong","Waiting")}{QUEUE_M}'
+        # No "Next up" or "Done today" rail here: the queue above and K1_DONE below already
+        # say it. On desktop they are a second column; pasted into one they read as repetition.
+        f'{K1_ALSO}{K1_WAITLIST}{K1_MEDIA_M}{K1_LATER}{K1_DONE}',
         MTAB["Today"]))
 
 # ---------------- K2 booking requests (PRD D3: confirm / decline)
@@ -372,6 +442,7 @@ K2_OTHER = dgroup("Also waiting", [
     drow("flask-conical", "3 results to release", sub="One is out of range and should not go out unexplained", name="Open results P7", tone="warn"),
     drow("message-square-text", "1 access reply", sub="Amara Okeke agreed to share her prescription history", name="Open patients P1", tone="ok"),
     drow("message-circle", "4 unread messages", sub="Two are about appointments today", name="Open messages P5"),
+    drow("notebook-pen", "2 unsigned notes", sub="Your fee is held until you sign them", name="Open drafts C9", tone="err"),
 ])
 
 add("Today", "K2-requests",
@@ -492,6 +563,9 @@ add("Today", "K4-file",
         dr_head("Amara Okeke", "MDR-8842-19 · starts in 6 minutes",
                 stats=[("O+", "Blood"), ("AA", "Genotype"), ("3", "Visits")],
                 right=f'<Frame name="Btn Open record P2" w={{38}} h={{38}} rounded={{12}} bg="#17324D" flex="col" justify="center" items="center">{I("clipboard-list",17,W_IC)}</Frame>'),
+        f'<Frame w="fill" flex="row" gap={{9}}>'
+        f'{dbtn("Ask for history","Open access P3","message-square-text","ghost",size="sm")}'
+        f'{dbtn("Send the link","Open virtual C10","send","ghost",size="sm")}</Frame>'
         f'{K4_SAFETY}{K4_REASON}{K4_SHARED}{K4_LAST}{K4_PREP}'
         f'{dcta("Start consultation","Start consult","stethoscope")}',
         MTAB["Today"]))
@@ -579,9 +653,13 @@ add("Today", "K6-week",
         dr_head("Schedule", "Week of 18 August", back=False,
                 stats=[("24", "Booked"), ("9", "Open"), ("1", "No-show")],
                 chips=[("Day", "Filter day", False), ("Week", "Filter week", True), ("Month", "Filter month", False)]),
+        f'<Frame w="fill" flex="row" gap={{9}}>'
+        f'{dbtn("Edit my hours","Open availability K7","clock","navy",size="sm")}'
+        f'{dbtn("Block time off","Open timeoff K8","calendar-x","ghost",size="sm")}</Frame>'
         f'{dcard(WEEK + LEGEND, p=13)}'
         f'{date_strip(3)}'
-        f'{T(14,"bold","var:text/strong","Thursday 21 August")}{QUEUE_M}{K6_SUM}',
+        f'{T(14,"bold","var:text/strong","Thursday 21 August")}{QUEUE_M}'
+        f'{rail_section("Next up", UPCOMING, "View all", "Open week K6")}{K6_SUM}',
         MTAB["Today"]))
 
 # ---------------- K7 availability
@@ -674,8 +752,64 @@ add("Today", "K8-timeoff",
         dr_head("Time off", "Friday 22 August",
                 stats=[("9", "Slots close"), ("4", "Booked"), ("₦60k", "To refund")]),
         f'{K8_FORM}{K8_IMPACT}{K8_AFFECTED}{K8_COVER}'
-        f'{dcta("Block this time","Save timeoff K8","calendar-x")}',
+        f'{dcta("Block this time","Save timeoff K8","calendar-x")}'
+        f'{dbtn("Offer everyone my next open slot","Offer slots K8","repeat","ghost",full=True)}',
         MTAB["Today"]))
+
+
+# ---------------- K9 more (the fifth mobile tab)
+# The sidebar carries eight destinations. A phone tab bar carries five, so four of them —
+# Schedule, Consults, Money, Growth — had no route on mobile at all. This screen is that
+# route, and on desktop the same directory answers "where is everything?".
+K9_CLINICAL = dgroup("Clinical", [
+    drow("calendar-days", "Schedule", sub="Your week, availability and time off", name="Nav Schedule"),
+    drow("notebook-pen", "Consultations", sub="In progress, unsigned notes and templates", name="Nav Consults", tone="warn"),
+    drow("users", "Patients", sub="42 people · records, follow-ups, messages", name="Nav Patients"),
+    drow("flask-conical", "Results to release", value="3", sub="One is out of range", name="Open results P7", tone="warn"),
+    drow("package", "Refill requests", value="2", sub="Oldest 19 hours", name="Open refills P6", tone="warn"),
+    drow("notebook-pen", "Unsigned notes", value="2", sub="Your fee is held until you sign", name="Open drafts C9", tone="err"),
+])
+
+K9_BUSINESS = dgroup("Your practice", [
+    drow("banknote", "Earnings and payouts", sub="₦129,750 due Friday", name="Nav Money"),
+    drow("credit-card", "Subscription and billing", sub="Free trial · 12 days left", name="Open billing S6", tone="warn"),
+    drow("trending-up", "Growth and insights", sub="486 profile views · 6.6% booked", name="Nav Growth"),
+    drow("star", "Ratings and reviews", value="4.9", sub="1 review waiting on a reply", name="Open reviews R2"),
+    drow("share-2", "My booking link", sub="13 of 34 bookings came from it", name="Open link R3"),
+    drow("user-plus", "Invite a colleague", sub="₦10,000 off each, after their first month", name="Open invite G3"),
+])
+
+K9_ACCOUNT = dgroup("Account", [
+    drow("circle-user", "Public profile", value="85%", sub="What patients see before booking", name="Open profile S1"),
+    drow("banknote", "Types and fees", sub="4 types · ₦8,000 to ₦45,000", name="Open fees S2"),
+    drow("video", "Virtual visits", sub="Google Meet · lobby on", name="Open virtual S3"),
+    drow("message-circle", "How patients reach me", sub="3 channels · 08:00–18:00", name="Open contact S4"),
+    drow("hospital", "Where I practise", sub="2 locations + virtual", name="Open practice S7"),
+    drow("shield-check", "Account and security", sub="3 devices · 2FA on", name="Open security S8"),
+    drow("badge-check", "Verification", value="Pending", sub="MDCN 71482 · submitted 12 Aug", name="Open verify G2", tone="warn"),
+    drow("bell", "Notifications", value="6", name="Notifications"),
+    drow("circle-help", "Help and support", sub="WhatsApp the Medra team", name="Open help"),
+])
+
+K9_SETUP = alert_strip("sparkles", "Setup is 4 of 7 done",
+    "Three steps are still open. Finish them and your profile appears in more searches.",
+    "info", dbtn("Finish setup", "Open verify G2", "arrow-right", "navy", grow=False, size="sm"))
+
+add("Today", "K9-more",
+    dr_desk("Doctor · Today — K9 Everything", ["Medra", "Everything in Medra"],
+        f'{T(14,"regular","var:text/muted","Every destination in one place. On a phone this is the More tab; here it is what the search box opens.",w="fill")}'
+        f'{K9_SETUP}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{K9_CLINICAL}{K9_BUSINESS}</Frame>'
+        f'<Frame w={{420}} flex="col" gap={{14}}>{K9_ACCOUNT}'
+        f'{dbtn("Sign out","Sign out","log-out","ghost",full=True)}</Frame></Frame>',
+        NAV["Today"], PANEL_TODAY, badges=BADGES),
+    dr_mob("Doctor · Today — K9 Everything · Mobile",
+        dr_head("Everything", "Dr. Ngozi Okafor · Cardiology", back=False,
+                stats=[("6", "Need you"), ("12d", "Trial left"), ("85%", "Profile")]),
+        f'{K9_SETUP}{K9_CLINICAL}{K9_BUSINESS}{K9_ACCOUNT}'
+        f'{dbtn("Sign out","Sign out","log-out","ghost",full=True)}',
+        MTAB["More"]))
 
 # =====================================================================================
 # 3. CONSULTATION — the spine
@@ -707,6 +841,15 @@ C_STRIP_M = (f'<Frame w="fill" flex="col" gap={{10}} p={{13}} rounded={{14}} bg=
 
 C_TABS   = tabs(["Note", "Prescription", "Tests", "Files", "Referral"], 0, "Consult tab", size=13)
 C_TABS_M = tabs(["Note", "Rx", "Tests", "Files"], 0, "Consult tab", size=13)
+
+def c_chips(active):
+    """The consult tab strip, as header chips. Same hotspot names as the desktop tabs so a
+    phone can move between note, prescription, tests, files and referral exactly as desktop can."""
+    labels = [("Note", "Consult tab Note"), ("Rx", "Consult tab Prescription"),
+              ("Tests", "Consult tab Tests"), ("Files", "Consult tab Files"),
+              ("Refer", "Consult tab Referral")]
+    return [(l, n, i == active) for i, (l, n) in enumerate(labels)]
+
 
 # PRD §7 Module 6 names these fields exactly. Keep them.
 C_NOTE = dgroup("Consultation note", [
@@ -763,15 +906,14 @@ add("Consult", "C1-room",
         f'{C_STRIP}'
         f'<Frame w="fill" flex="row" gap={{16}} items="start">'
         f'<Frame grow={{1}} flex="col" gap={{14}}>{C_TABS}{C_AI}{C_NOTE}{C_HISTORY}</Frame>'
-        f'<Frame w={{360}} flex="col" gap={{14}}>{C_SIDE}{C_ADD}'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{C_SIDE}'
         f'{dcta("Finish and review","Open sign C7","arrow-right")}</Frame></Frame>',
         NAV["Consults"], PANEL_CONSULT, urgent=0, badges=BADGES),
     dr_mob("Doctor · Consult — C1 In Progress · Mobile",
         dr_head("Consultation", "Amara Okeke · 12:04 elapsed",
                 stats=[("30m", "Booked"), ("4th", "Visit"), ("Saved", "Autosave")],
-                chips=[("Note", "Consult tab Note", True), ("Rx", "Open prescribe C3", False),
-                       ("Tests", "Open tests C4", False), ("Files", "Open upload C5", False)]),
-        f'{C_STRIP_M}{C_SIDE}{C_NOTE}{C_HISTORY}{C_ADD}'
+                chips=c_chips(0)),
+        f'{C_STRIP_M}{C_AI}{C_SIDE}{C_NOTE}{C_HISTORY}{C_ADD}'
         f'{dcta("Finish and review","Open sign C7","arrow-right")}',
         MTAB["Consult"]))
 
@@ -867,7 +1009,8 @@ add("Consult", "C3-prescribe",
         NAV["Consults"], PANEL_CONSULT, urgent=0, badges=BADGES),
     dr_mob("Doctor · Consult — C3 Prescribe · Mobile",
         dr_head("Prescribe", "Amara Okeke · 2 on this prescription",
-                stats=[("2", "Medicines"), ("1", "Blocked"), ("0", "Interactions")]),
+                stats=[("2", "Medicines"), ("1", "Blocked"), ("0", "Interactions")],
+                chips=c_chips(1)),
         f'{C_STRIP_M}{C3_SEARCH}{C3_BLOCK}{C3_BUILDER}{C3_CURRENT}{C3_CHECKS}'
         f'{dcta("Add to the visit","Open sign C7","check")}',
         MTAB["Consult"]))
@@ -908,7 +1051,8 @@ add("Consult", "C4-tests",
         NAV["Consults"], PANEL_CONSULT, urgent=0, badges=BADGES),
     dr_mob("Doctor · Consult — C4 Order Tests · Mobile",
         dr_head("Order tests", "Amara Okeke · 2 selected",
-                stats=[("2", "Tests"), ("₦8,500", "She pays"), ("1", "Overdue")]),
+                stats=[("2", "Tests"), ("₦8,500", "She pays"), ("1", "Overdue")],
+                chips=c_chips(2)),
         f'{C_STRIP_M}{C4_PICK}{C4_WHERE}{C4_NOTE}{C4_ORDER}'
         f'{dcta("Add to the visit","Open sign C7","check")}',
         MTAB["Consult"]))
@@ -994,9 +1138,11 @@ add("Consult", "C6-refer",
         NAV["Consults"], PANEL_CONSULT, urgent=0, badges=BADGES),
     dr_mob("Doctor · Consult — C6 Refer · Mobile",
         dr_head("Refer", "Amara Okeke · neurology",
-                stats=[("Routine", "Urgency"), ("2", "Suggested"), ("Tue", "Next slot")]),
+                stats=[("Routine", "Urgency"), ("2", "Suggested"), ("Tue", "Next slot")],
+                chips=c_chips(4)),
         f'{C_STRIP_M}{C6_WHO}{C6_LETTER}{C6_WHAT}'
-        f'{dcta("Send the referral","Send refer C6","send")}',
+        f'{dcta("Send the referral","Send refer C6","send")}'
+        f'{dbtn("Save it with the note instead","Save refer C6","file-text","ghost",full=True)}',
         MTAB["Consult"]))
 
 # ---------------- C7 review & sign
@@ -1043,6 +1189,8 @@ C7_SIGN = dcard(
 
 add("Consult", "C7-sign",
     dr_desk("Doctor · Consult — C7 Review &amp; Sign", ["Consults", "Amara Okeke", "Review"],
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",17,N_IC)}'
+        f'{T(13,"semibold","var:text/default","Back to the note")}</Frame>'
         f'{C_STRIP}'
         f'{dhead([("Check it, then",False),("sign it",True)],26)}'
         f'<Frame w="fill" flex="row" gap={{16}} items="start">'
@@ -1079,8 +1227,8 @@ C8_RATE = dgroup("Two seconds of feedback", [
 add("Consult", "C8-signed",
     dr_desk("Doctor · Consult — C8 Signed", ["Consults", "Signed"],
         f'<Frame w="fill" flex="row" gap={{16}} justify="center" items="start" pt={{8}}>'
-        f'<Frame w={{540}} flex="col" gap={{14}}>{C8_DONE}{C8_WENT}</Frame>'
-        f'<Frame w={{360}} flex="col" gap={{14}}>{C8_NEXT}'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{C8_DONE}{C8_WENT}</Frame>'
+        f'<Frame w={{330}} flex="col" gap={{14}}>{C8_NEXT}'
         f'{dcta("Start the next consultation","Start consult","stethoscope")}'
         f'{dbtn("Back to today","Nav Today","arrow-left","ghost",full=True)}{C8_RATE}</Frame></Frame>',
         NAV["Consults"], PANEL_CONSULT, urgent=0, badges=BADGES),
@@ -1560,6 +1708,12 @@ S1_COMPLETE = dgroup("Profile completeness · 85%", [
     checklist_row(False, "A photo of where you practise", "Members are more likely to book somewhere they can picture", "Cpl clinic"),
 ], footer="Pilot observation, not a promise: complete profiles get roughly twice the bookings of 60% ones.")
 
+S1_LINKS = dgroup("Practice settings", [
+    drow(ic, label, name=nm) for ic, label, nm in SETTINGS_NAV[1:]
+], footer="Everything the desktop keeps in the right-hand rail. Nothing here is desktop-only.")
+
+S1_SIGNOUT = dbtn("Sign out", "Sign out", "log-out", "ghost", full=True)
+
 add("Practice", "S1-profile",
     dr_desk("Doctor · Practice — S1 Public Profile", ["Settings", "Public profile"],
         f'<Frame w="fill" flex="row" justify="between" items="center">'
@@ -1573,7 +1727,7 @@ add("Practice", "S1-profile",
         dr_head("Public profile", "Cardiologist · MDCN 71482", back=False,
                 stats=[("85%", "Complete"), ("4.9", "Rating"), ("1,204", "Patients")],
                 right=f'<Frame name="Btn Save profile S1" w={{38}} h={{38}} rounded={{12}} bg="#17324D" flex="col" justify="center" items="center">{I("check",17,W_IC)}</Frame>'),
-        f'{S1_COMPLETE}{S1_PROFILE}{S1_PUBLIC}',
+        f'{S1_COMPLETE}{S1_PROFILE}{S1_PUBLIC}{S1_LINKS}{S1_SIGNOUT}',
         MTAB["More"]))
 
 # ---------------- S2 types and fees
@@ -1622,6 +1776,8 @@ S2_RULES = dgroup("Fee rules", [
 
 add("Practice", "S2-fees",
     dr_desk("Doctor · Practice — S2 Types &amp; Fees", ["Settings", "Types and fees"],
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",17,N_IC)}'
+        f'{T(13,"semibold","var:text/default","Settings")}</Frame>'
         f'<Frame w="fill" flex="row" justify="between" items="center">'
         f'{dhead([("What you offer,",False),("and for how much",True)],26)}'
         f'{dbtn("Add a type","Add fee type","plus","navy",grow=False,size="sm")}</Frame>'
@@ -1633,7 +1789,7 @@ add("Practice", "S2-fees",
         f'{dcta("Save fees","Save fees S2","check")}</Frame></Frame>',
         NAV["Settings"], PANEL_SETTINGS, urgent=0, badges=BADGES),
     dr_mob("Doctor · Practice — S2 Types &amp; Fees · Mobile",
-        dr_head("Types and fees", "4 types · ₦8,000 to ₦45,000", back=False,
+        dr_head("Types and fees", "4 types · ₦8,000 to ₦45,000",
                 stats=[("3", "Active"), ("₦15k", "Typical"), ("₦14,775", "You get")],
                 right=f'<Frame name="Btn Add fee type" w={{38}} h={{38}} rounded={{12}} bg="#17324D" flex="col" justify="center" items="center">{I("plus",17,W_IC)}</Frame>'),
         f'{S2_TYPES}{S2_MONEY}{S2_RULES}{dcta("Save fees","Save fees S2","check")}',
@@ -1682,7 +1838,7 @@ add("Practice", "S3-virtual",
         f'{dcta("Save","Save virtual S3","check")}</Frame></Frame>',
         NAV["Settings"], PANEL_SETTINGS, urgent=0, badges=BADGES),
     dr_mob("Doctor · Practice — S3 Virtual Visits · Mobile",
-        dr_head("Virtual visits", "Google Meet · tested 2 min ago", back=False,
+        dr_head("Virtual visits", "Google Meet · tested 2 min ago",
                 stats=[("Meet", "Provider"), ("On", "Lobby"), ("3", "Delivery routes")],
                 right=f'<Frame name="Btn Save virtual S3" w={{38}} h={{38}} rounded={{12}} bg="#17324D" flex="col" justify="center" items="center">{I("check",17,W_IC)}</Frame>'),
         f'{S3_TEST}{S3_PROVIDER}{S3_SETUP}{S3_PHASE2}',
@@ -1721,7 +1877,7 @@ add("Practice", "S4-contact",
         f'<Frame w={{380}} flex="col" gap={{14}}>{S4_PREVIEW}{dcta("Save","Save contact S4","check")}</Frame></Frame>',
         NAV["Settings"], PANEL_SETTINGS, urgent=0, badges=BADGES),
     dr_mob("Doctor · Practice — S4 Contact Channels · Mobile",
-        dr_head("How patients reach me", "3 channels on", back=False,
+        dr_head("How patients reach me", "3 channels on",
                 stats=[("3", "Channels"), ("08–18", "Hours"), ("On", "Do not disturb")],
                 right=f'<Frame name="Btn Save contact S4" w={{38}} h={{38}} rounded={{12}} bg="#17324D" flex="col" justify="center" items="center">{I("check",17,W_IC)}</Frame>'),
         f'{S4_CHANNELS}{S4_LIMITS}{S4_PREVIEW}',
@@ -1770,7 +1926,9 @@ add("Practice", "S5-earnings",
     dr_mob("Doctor · Practice — S5 Earnings · Mobile",
         dr_head("Earnings", "August · ₦486,000 collected", back=False,
                 stats=[("₦486k", "This month"), ("₦129.8k", "Next payout"), ("+18%", "Vs July")]),
-        f'{S5_CHART}{S5_BREAKDOWN}{S5_PAYOUTS}',
+        f'{S5_CHART}{S5_BREAKDOWN}{S5_PAYOUTS}'
+        f'{dbtn("Statements","Payout statements","file-text","ghost",full=True,size="sm")}'
+        f'{dbtn("Subscription and billing","Open billing S6","credit-card","ghost",full=True,size="sm")}',
         MTAB["More"]))
 
 # ---------------- S6 subscription (PRD §7 Module 8)
@@ -1874,9 +2032,10 @@ add("Practice", "S7-practice",
         f'<Frame w={{380}} flex="col" gap={{14}}>{S7_FACILITY}{dcta("Save","Save practice S7","check")}</Frame></Frame>',
         NAV["Settings"], PANEL_SETTINGS, urgent=0, badges=BADGES),
     dr_mob("Doctor · Practice — S7 Where I Practise · Mobile",
-        dr_head("Where I practise", "2 locations + virtual", back=False,
+        dr_head("Where I practise", "2 locations + virtual",
                 stats=[("2", "Locations"), ("1", "Facility"), ("Sat", "Virtual only")]),
-        f'{S7_MODE}{S7_PLACES}{S7_FACILITY}',
+        f'{S7_MODE}{S7_PLACES}{S7_FACILITY}'
+        f'{dcta("Save","Save practice S7","check")}',
         MTAB["More"]))
 
 # ---------------- S8 account and security
@@ -1915,6 +2074,8 @@ S8_DANGER = dcard(
 
 add("Practice", "S8-security",
     dr_desk("Doctor · Practice — S8 Account &amp; Security", ["Settings", "Account and security"],
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",17,N_IC)}'
+        f'{T(13,"semibold","var:text/default","Settings")}</Frame>'
         f'<Frame w="fill" flex="row" justify="between" items="center">'
         f'{dhead([("Your account,",False),("and who can use it",True)],26)}'
         f'<Frame name="Btn Sign out all" flex="row" gap={{7}} items="center" px={{13}} py={{9}} rounded={{11}} bg="var:state/error-bg">'
@@ -1924,14 +2085,22 @@ add("Practice", "S8-security",
         f'<Frame w={{380}} flex="col" gap={{14}}>{S8_SECURITY}{S8_DANGER}</Frame></Frame>',
         NAV["Settings"], PANEL_SETTINGS, urgent=0, badges=BADGES),
     dr_mob("Doctor · Practice — S8 Account &amp; Security · Mobile",
-        dr_head("Account and security", "3 devices signed in", back=False,
+        dr_head("Account and security", "3 devices signed in",
                 stats=[("3", "Devices"), ("On", "2FA"), ("15m", "Idle timeout")]),
-        f'{S8_DEVICES}{S8_SECURITY}{S8_AUDIT}{S8_DANGER}',
+        f'{S8_DEVICES}{S8_SECURITY}{S8_AUDIT}'
+        f'{dbtn("Sign out everywhere","Sign out all","log-out","ghost",full=True)}{S8_DANGER}',
         MTAB["More"]))
 
 # =====================================================================================
 # 6. GROWTH — the AARRR screens a supply side actually needs
 # =====================================================================================
+R_LINKS = dgroup("Grow your practice", [
+    drow("share-2", "My booking link", sub="13 of 34 bookings came from it", name="Open link R3"),
+    drow("user-plus", "Invite a colleague", sub="₦10,000 off each, after their first month", name="Open invite G3"),
+    drow("circle-user", "My public profile", value="85%", sub="What patients see before booking", name="Open profile S1"),
+    drow("star", "Ratings and reviews", value="4.9", sub="1 review waiting on a reply", name="Open reviews R2"),
+], footer="The desktop keeps these in the right-hand rail. On a phone they live here.")
+
 R1_STATS = rows_of([
     stat_tile("eye", "486", "Profile views", "Last 30 days · +22%", "info", "Ins views"),
     stat_tile("calendar-check", "32", "Booked", "6.6% of views", "teal", "Ins booked"),
@@ -1973,7 +2142,7 @@ add("Growth", "R1-insights",
     dr_mob("Doctor · Growth — R1 Insights · Mobile",
         dr_head("Insights", "Last 30 days", back=False,
                 stats=[("486", "Views"), ("32", "Booked"), ("6.6%", "Conversion")]),
-        f'{R1_STATS}{R1_FUNNEL}{R1_WHY}{R1_TIME}'
+        f'{R1_STATS}{R1_FUNNEL}{R1_WHY}{R1_TIME}{R_LINKS}'
         f'{dcta("Open more evening slots","Open availability K7","clock")}',
         MTAB["More"]))
 
@@ -2026,12 +2195,12 @@ add("Growth", "R2-reviews",
         f'{R2_SUMMARY}'
         f'<Frame w="fill" flex="row" gap={{16}} items="start">'
         f'<Frame grow={{1}} flex="col" gap={{14}}>{R2_LIST}</Frame>'
-        f'<Frame w={{380}} flex="col" gap={{14}}>{R2_THEMES}{R2_RULES}</Frame></Frame>',
+        f'<Frame w={{380}} flex="col" gap={{14}}>{R2_THEMES}{R2_RULES}{R_LINKS}</Frame></Frame>',
         NAV["Growth"], PANEL_GROWTH, urgent=0, badges=BADGES),
     dr_mob("Doctor · Growth — R2 Ratings · Mobile",
         dr_head("Ratings", "4.9 from 148 visits", back=False,
                 stats=[("4.9", "Rating"), ("148", "Ratings"), ("1", "To reply")]),
-        f'{R2_SUMMARY_M}{R2_THEMES}{R2_LIST}{R2_RULES}',
+        f'{R2_SUMMARY_M}{R2_THEMES}{R2_LIST}{R2_RULES}{R_LINKS}',
         MTAB["More"]))
 
 # ---------------- R3 booking link and promotion
@@ -2080,7 +2249,8 @@ add("Growth", "R3-link",
     dr_mob("Doctor · Growth — R3 Booking Link · Mobile",
         dr_head("Booking link", "13 of 34 bookings came from it", back=False,
                 stats=[("9", "From link"), ("4", "From QR"), ("2", "Referred")]),
-        f'{R3_LINK}{R3_QR}{R3_IMPORT}{R3_PERF}',
+        f'{R3_LINK}{R3_QR}{R3_IMPORT}{R3_PERF}{R_LINKS}'
+        f'{dbtn("Open my booking page","Open link R3","external-link","ghost",full=True)}',
         MTAB["More"]))
 
 # =====================================================================================
@@ -2108,15 +2278,38 @@ X1_STOPPED = dgroup("What has stopped", [
     drow("trending-up", "Insights and reviews", name="Stop insights", tone="err", chevron=False),
 ], footer="Nothing is deleted. Unlock and every list, template and setting is where you left it.")
 
+STATE_LIST = [("X1", "lock", "Subscription locked"), ("X2", "calendar-check", "Nothing booked"),
+              ("X3", "bell", "Notifications"), ("X4", "cloud-off", "Offline"),
+              ("X5", "triangle-alert", "Error"), ("X6", "loader", "Loading")]
+
+def state_nav(active, per=6):
+    """These screens appear because of a condition, not a tap. In a click-through that leaves
+    most of them unreachable, so each one carries a switcher — the design-file equivalent of
+    forcing the state. wrap is not honoured by the renderer, so the chips are chunked."""
+    cells = []
+    for code, ic, label in STATE_LIST:
+        on = code == active
+        st = ('image="assets/img/btn-navy.jpg" overflow="hidden"' if on
+              else 'bg="var:bg/base" stroke="var:border/subtle" strokeWidth={1}')
+        col = "var:text/on-dark" if on else "var:text/muted"
+        cells.append(f'<Frame name="Btn State {code}" flex="row" gap={{6}} items="center" px={{11}} py={{7}} '
+                     f'rounded={{999}} {st}>{I(ic,12,W_IC if on else M_IC)}'
+                     f'{T(11,"semibold" if on else "regular",col,label)}</Frame>')
+    return (f'<Frame w="fill" flex="col" gap={{7}}>'
+            f'{T(10,"semibold","var:text/faint","STATE — FOR REVIEW, NOT A REAL CONTROL")}'
+            f'{rows_of(cells, per, 7)}</Frame>')
+
 add("States", "X1-locked",
     dr_desk("Doctor · States — X1 Subscription Locked", ["Money", "Subscription"],
+        f'{state_nav("X1")}'
         f'<Frame w="fill" flex="row" gap={{16}} justify="center" items="start" pt={{10}}>'
-        f'<Frame w={{520}} flex="col" gap={{14}}>{X1_LOCK}</Frame>'
-        f'<Frame w={{380}} flex="col" gap={{14}}>{X1_STILL}{X1_STOPPED}</Frame></Frame>',
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{X1_LOCK}</Frame>'
+        f'<Frame w={{330}} flex="col" gap={{14}}>{X1_STILL}{X1_STOPPED}</Frame></Frame>',
         NAV["Money"], PANEL_MONEY, urgent=0),
     dr_mob("Doctor · States — X1 Subscription Locked · Mobile",
         dr_head("Locked", "Trial ended 26 August", back=False,
                 stats=[("0", "New bookings"), ("4", "Still booked"), ("Safe", "Records")]),
+        f'{state_nav("X1",3)}'
         f'{X1_LOCK}{X1_STILL}{X1_STOPPED}',
         MTAB["More"]))
 
@@ -2141,6 +2334,7 @@ X2_WEEK = dgroup("The rest of your week", [
 
 add("States", "X2-empty",
     dr_desk("Doctor · States — X2 Nothing Booked", ["Today", "Nothing booked"],
+        f'{state_nav("X2")}'
         f'<Frame w="fill" flex="row" gap={{16}} items="start" pt={{6}}>'
         f'<Frame grow={{1}} flex="col" gap={{14}}>{X2_EMPTY}{X2_WEEK}</Frame>'
         f'<Frame w={{380}} flex="col" gap={{14}}>{X2_WHY}</Frame></Frame>',
@@ -2148,6 +2342,7 @@ add("States", "X2-empty",
     dr_mob("Doctor · States — X2 Nothing Booked · Mobile",
         dr_head("Thursday 14 Aug", "Nothing booked today", back=False,
                 stats=[("0", "Today"), ("2", "Friday"), ("6", "Open Saturday")]),
+        f'{state_nav("X2",3)}'
         f'{X2_EMPTY}{X2_WEEK}{X2_WHY}',
         MTAB["Today"]))
 
@@ -2179,6 +2374,7 @@ X3_CHANNELS = dgroup("How you get told", [
 
 add("States", "X3-notifications",
     dr_desk("Doctor · States — X3 Notifications", ["Requests", "Notifications"],
+        f'{state_nav("X3")}'
         f'<Frame w="fill" flex="row" justify="between" items="center">'
         f'{dhead([("What needs",False),("your attention",True)],26)}'
         f'{dbtn("Mark all read","Mark all read","check-check","ghost",grow=False,size="sm")}</Frame>'
@@ -2189,6 +2385,7 @@ add("States", "X3-notifications",
     dr_mob("Doctor · States — X3 Notifications · Mobile",
         dr_head("Notifications", "5 new · 4 blocking a patient", back=False,
                 stats=[("5", "New"), ("4", "Blocking"), ("On", "WhatsApp")]),
+        f'{state_nav("X3",3)}'
         f'{X3_BLOCKING}{X3_TODAY}{X3_EARLIER}{X3_CHANNELS}',
         MTAB["Requests"]))
 
@@ -2218,6 +2415,7 @@ X4_QUEUE = dgroup("Waiting to sync · 3", [
 
 add("States", "X4-offline",
     dr_desk("Doctor · States — X4 Offline", ["Today", "Offline"],
+        f'{state_nav("X4")}'
         f'{X4_BANNER}'
         f'<Frame w="fill" flex="row" gap={{16}} items="start">'
         f'<Frame grow={{1}} flex="col" gap={{14}}>{X4_WORKS}{X4_WAITS}</Frame>'
@@ -2227,6 +2425,7 @@ add("States", "X4-offline",
     dr_mob("Doctor · States — X4 Offline · Mobile",
         dr_head("Offline", "Last synced 09:41", back=False,
                 stats=[("3", "Queued"), ("09:41", "Synced"), ("8", "Cached")]),
+        f'{state_nav("X4",3)}'
         f'{X4_BANNER}{X4_QUEUE}{X4_WORKS}{X4_WAITS}',
         MTAB["Today"]))
 
@@ -2257,13 +2456,15 @@ X5_SAFE = dgroup("What is safe", [
 
 add("States", "X5-error",
     dr_desk("Doctor · States — X5 Error", ["Today", "Error"],
+        f'{state_nav("X5")}'
         f'<Frame w="fill" flex="row" gap={{16}} justify="center" items="start" pt={{10}}>'
-        f'<Frame w={{520}} flex="col" gap={{14}}>{X5_MAIN}{X5_REF}</Frame>'
-        f'<Frame w={{380}} flex="col" gap={{14}}>{X5_SAFE}{X5_HELP}</Frame></Frame>',
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{X5_MAIN}{X5_REF}</Frame>'
+        f'<Frame w={{330}} flex="col" gap={{14}}>{X5_SAFE}{X5_HELP}</Frame></Frame>',
         NAV["Today"], PANEL_STATES, urgent=0),
     dr_mob("Doctor · States — X5 Error · Mobile",
         dr_head("Something went wrong", "ERR-7731-A2", back=False,
                 stats=[("Saved", "Your note"), ("Safe", "Signed"), ("4 min", "Support")]),
+        f'{state_nav("X5",3)}'
         f'{X5_MAIN}{X5_REF}{X5_SAFE}{X5_HELP}',
         MTAB["Today"]))
 
@@ -2282,10 +2483,11 @@ X6_SKEL_M = (f'{skel(h=104,r=16)}'
              f'{I("loader",14,M_IC)}{T(12,"regular","var:text/muted","Loading…")}</Frame>')
 
 add("States", "X6-loading",
-    dr_desk("Doctor · States — X6 Loading", ["Today", "Loading"], X6_SKEL_D, NAV["Today"], PANEL_STATES, urgent=0),
+    dr_desk("Doctor · States — X6 Loading", ["Today", "Loading"],
+        state_nav("X6") + X6_SKEL_D, NAV["Today"], PANEL_STATES, urgent=0),
     dr_mob("Doctor · States — X6 Loading · Mobile",
         dr_head("Thursday 14 Aug", "Loading…", back=False, stats=[("—", "Seen"), ("—", "Wait"), ("—", "Today")]),
-        X6_SKEL_M, MTAB["Today"]))
+        state_nav("X6", 3) + X6_SKEL_M, MTAB["Today"]))
 
 # =====================================================================================
 # 8. COMPONENT STATES
@@ -2373,6 +2575,7 @@ NAVMAP = {
   "Btn Search patient": NAMES["P1-patients"],
   "Btn Start consult": NAMES["C1-room"],
   "Btn Open help":     NAMES["X5-error"],
+  "Btn Nav More":      NAMES["K9-more"],
 }
 
 TRN = [
@@ -2450,7 +2653,7 @@ TRN = [
  ("C7-sign","Btn Sign C7","C8-signed"),("C7-sign","Btn Save draft C7","C9-drafts"),
  ("C7-sign","Btn Back","C1-room"),
  ("C8-signed","Btn Start consult","C1-room"),("C8-signed","Btn Nav Today","K1-today"),
- ("C8-signed","Btn Q Chidi","K4-file"),("C8-signed","Btn Open Q Chidi","K4-file"),
+ ("C8-signed","Btn Q Chidi","K4-file"),
  ("C9-drafts","Btn Open room C1","C1-room"),("C9-drafts","Btn Open sign C7","C7-sign"),
  ("C9-drafts","Btn Draft Chidi","C1-room"),("C9-drafts","Btn Draft Fatima","C7-sign"),
  ("C10-virtual","Btn Join call C10","C1-room"),("C10-virtual","Btn Start consult","C1-room"),
@@ -2517,6 +2720,36 @@ TRN = [
  ("X3-notifications","Btn Open refills P6","P6-refills"),("X3-notifications","Btn Open drafts C9","C9-drafts"),
  ("X4-offline","Btn Retry X4","K1-today"),
  ("X5-error","Btn Retry X5","K1-today"),("X5-error","Btn Open help","X5-error"),
+ # ---- routes that existed as affordances but had never been wired
+ ("S1-profile","Btn Open security S8","S8-security"),("S1-profile","Btn Open earnings S5","S5-earnings"),
+ ("S1-profile","Btn Open billing S6","S6-billing"),
+ ("S8-security","Btn Back","S1-profile"),
+ ("R1-insights","Btn Open link R3","R3-link"),("R1-insights","Btn Open invite G3","G3-invite"),
+ ("R2-reviews","Btn Open link R3","R3-link"),("R2-reviews","Btn Open profile S1","S1-profile"),
+ ("R3-link","Btn Open invite G3","G3-invite"),
+ ("K1-today","Btn Nav More","K9-more"),
+ ("K2-requests","Btn Open drafts C9","C9-drafts"),
+ # K9 — the fifth mobile tab and the desktop directory
+ ("K9-more","Btn Open results P7","P7-results"),("K9-more","Btn Open refills P6","P6-refills"),
+ ("K9-more","Btn Open drafts C9","C9-drafts"),("K9-more","Btn Open billing S6","S6-billing"),
+ ("K9-more","Btn Open reviews R2","R2-reviews"),("K9-more","Btn Open link R3","R3-link"),
+ ("K9-more","Btn Open invite G3","G3-invite"),("K9-more","Btn Open profile S1","S1-profile"),
+ ("K9-more","Btn Open fees S2","S2-fees"),("K9-more","Btn Open virtual S3","S3-virtual"),
+ ("K9-more","Btn Open contact S4","S4-contact"),("K9-more","Btn Open practice S7","S7-practice"),
+ ("K9-more","Btn Open security S8","S8-security"),("K9-more","Btn Open verify G2","G2-verification"),
+ ("K9-more","Btn Open help","X5-error"),("K9-more","Btn Sign out","AUTH"),
+ # the message action a mobile queue row carries instead of the desktop row's Open button
+ ("K1-today","Btn Msg Q Chidi","P5-messages"),("K1-today","Btn Msg Q Musa","P5-messages"),
+ ("K1-today","Btn Msg Q Grace","P5-messages"),("K1-today","Btn Msg Q Tunde","P5-messages"),
+ ("K6-week","Btn Msg Q Chidi","P5-messages"),("K6-week","Btn Msg Q Musa","P5-messages"),
+ ("K6-week","Btn Msg Q Grace","P5-messages"),("K6-week","Btn Msg Q Tunde","P5-messages"),
+] + [
+ # States are reached by condition, not by tapping, so each one carries a switcher strip.
+ # Without it half the States page is unreachable in a click-through and cannot be demoed.
+ (src, "Btn State " + dst[:2], dst)
+ for src in ("X1-locked","X2-empty","X3-notifications","X4-offline","X5-error","X6-loading")
+ for dst in ("X1-locked","X2-empty","X3-notifications","X4-offline","X5-error","X6-loading")
+ if src != dst
 ]
 
 def resolve(target, side):
@@ -2539,7 +2772,9 @@ order_js, starts_js = {}, {}
 for page, fids in ORDER.items():
     if page == "Components": continue
     order_js[PAGE_FIGMA[page]] = [[NAMES[f][0], NAMES[f][1]] for f in fids]
-    starts_js[PAGE_FIGMA[page]] = NAMES[fids[0]][0]
+    # Two starting points per page. With one, the mobile row is not a prototype at all —
+    # you cannot present it without hand-picking a frame each time.
+    starts_js[PAGE_FIGMA[page]] = [NAMES[fids[0]][0], NAMES[fids[0]][1]]
 
 MOTION = json.dumps({
   "default": {"type": "SMART_ANIMATE", "easing": "GENTLE", "duration": 0.26},
@@ -2606,7 +2841,10 @@ linker = ("(async () => {\n"
  "  for (const pg of pages){ const ord=ORDER[pg.name]; if(!ord) continue; let x=0, rowH=0;\n"
  "    for (const [dn] of ord){ const df=F(dn); if(df){ df.x=x; df.y=0; x+=df.width+GX; rowH=Math.max(rowH,df.height);} }\n"
  "    let mx=0; for (const [,mn] of ord){ const mf=F(mn); if(mf){ mf.x=mx; mf.y=rowH+GY; mx+=mf.width+GX; } } }\n"
- "  for (const pg of pages){ const s=STARTS[pg.name]; if(s&&F(s)) pg.flowStartingPoints=[{ nodeId:F(s).id, name:pg.name }]; }\n"
+ "  for (const pg of pages){ const s=STARTS[pg.name]; if(!s) continue;\n"
+ "    const pts=[]; if(F(s[0])) pts.push({ nodeId:F(s[0]).id, name:pg.name+' · Desktop' });\n"
+ "    if(F(s[1])) pts.push({ nodeId:F(s[1]).id, name:pg.name+' · Mobile' });\n"
+ "    if(pts.length) pg.flowStartingPoints=pts; }\n"
  "  return { linked, navLinked, stayOnScreen: stay, framesFound: Object.keys(byName).length, missing };\n"
  "})();\n")
 open(os.path.join(OUT, "link-doctor.js"), "w").write(linker)

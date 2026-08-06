@@ -1,11 +1,15 @@
 # Medra — Doctor / Medical Practitioner module
 
-**114 frames · 8 Figma pages · Desktop 1440×900 + Mobile 390 · doctor-module only**
+**116 frames · 8 Figma pages · Desktop 1440×900 + Mobile 390 · doctor-module only**
 
-45 screens, every one drawn at both breakpoints, plus 24 component-state frames that become
+46 screens, every one drawn at both breakpoints, plus 24 component-state frames that become
 10 interactive component sets.
 
-Offline validation: **ALL 114 CLEAN, FULLY OFFLINE ✓** (`node validate.js`) · **0 horizontal overflow**
+Offline validation
+- `node validate.js` → **ALL 116 CLEAN, FULLY OFFLINE ✓** (197 icons, 41 tokens, 0 warnings)
+- `python3 tools/figma/preview_bundle.py` + headless measurement → **0 horizontal overflow** at 390 and 1440
+- `python3 tools/figma/proto_check.py figma/medra-doctor link-doctor.js` → **PROTOTYPE COMPLETE ✓**
+  92/92 screens reachable, 626 explicit links, 1,196 navigation links, no broken hotspots
 
 ---
 
@@ -15,31 +19,53 @@ That was the first thing asked for, so it is structural rather than cosmetic.
 
 | | Member app | Doctor app |
 |---|---|---|
-| Navigation | one 262px navy sidebar | **88px icon rail + 236px contextual panel** |
-| Ground | soft mesh gradient | **graph paper** — the ruled sheet a clinic already runs on |
-| Corners | 24–28px | **14–18px** |
-| Density | generous, one thing at a time | dense — the whole queue on one screen |
-| Top bar | light search bar | **dark command strip**: breadcrumb, "2 need you", ⌘K patient search |
-| Mobile chrome | light appbar | **navy header block** with the day's numbers inside it |
-| Mobile nav | 5 flat tabs | 5 tabs with a **raised centre Consult action** |
+| Page | full-bleed, soft mesh gradient | **a white card floating on a soft blue canvas**, 24px inset, 28px radius |
+| Columns | two — navy sidebar + main | **three** — navy sidebar + main + a light right rail |
+| Navigation | one 262px navy sidebar | **206px navy sidebar**, labelled, with a white left notch on the active item and coral count badges |
+| Right rail | none | **292px light column**: a month calendar, "Next up", "Done today", and the two actions that section needs |
+| Top bar | light search bar | light bar with the parent trail **above** the title, a "2 need you" chip, patient search, the app directory and the doctor's chip |
+| Accent | teal only | teal **plus a warm coral/amber** used only for counts, attention and progress |
+| Mobile chrome | light appbar | **a floating brand-gradient header card** carrying the day's numbers and a filter chip row |
+| Mobile nav | 5 flat tabs | 5 tabs with a **raised centre Consult action**; the fifth is **More** (K9), not Settings |
 | Primary action | teal | **navy**; teal is reserved for live/active |
 
-The **contextual panel** is the important one. It is why the app can be dense without being
-cluttered: it always holds what that section needs next. Today shows clinic progress and the
-"needs you" counts; Requests shows the inbox split; Consultation shows who you are with, the
-elapsed timer and what you can attach; Money shows the next payout and the trial countdown.
+The reference dashboard the product owner liked is where the warmth comes from: the floating
+card, the pastel code chips (`Rx` `Lab` `Ref` `Note`), the donut, the per-patient progress bars,
+the media table and the month calendar in the right rail. The structure is what keeps it a
+different product from the member app, not the palette.
+
+The **right rail** is the important one. It is why the app can be dense without being cluttered:
+it always holds what that section needs next. Today shows the month, who is next and what is
+already signed; Requests shows the inbox split; Consultation shows who you are with, the elapsed
+timer and what you can attach; Money shows the next payout and the trial countdown.
 
 ## 2. Mobile carries the same information as desktop
 
-The previous version trimmed mobile, which was the second complaint. It no longer does. Every
-mobile screen contains the same cards as its desktop twin, laid out vertically, with the desktop
-side-rail content folded in underneath. The header block absorbs the panel's key numbers so
-nothing is lost.
+The previous version trimmed mobile, which was the second complaint. It no longer does, and
+this pass closed the last of it:
+
+- the **consult tab strip** (Note / Rx / Tests / Files / Refer) is now on the phone, so C1, C3,
+  C4 and C6 can move between each other exactly as desktop can;
+- a mobile **queue row carries its own actions** — "Open the file" and "Message" — because the
+  desktop row puts them at the end of a line that does not exist at 390;
+- K4 gained "Ask for history" and "Send the link"; K6 gained "Edit my hours" and "Block time
+  off"; K8 gained "Offer everyone my next open slot"; S5 gained statements and billing; S7 and
+  S8 gained their save and sign-out-everywhere actions;
+- S1 carries the whole settings list the desktop keeps in its right rail, and R1/R2/R3 carry the
+  growth rail;
+- **K9 "Everything"** is new. The sidebar has eight destinations and a phone tab bar has five,
+  so Schedule, Consults, Money and Growth had no mobile route at all. K9 is that route, and on
+  desktop the same directory is what the app-grid button in the top bar opens.
+
+Where the desktop rail would only repeat the main column — "Next up" on a screen that already
+lists the queue — it is left out rather than pasted in. That is the difference between parity
+and duplication.
 
 These are **scrolling frames** — `minH={844}`, so Figma grows them rather than clipping. The
-tallest is C1 (the consultation room) at about 2,500px, which is a genuinely long screen on a
-phone. What is guaranteed is that **nothing overflows horizontally** at 390 and that the primary
-action of each screen sits in the first viewport.
+tallest is K1 (today's queue) at about 4,100px, which is a genuinely long screen because it is
+a whole clinic day; then S1 at 2,700 and C1 at 2,600. What is guaranteed is that **nothing
+overflows horizontally** at 390 and that the primary action of each screen sits in the first
+viewport.
 
 ## 3. Screens
 
@@ -61,6 +87,7 @@ action of each screen sits in the first viewport.
 | K6 | **The week** | Six-day grid with booked / open / held-for-payment / break / away, the day list, and the week's counts including no-shows |
 | K7 | **Availability** | Working days, slot length, buffer, horizon, same-day cutoff, daily cap, unpaid-hold, breaks, travel buffer, and where each type can be booked |
 | K8 | **Time off** | Blocks the days, shows who is already booked and how much is refundable, offers to message them, and offers to hand them to a named colleague |
+| K9 | **Everything** | Every destination in one place. On a phone it is the More tab — the only route to Schedule, Consults, Money and Growth; on desktop it is what the app-grid button opens |
 
 ### 3 · Consultation — the spine
 | # | Screen | Why it exists |
@@ -115,6 +142,10 @@ action of each screen sits in the first viewport.
 | X4 | **Offline** | Writing a note works offline; signing, prescribing and releasing do not — and three queued items are listed by name |
 | X5 | **Error** | Says plainly it is Medra's fault, gives a copyable reference with the failing service, lists what is safe, and tells you to write on paper if a patient is in front of you |
 | X6 | **Loading** | Skeletons for both breakpoints |
+
+Each of these six carries a small **state switcher** strip. States happen because of a
+condition, not a tap, so without it most of this page cannot be reached in a click-through and
+cannot be demoed. It is labelled "for review, not a real control".
 
 ### 8 · Components
 `Medra Doctor/Slot` (5) · `Queue Row` (3) · `Share Toggle` (2) · `Scope Line` (2) ·
@@ -185,7 +216,7 @@ See `CLI-PROMPT.md` for the exact instruction to hand to the terminal.
 .\render-doctor.ps1
 ```
 
-It creates the eight `Medra Doctor —` pages, renders 114 frames into them, builds the component
+It creates the eight `Medra Doctor —` pages, renders 116 frames into them, builds the component
 sets on the doctor components page only, then wires the prototype. **It does not touch the
 design-system, authentication or member pages.** The one cross-module link is Sign out, which
 points at `Auth · Doctor — D6 Log In` if that frame exists and is skipped if it does not.
@@ -193,8 +224,24 @@ points at `Auth · Doctor — D6 Log In` if that frame exists and is skipped if 
 `link-doctor.js` returns `{ linked, navLinked, stayOnScreen, framesFound, missing }`.
 A non-empty `missing` means that frame did not render — re-render that one `.jsx` and re-run step 4.
 
-## 7. Preview without Figma
+## 7. The prototype
+
+Every page gets **two flow starting points**, `… · Desktop` and `… · Mobile`, so either row can
+be presented without hand-picking a frame. See `PROTOTYPE.md` for the flows themselves.
+
+Audit it before you render:
+
+```bash
+python3 tools/figma/proto_check.py figma/medra-doctor link-doctor.js
+```
+
+It reads the frames off disk, walks the transition table, and answers three questions without
+opening Figma: is every screen reachable from a flow start, does every explicit transition name
+a hotspot that actually exists on that frame, and how many `Btn` nodes are wired explicitly
+versus swept. Current result: **92/92 reachable, 0 broken links**.
+
+## 8. Preview without Figma
 ```bash
 python3 tools/figma/preview_bundle.py figma/medra-doctor
 ```
-`medra-doctor-overview.png` is the contact sheet for all 114 frames.
+`medra-doctor-overview.png` is the contact sheet for all 116 frames.

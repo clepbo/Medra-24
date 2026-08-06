@@ -10,7 +10,7 @@ authentication and member pages in this file are finished and signed off — lea
 
 **Working directory:** the unzipped `medra-doctor` folder. Confirm you can see
 `render-doctor.ps1`, `link-doctor.js`, `components-doctor.js`, `DESIGN.md`, `pages.json`,
-114 `.jsx` files and an `assets/` folder before you start.
+116 `.jsx` files and an `assets/` folder before you start.
 
 **Run, in this order:**
 
@@ -30,11 +30,12 @@ authentication and member pages in this file are finished and signed off — lea
   removes or renames a token;
 - creates (or reuses) exactly eight pages: `Medra Doctor — 1 Getting Started` through
   `Medra Doctor — 8 Components`;
-- renders 90 screen frames and 24 `cmp/*` frames into those pages;
+- renders 92 screen frames and 24 `cmp/*` frames into those pages;
 - runs `components-doctor.js`, which touches **only** page 8 and removes only component sets it
   owns (`Medra Doctor/…`);
-- runs `link-doctor.js`, which wires the prototype, closes the navigation and arranges each page
-  with the desktop row on top and the matching mobile row beneath.
+- runs `link-doctor.js`, which wires the prototype, closes the navigation, gives each page two
+  flow starting points (`… · Desktop` and `… · Mobile`) and arranges each page with the desktop
+  row on top and the matching mobile row beneath.
 
 **Report back with:**
 - the object `link-doctor.js` returns — `{ linked, navLinked, stayOnScreen, framesFound, missing }`;
@@ -58,7 +59,7 @@ reorder or delete existing pages, or "tidy up" frames on pages you did not creat
 | | |
 |---|---|
 | Pages created | 8, all prefixed `Medra Doctor —` |
-| Frames rendered | 114 (90 screens + 24 component states) |
+| Frames rendered | 116 (92 screens + 24 component states) |
 | Component sets | 10, named `Medra Doctor/…` |
-| Prototype links | ~500 explicit + ~1,000 navigation, plus a sweep so no `Btn` node is dead |
+| Prototype links | 626 explicit + 1,196 navigation, plus a sweep so no `Btn` node is dead |
 | Pages touched outside the doctor module | **0** |

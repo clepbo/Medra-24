@@ -2,17 +2,22 @@
 """Medra — Doctor app design system.
 
 **This is deliberately not the member app.** A member opens Medra once a month; a doctor lives
-in it between patients. So the doctor app is built as a clinical workstation, and it should be
-recognisable as a different product from three metres away:
+in it between patients. The first pass made that difference *cold* — graph paper and a dark
+command strip — which read as technical rather than warm. This version takes the structure from
+the reference dashboard the product owner liked instead: a white card floating on a soft blue
+canvas, three columns, pastel code chips, a donut, progress bars and a month calendar.
 
 | | Member app | Doctor app |
 |---|---|---|
-| Navigation | one 262px navy sidebar | **88px icon rail + 236px contextual panel** |
-| Ground | soft mesh gradient | **graph paper** — the ruled sheet a clinic already runs on |
-| Corners | 24–28px | **14–18px** |
+| Page | full-bleed soft mesh gradient | **white card floating on a soft blue canvas**, 24px inset |
+| Columns | two — sidebar + main | **three** — navy sidebar + main + light right rail |
+| Navigation | one 262px navy sidebar | **206px labelled navy sidebar**, white left notch, coral badges |
+| Right rail | none | **292px light column** — month calendar, next up, done today |
+| Corners | 24–28px | 14–18px inside a 28px card |
 | Density | generous, one thing at a time | dense — a whole queue on one screen |
-| Top bar | light search bar | **dark command strip** with the day's progress and urgent count |
-| Mobile chrome | light appbar | **navy header block** with the day's numbers in it |
+| Accent | teal only | teal **plus warm coral/amber** for counts, attention and progress |
+| Mobile chrome | light appbar | **floating brand-gradient header card** with the day's numbers |
+| Mobile nav | 5 flat tabs | 5 tabs, raised centre Consult, fifth tab is **More** (K9) |
 | Primary action | teal | **navy**, teal reserved for live/active state |
 
 House rules carried over: no wrap="wrap", no items="stretch", grow is a row property,
@@ -137,7 +142,9 @@ def progress_row(label, value, pct, tone="teal"):
             f'{bar(pct,tone)}</Frame>')
 
 # =====================================================================================
-# DESKTOP SHELL — icon rail + contextual panel + command strip
+# SHELL — a white app card floating on a soft blue canvas, three columns:
+# navy sidebar · main · light right rail. Distinct from the member app by structure
+# (member is full-bleed and two columns), warm rather than clinical.
 # =====================================================================================
 RAIL = [("layout-dashboard", "Today",    "Nav Today"),
         ("inbox",            "Requests", "Nav Requests"),
@@ -148,85 +155,101 @@ RAIL = [("layout-dashboard", "Today",    "Nav Today"),
         ("trending-up",      "Growth",   "Nav Growth"),
         ("settings",         "Settings", "Nav Settings")]
 
-def rail(active=0, badges=None):
+def sidebar(active=0, badges=None):
     badges = badges or {}
     cells = ""
     for i, (ic, label, nm) in enumerate(RAIL):
         on = i == active
         chip = ''
         if badges.get(label):
-            chip = (f'<Frame flex="row" px={{6}} py={{1}} rounded={{999}} bg="#D14343">'
+            chip = (f'<Frame flex="row" px={{7}} py={{2}} rounded={{999}} bg="#F07A52">'
                     f'{T(9,"bold","var:text/on-dark",str(badges[label]))}</Frame>')
-        box = ('bg="#17324D" stroke="#2B5B85" strokeWidth={1}' if on else '')
-        cells += (f'<Frame name="Btn {nm}" w="fill" flex="col" gap={{5}} items="center" py={{10}} '
-                  f'rounded={{13}} {box}>'
-                  f'<Frame flex="row" gap={{4}} items="start">{I(ic,20,RAIL_ON if on else RAIL_DIM)}{chip}</Frame>'
-                  f'{T(9,"semibold" if on else "medium","var:text/on-dark" if on else "#7FA3BE",label)}</Frame>')
-    return (f'<Frame w={{88}} h="fill" flex="col" gap={{6}} px={{9}} pt={{18}} pb={{16}} '
-            f'image="assets/img/rail.jpg" overflow="hidden">'
-            f'<Frame w="fill" flex="col" gap={{4}} items="center" pb={{10}}>'
-            f'<Image image="assets/logo/appicon.png" w={{40}} h={{40}} rounded={{11}} />'
-            f'<Frame flex="row" px={{7}} py={{2}} rounded={{999}} bg="#17324D">'
-            f'{T(8,"bold","var:brand/teal","CLINIC")}</Frame></Frame>'
+        notch = ('<Rect w={4} h={22} rounded={999} bg="#FFFFFF" />' if on
+                 else '<Frame w={4} h={22} />')
+        row = (f'<Frame grow={{1}} flex="row" gap={{12}} items="center" px={{14}} py={{12}} rounded={{14}} '
+               f'{"bg=" + chr(34) + "#17324D" + chr(34) if on else ""}>'
+               f'{I(ic,18,"#FFFFFF" if on else "#7FA3BE")}'
+               f'{T(13,"semibold" if on else "regular","var:text/on-dark" if on else "#9FBED6",label,w="fill")}'
+               f'{chip}</Frame>')
+        cells += (f'<Frame name="Btn {nm}" w="fill" flex="row" gap={{8}} items="center">{notch}{row}</Frame>')
+    return (f'<Frame w={{206}} h="fill" flex="col" gap={{6}} pl={{10}} pr={{16}} pt={{22}} pb={{18}} '
+            f'image="assets/img/sidebar-dr.jpg" overflow="hidden">'
+            f'<Frame w="fill" flex="row" gap={{11}} items="center" px={{14}} pb={{18}}>'
+            f'<Image image="assets/logo/appicon.png" w={{36}} h={{36}} rounded={{11}} />'
+            f'<Frame flex="col" gap={{1}}>{T(16,"bold","var:text/on-dark","Medra")}'
+            f'{T(9,"semibold","var:brand/teal","FOR DOCTORS")}</Frame></Frame>'
             f'{cells}<Frame grow={{1}} />'
-            f'<Frame name="Btn Open help" w="fill" flex="col" gap={{5}} items="center" py={{9}} rounded={{13}}>'
-            f'{I("circle-help",19,RAIL_DIM)}{T(9,"medium","#7FA3BE","Help")}</Frame>'
-            f'<Frame name="Btn Nav Settings" w="fill" flex="col" items="center" pt={{6}}>'
-            f'<Image image="assets/img/avatar-4.jpg" w={{36}} h={{36}} rounded={{999}} /></Frame></Frame>')
+            f'<Frame w="fill" flex="col" gap={{9}} px={{8}}>'
+            f'<Frame w="fill" flex="col" gap={{9}} p={{14}} rounded={{16}} bg="#17324D">'
+            f'<Frame flex="row" gap={{8}} items="center">{I("sparkles",15,T_IC)}'
+            f'{T(12,"semibold","var:text/on-dark","Free trial")}</Frame>'
+            f'{T(11,"regular","#9FBED6","12 days left. Add a card to keep your dashboard after 26 August.",w="fill")}'
+            f'<Frame name="Btn Open billing S6" w="fill" flex="row" justify="center" px={{12}} py={{8}} rounded={{10}} bg="#FFFFFF">'
+            f'{T(11,"semibold","var:text/strong","See plans")}</Frame></Frame>'
+            f'<Frame name="Btn Sign out" w="fill" flex="row" gap={{11}} items="center" px={{14}} py={{11}}>'
+            f'{I("log-out",17,"#7FA3BE")}{T(13,"regular","#9FBED6","Log out")}</Frame></Frame></Frame>')
+
+def topbar(crumbs, right=None, urgent=2):
+    # A breadcrumb laid out horizontally squeezed the page title onto two lines once the
+    # right-hand group was in place. Parents go above the title instead.
+    parents = " · ".join(crumbs[:-1])
+    trail = (f'<Frame flex="col" gap={{2}}>'
+             + (T(11, "semibold", "var:text/accent", parents.upper()) if parents else "")
+             + T(20, "bold", "var:text/strong", crumbs[-1]) + '</Frame>')
+    ug = (f'<Frame name="Btn Nav Requests" flex="row" gap={{7}} items="center" px={{12}} py={{8}} rounded={{12}} '
+          f'bg="var:state/error-bg">{I("triangle-alert",14,ERR_IC)}'
+          f'{T(12,"semibold","var:state/error",f"{urgent} need you")}</Frame>') if urgent else ''
+    return (f'<Frame w="fill" flex="row" justify="between" items="center" gap={{16}}>'
+            f'<Frame grow={{1}} flex="row" gap={{9}} items="center">{trail}</Frame>'
+            f'<Frame flex="row" gap={{10}} items="center">{ug}'
+            f'<Frame name="Btn Search patient" w={{230}} flex="row" gap={{9}} items="center" px={{13}} py={{10}} '
+            f'rounded={{12}} bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>{I("search",15,M_IC)}'
+            f'{T(12,"regular","var:text/faint","Search or Medra ID",w="fill")}</Frame>'
+            f'<Frame name="Btn Nav More" flex="row" px={{10}} py={{10}} rounded={{12}} bg="var:bg/base" '
+            f'stroke="var:border/subtle" strokeWidth={{1}}>{I("layout-grid",16,N_IC)}</Frame>'
+            f'<Frame name="Btn Notifications" flex="row" px={{10}} py={{10}} rounded={{12}} bg="var:bg/base" '
+            f'stroke="var:border/subtle" strokeWidth={{1}}>{I("bell",16,N_IC)}</Frame>'
+            f'<Frame name="Btn Nav Settings" flex="row" gap={{10}} items="center">'
+            f'<Frame w={{112}} flex="col" gap={{1}} items="end">'
+            f'{T(13,"semibold","var:text/strong","Dr. Okafor")}'
+            f'{T(10,"regular","var:text/muted","Cardiology")}</Frame>'
+            f'<Image image="assets/img/avatar-4.jpg" w={{38}} h={{38}} rounded={{999}} /></Frame>'
+            f'{right or ""}</Frame></Frame>')
 
 def panel(title, body, foot=None):
-    """The 236px contextual column. Every section fills it with what that section needs next —
-    it is the main reason the doctor app can be dense without being cluttered."""
-    ft = f'<Frame grow={{1}} /><Frame w="fill" flex="col" gap={{9}}>{foot}</Frame>' if foot else '<Frame grow={1} />'
-    return (f'<Frame w={{236}} h="fill" flex="col" gap={{14}} px={{16}} pt={{20}} pb={{18}} '
-            f'image="assets/img/panel.jpg" overflow="hidden" stroke="var:border/subtle" strokeWidth={{1}}>'
+    """The right rail. Same idea as before — always holds what this section needs next —
+    but light, like the reference's calendar column, instead of a second dark band."""
+    ft = (f'<Frame grow={{1}} /><Frame w="fill" flex="col" gap={{9}}>{foot}</Frame>'
+          if foot else '<Frame grow={1} />')
+    return (f'<Frame w={{292}} h="fill" flex="col" gap={{14}} px={{18}} pt={{24}} pb={{20}} bg="var:bg/subtle" '
+            f'stroke="var:border/subtle" strokeWidth={{1}}>'
             f'{T(11,"semibold","var:text/accent",title.upper())}{body}{ft}</Frame>')
-
-def command(crumbs, right=None, urgent=2):
-    trail = ""
-    for i, c in enumerate(crumbs):
-        last = i == len(crumbs) - 1
-        trail += T(13, "semibold" if last else "regular",
-                   "var:text/on-dark" if last else "var:text/on-dark-muted", c)
-        if not last:
-            trail += I("chevron-right", 13, "#7FA3BE")
-    ug = (f'<Frame name="Btn Nav Requests" flex="row" gap={{7}} items="center" px={{11}} py={{7}} rounded={{10}} bg="#3A1E22" '
-          f'stroke="#7A3238" strokeWidth={{1}}>{I("triangle-alert",13,"#F08A8A")}'
-          f'{T(12,"semibold","#F5B5B5",f"{urgent} need you")}</Frame>') if urgent else ''
-    return (f'<Frame w="fill" flex="row" justify="between" items="center" px={{24}} py={{13}} '
-            f'image="assets/img/command.jpg" overflow="hidden">'
-            f'<Frame flex="row" gap={{9}} items="center">{trail}</Frame>'
-            f'<Frame flex="row" gap={{11}} items="center">{ug}'
-            f'<Frame name="Btn Search patient" flex="row" gap={{9}} items="center" px={{13}} py={{8}} rounded={{10}} '
-            f'bg="#17324D" stroke="#24486B" strokeWidth={{1}}>{I("search",14,"#7FA3BE")}'
-            f'{T(12,"regular","#9FBED6","Search patient or Medra ID")}'
-            f'<Frame flex="row" px={{6}} py={{2}} rounded={{6}} bg="#0F2233">'
-            f'{T(10,"semibold","#7FA3BE","⌘K")}</Frame></Frame>'
-            f'<Frame name="Btn Notifications" flex="row" px={{9}} py={{8}} rounded={{10}} bg="#17324D">'
-            f'{I("bell",15,"#9FBED6")}</Frame>'
-            f'{right or ""}</Frame></Frame>')
 
 def dr_desk(name, crumbs, children, active=0, panel_block=None, urgent=2, cmd_right=None, badges=None):
     p = panel_block if panel_block is not None else ''
-    return (f'<Frame name="{name}" w={{1440}} minH={{900}} flex="row" image="assets/img/surface-clinic.jpg" '
-            f'overflow="hidden">{rail(active,badges)}{p}'
-            f'<Frame grow={{1}} h="fill" flex="col">'
-            f'{command(crumbs,cmd_right,urgent)}'
-            f'<Frame grow={{1}} w="fill" flex="col" gap={{16}} px={{28}} py={{22}}>{children}</Frame></Frame></Frame>')
+    return (f'<Frame name="{name}" w={{1440}} minH={{900}} flex="col" p={{24}} '
+            f'image="assets/img/canvas.jpg" overflow="hidden">'
+            f'<Frame w="fill" grow={{1}} flex="row" rounded={{28}} bg="var:bg/base" overflow="hidden" '
+            f'stroke="#E1EAF4" strokeWidth={{1}}>'
+            f'{sidebar(active,badges)}'
+            f'<Frame grow={{1}} h="fill" flex="col" gap={{18}} px={{28}} py={{24}}>'
+            f'{topbar(crumbs,cmd_right,urgent)}{children}</Frame>'
+            f'{p}</Frame></Frame>')
 
-# =====================================================================================
-# MOBILE SHELL — navy header block, then graph paper, then a tab bar with a raised action
-# =====================================================================================
+# ---------------------------------------------------------------- mobile
+# The sidebar carries eight destinations; a phone tab bar cannot. The fifth tab is a real
+# screen (K9) that holds the four the tab bar drops — Schedule, Consults, Money, Growth —
+# plus search, help and settings, so nothing on desktop is unreachable on mobile.
 MTABS = [("layout-dashboard", "Today", "Nav Today"), ("inbox", "Requests", "Nav Requests"),
          ("stethoscope", "Consult", "Start consult"), ("users", "Patients", "Nav Patients"),
-         ("ellipsis", "More", "Nav Settings")]
+         ("ellipsis", "More", "Nav More")]
 
 def dr_tabbar(active=0):
     cells = ""
     for i, (ic, label, nm) in enumerate(MTABS):
         if i == 2:
             cells += (f'<Frame name="Btn {nm}" grow={{1}} flex="col" gap={{4}} items="center">'
-                      f'<Frame w={{46}} h={{46}} rounded={{15}} image="assets/img/btn-navy.jpg" overflow="hidden" '
+                      f'<Frame w={{46}} h={{46}} rounded={{16}} image="assets/img/btn-navy.jpg" overflow="hidden" '
                       f'flex="col" justify="center" items="center">{I(ic,21,W_IC)}</Frame>'
                       f'{T(9,"semibold","var:text/strong",label)}</Frame>')
             continue
@@ -235,23 +258,35 @@ def dr_tabbar(active=0):
                   f'{I(ic,20,T_IC if on else M_IC)}'
                   f'{T(9,"semibold" if on else "regular","var:text/accent" if on else "var:text/muted",label)}</Frame>')
     return (f'<Frame w="fill" flex="row" gap={{4}} items="center" px={{12}} pt={{9}} pb={{16}} '
-            f'bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}} rounded={{20}}>{cells}</Frame>')
+            f'bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}} rounded={{22}}>{cells}</Frame>')
 
-def dr_head(title, sub=None, back=True, right=None, stats=None, chips=None):
-    """Navy header block — the single strongest signal that this is not the member app."""
-    left = (f'<Frame name="Btn Back" w={{38}} h={{38}} rounded={{12}} bg="#17324D" flex="col" justify="center" '
-            f'items="center">{I("arrow-left",18,W_IC)}</Frame>' if back else
-            f'<Image image="assets/logo/appicon.png" w={{38}} h={{38}} rounded={{11}} />')
-    rt = right if right is not None else (
-        f'<Frame name="Btn Notifications" w={{38}} h={{38}} rounded={{12}} bg="#17324D" flex="col" '
-        f'justify="center" items="center">{I("bell",17,W_IC)}</Frame>')
+def dr_head(title, sub=None, back=True, right=None, stats=None, chips=None, illo=False):
+    """A floating brand-gradient card, not a full-bleed navy block — the mobile equivalent of
+    the desktop welcome banner."""
+    left = (f'<Frame name="Btn Back" w={{36}} h={{36}} rounded={{12}} bg="#17324D" flex="col" justify="center" '
+            f'items="center">{I("arrow-left",17,W_IC)}</Frame>' if back else
+            f'<Image image="assets/logo/appicon.png" w={{36}} h={{36}} rounded={{11}} />')
+    # Top-level screens carry search as well as notifications; the desktop top bar has both and
+    # without it a phone has no way into a patient record except the Patients tab.
+    _bell = (f'<Frame name="Btn Notifications" w={{36}} h={{36}} rounded={{12}} bg="#17324D" flex="col" '
+             f'justify="center" items="center">{I("bell",16,W_IC)}</Frame>')
+    _search = (f'<Frame name="Btn Search patient" w={{36}} h={{36}} rounded={{12}} bg="#17324D" flex="col" '
+               f'justify="center" items="center">{I("search",16,W_IC)}</Frame>')
+    if right is not None:
+        rt = right
+    elif back:
+        rt = _bell
+    else:
+        rt = f'<Frame flex="row" gap={{8}} items="center">{_search}{_bell}</Frame>'
     subline = T(12, "regular", "var:text/on-dark-muted", sub, w="fill") if sub else ""
+    art = (f'<Frame w="fill" flex="row" justify="end" pt={{2}}>'
+           f'<Image image="assets/img/illo-welcome-m.png" w={{190}} h={{132}} /></Frame>') if illo else ''
     statrow = ''
     if stats:
         cells = ""
         for v, l in stats:
-            cells += (f'<Frame grow={{1}} flex="col" gap={{2}} px={{11}} py={{10}} rounded={{12}} bg="#17324D">'
-                      f'{T(17,"bold","var:text/on-dark",v)}{T(10,"regular","#9FBED6",l)}</Frame>')
+            cells += (f'<Frame grow={{1}} flex="col" gap={{2}} px={{11}} py={{10}} rounded={{13}} bg="#17324D">'
+                      f'{T(16,"bold","var:text/on-dark",v)}{T(10,"regular","#9FBED6",l)}</Frame>')
         statrow = f'<Frame w="fill" flex="row" gap={{8}} pt={{2}}>{cells}</Frame>'
     chiprow = ''
     if chips:
@@ -261,18 +296,171 @@ def dr_head(title, sub=None, back=True, right=None, stats=None, chips=None):
             cc += (f'<Frame name="Btn {nm}" flex="row" px={{12}} py={{7}} rounded={{999}} {st}>'
                    f'{T(12,"semibold","var:text/on-dark",label)}</Frame>')
         chiprow = f'<Frame w="fill" flex="row" gap={{8}} pt={{2}}>{cc}</Frame>'
-    return (f'<Frame w="fill" flex="col" gap={{11}} px={{18}} pt={{8}} pb={{18}} '
+    return (f'<Frame w="fill" flex="col" gap={{11}} px={{18}} pt={{16}} pb={{18}} rounded={{24}} '
             f'image="assets/img/head-m.jpg" overflow="hidden">'
             f'<Frame w="fill" flex="row" justify="between" items="center">{left}'
             f'<Frame grow={{1}} flex="col" gap={{1}} px={{12}}>{T(17,"bold","var:text/on-dark",title)}{subline}</Frame>'
-            f'{rt}</Frame>{statrow}{chiprow}</Frame>')
+            f'{rt}</Frame>{art}{statrow}{chiprow}</Frame>')
 
 def dr_mob(name, head, children, tab=None):
     tabrow = f'<Frame w="fill" px={{12}} pb={{8}}>{dr_tabbar(tab)}</Frame>' if tab is not None else ''
-    return (f'<Frame name="{name}" w={{390}} minH={{844}} flex="col" image="assets/img/surface-clinic-m.jpg" '
-            f'overflow="hidden">{statusbar(dark=True)}{head}'
-            f'<Frame grow={{1}} w="fill" flex="col" gap={{12}} px={{16}} pt={{14}} pb={{10}}>{children}</Frame>'
+    return (f'<Frame name="{name}" w={{390}} minH={{844}} flex="col" image="assets/img/canvas-m.jpg" '
+            f'overflow="hidden">{statusbar()}'
+            f'<Frame w="fill" px={{14}} pt={{2}}>{head}</Frame>'
+            f'<Frame grow={{1}} w="fill" flex="col" gap={{12}} px={{14}} pt={{14}} pb={{10}}>{children}</Frame>'
             f'{tabrow}</Frame>')
+
+# ---------------------------------------------------------------- reference-flavoured parts
+def welcome(title_plain, title_bold, sub, actions="", stats=None):
+    """The hero from the reference: greeting, one line of progress, illustration on the right."""
+    st = ''
+    if stats:
+        cells = ""
+        for v, l, tone in stats:
+            bgc = {"teal": "var:state/info-bg", "ok": "var:state/success-bg",
+                   "warn": "var:state/warning-bg", "coral": "#FDEBE4"}[tone]
+            cells += (f'<Frame flex="col" gap={{2}} px={{14}} py={{10}} rounded={{13}} bg="{bgc}">'
+                      f'{T(18,"bold","var:text/strong",v)}{T(10,"medium","var:text/muted",l)}</Frame>')
+        st = f'<Frame w="fill" flex="row" gap={{9}} pt={{2}}>{cells}</Frame>'
+    act = f'<Frame w="fill" flex="row" gap={{10}} pt={{4}}>{actions}</Frame>' if actions else ''
+    return (f'<Frame w="fill" flex="row" justify="between" items="center" gap={{18}} p={{24}} rounded={{22}} '
+            f'bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>'
+            f'<Frame grow={{1}} flex="col" gap={{9}}>'
+            f'{head_chip([(title_plain,False),(title_bold,True)],26)}'
+            f'{T(14,"regular","var:text/muted",sub,w="fill")}{st}{act}</Frame>'
+            f'<Image image="assets/img/illo-welcome.png" w={{300}} h={{182}} /></Frame>')
+
+def donut_card(pct, title, legend, note=None, size=168):
+    lg = ""
+    for label, tone in legend:
+        col = {"teal": "#39B0CF", "navy": "#1B3A5B", "amber": "#E0A32E", "coral": "#F07A52",
+               "grey": "#CBD6DF"}[tone]
+        lg += (f'<Frame flex="row" gap={{7}} items="center"><Ellipse w={{9}} h={{9}} bg="{col}" />'
+               f'{T(11,"regular","var:text/muted",label)}</Frame>')
+    n = T(11, "regular", "var:text/muted", note, w="fill", align="center") if note else ""
+    return (f'<Frame w="fill" flex="col" gap={{12}} items="center" p={{18}} rounded={{18}} bg="var:bg/base" '
+            f'stroke="var:border/subtle" strokeWidth={{1}}>'
+            f'<Frame w="fill" flex="row" justify="between" items="center">'
+            f'{T(13,"semibold","var:text/strong",title)}'
+            f'<Frame name="Btn Donut range" flex="row" gap={{6}} items="center" px={{11}} py={{6}} rounded={{999}} '
+            f'bg="#FDEBE4">{T(11,"semibold","#C2521F","Today")}{I("chevron-down",12,"#C2521F")}</Frame></Frame>'
+            f'<Frame w={{{size}}} h={{{size}}} flex="col" justify="center" items="center" '
+            f'image="assets/img/donut-{pct}.png" overflow="hidden">'
+            f'{T(28,"bold","var:text/strong",f"{pct}%")}</Frame>'
+            f'<Frame w="fill" flex="row" gap={{18}} justify="center">{lg}</Frame>{n}</Frame>')
+
+def level_chip(code, tone="blue"):
+    bg = {"blue": "assets/img/pale-blue.jpg", "mint": "assets/img/pale-mint.jpg",
+          "amber": "assets/img/pale-amber.jpg", "coral": "assets/img/pale-coral.jpg",
+          "lilac": "assets/img/pale-lilac.jpg"}[tone]
+    col = {"blue": "var:text/accent", "mint": "var:state/success", "amber": "var:state/warning",
+           "coral": "#C2521F", "lilac": "#4A54A8"}[tone]
+    return (f'<Frame w={{38}} h={{38}} rounded={{12}} image="{bg}" overflow="hidden" flex="col" '
+            f'justify="center" items="center">{T(12,"bold",col,code)}</Frame>')
+
+def person_progress(avatar, who, pct, tone="teal", name=None):
+    """The reference's student list: avatar, name, a bar, a percentage."""
+    col = {"teal": "btn-teal.jpg", "coral": "tint-coral.jpg", "navy": "btn-navy.jpg",
+           "amber": "tint-amber.jpg"}[tone]
+    return (f'<Frame name="Btn {name or who}" w="fill" flex="row" gap={{12}} items="center" py={{10}}>'
+            f'<Image image="assets/img/{avatar}" w={{36}} h={{36}} rounded={{999}} />'
+            f'{T(13,"medium","var:text/strong",who,w=136)}'
+            f'<Frame grow={{1}} h={{7}} rounded={{999}} bg="var:neutral/200" flex="row">'
+            f'<Frame grow={{{max(1,min(100,pct))}}} h={{7}} rounded={{999}} image="assets/img/{col}" overflow="hidden" />'
+            f'<Frame grow={{{max(1,100-pct)}}} h={{7}} /></Frame>'
+            f'{T(13,"semibold","var:text/strong",f"{pct}%")}</Frame>')
+
+def file_row(code, tone, title, filename, status, status_tone, members, size, name, mobile=False):
+    """The reference's media table. The fixed columns only work at desktop width, so the
+    mobile variant stacks instead of squeezing — that is what pushed K1 past 390."""
+    sc = {"ok": "var:state/success", "warn": "var:state/warning", "muted": "var:text/muted"}[status_tone]
+    if mobile:
+        return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{11}} items="center" py={{10}}>'
+                f'{level_chip(code, tone)}'
+                f'<Frame grow={{1}} flex="col" gap={{2}}>{T(12,"semibold","var:text/strong",title)}'
+                f'{T(10,"regular","var:text/muted",filename,w="fill")}'
+                f'<Frame flex="row" gap={{6}} items="center">'
+                f'<Ellipse w={{5}} h={{5}} bg="#CBD6DF" />{T(10,"medium",sc,status)}'
+                f'{T(10,"regular","var:text/faint","· "+size)}</Frame></Frame>'
+                f'{I("chevron-right",14,M_IC)}</Frame>')
+    return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{13}} items="center" py={{11}}>'
+            f'{level_chip(code, tone)}'
+            f'{T(13,"semibold","var:text/strong",title,w=132)}'
+            f'{T(12,"regular","var:text/muted",filename,w="fill")}'
+            f'<Frame flex="row" gap={{7}} items="center" w={{110}}>'
+            f'<Ellipse w={{6}} h={{6}} bg="#CBD6DF" />{T(11,"medium",sc,status)}</Frame>'
+            f'{T(11,"regular","var:text/muted",members,w=84)}'
+            f'{T(11,"regular","var:text/muted",size,w=56)}</Frame>')
+
+MONTH = [("Mon", ["27", "4", "11", "18", "25"]), ("Tue", ["28", "5", "12", "19", "26"]),
+         ("Wed", ["29", "6", "13", "20", "27"]), ("Thu", ["30", "7", "14", "21", "28"]),
+         ("Fri", ["1", "8", "15", "22", "29"]), ("Sat", ["2", "9", "16", "23", "30"]),
+         ("Sun", ["3", "10", "17", "24", "31"])]
+
+def month_cal(today="14", busy=("6", "7", "8", "13", "20", "21", "27"), full=("9", "22")):
+    cols = ""
+    for day, nums in MONTH:
+        cells = f'{T(10,"medium","var:text/muted",day)}'
+        for n in nums:
+            faint = n in ("27", "28", "29", "30") and nums.index(n) == 0
+            if n == today:
+                cells += (f'<Frame name="Btn Day {n}" w="fill" flex="col" gap={{2}} items="center" py={{5}} '
+                          f'rounded={{9}} image="assets/img/btn-navy.jpg" overflow="hidden">'
+                          f'{T(11,"bold","var:text/on-dark",n)}<Frame h={{4}} /></Frame>')
+            elif n in full:
+                cells += (f'<Frame name="Btn Day {n}" w="fill" flex="col" gap={{2}} items="center" py={{5}} '
+                          f'rounded={{9}} bg="#F07A52">{T(11,"bold","var:text/on-dark",n)}'
+                          f'<Frame h={{4}} /></Frame>')
+            else:
+                dot = ('<Ellipse w={4} h={4} bg="#F07A52" />' if n in busy else '<Frame h={4} />')
+                cells += (f'<Frame name="Btn Day {n}" w="fill" flex="col" gap={{2}} items="center" py={{5}}>'
+                          f'{T(11,"medium","var:text/faint" if faint else "var:text/default",n)}{dot}</Frame>')
+        cols += f'<Frame grow={{1}} flex="col" gap={{4}} items="center">{cells}</Frame>'
+    return (f'<Frame w="fill" flex="col" gap={{10}}>'
+            f'<Frame w="fill" flex="row" justify="between" items="center">'
+            f'{T(14,"bold","var:text/strong","August 2026")}'
+            f'<Frame flex="row" gap={{7}} items="center">'
+            f'<Frame name="Btn Month prev" w={{24}} h={{24}} rounded={{8}} flex="col" justify="center" items="center">'
+            f'{I("chevron-left",14,M_IC)}</Frame>'
+            f'<Frame name="Btn Month next" w={{24}} h={{24}} rounded={{8}} image="assets/img/btn-navy.jpg" '
+            f'overflow="hidden" flex="col" justify="center" items="center">{I("chevron-right",14,W_IC)}</Frame>'
+            f'</Frame></Frame>'
+            f'<Frame w="fill" flex="row" gap={{2}}>{cols}</Frame></Frame>')
+
+def upcoming_card(title, when, avatars, name, tone="teal", action="plus"):
+    bar_col = {"teal": "#39B0CF", "coral": "#F07A52", "navy": "#1B3A5B"}[tone]
+    av = ""
+    for a in avatars:
+        av += f'<Image image="assets/img/{a}" w={{26}} h={{26}} rounded={{999}} />'
+    return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{12}} items="center" p={{14}} rounded={{16}} '
+            f'bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>'
+            f'<Rect w={{4}} h={{44}} rounded={{999}} bg="{bar_col}" />'
+            f'<Frame grow={{1}} flex="col" gap={{6}}>'
+            f'<Frame w="fill" flex="row" justify="between" items="center">'
+            f'{T(13,"semibold","var:text/strong",title)}{I("ellipsis-vertical",15,M_IC)}</Frame>'
+            f'{T(11,"regular","var:text/muted",when)}'
+            f'<Frame flex="row" gap={{4}} items="center">{av}</Frame></Frame>'
+            f'<Frame name="Btn Add {name}" w={{30}} h={{30}} rounded={{999}} image="assets/img/btn-navy.jpg" '
+            f'overflow="hidden" flex="col" justify="center" items="center">{I(action,15,W_IC)}</Frame></Frame>')
+
+def task_row(ic, tone, title, meta, name):
+    bg = {"blue": "assets/img/pale-blue.jpg", "mint": "assets/img/pale-mint.jpg",
+          "amber": "assets/img/pale-amber.jpg", "coral": "assets/img/pale-coral.jpg"}[tone]
+    col = {"blue": A_IC, "mint": OK_IC, "amber": WARN_IC, "coral": "#C2521F"}[tone]
+    return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{11}} items="center" p={{12}} rounded={{14}} '
+            f'bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>'
+            f'<Frame w={{32}} h={{32}} rounded={{10}} image="{bg}" overflow="hidden" flex="col" '
+            f'justify="center" items="center">{I(ic,15,col)}</Frame>'
+            f'<Frame grow={{1}} flex="col" gap={{1}}>{T(12,"semibold","var:text/strong",title)}'
+            f'{T(10,"regular","var:text/muted",meta,w="fill")}</Frame>'
+            f'{I("chevron-right",14,M_IC)}</Frame>')
+
+def rail_section(title, body, action="View all", action_name=None):
+    act = (f'<Frame name="Btn {action_name or title}" flex="row">'
+           f'{T(11,"semibold","var:text/accent",action)}</Frame>') if action else ''
+    return (f'<Frame w="fill" flex="col" gap={{10}}>'
+            f'<Frame w="fill" flex="row" justify="between" items="center">'
+            f'{T(13,"bold","var:text/strong",title)}{act}</Frame>{body}</Frame>')
 
 # =====================================================================================
 # CLINICAL COMPONENTS
@@ -290,8 +478,13 @@ def queue_row(time, avatar, who, meta, reason, kind, vtype, name, now=False, fla
             ff += (f'<Frame flex="row" gap={{5}} items="center" px={{8}} py={{4}} rounded={{7}} bg="{bg}">'
                    f'{I(ic,11,c)}{T(10,"semibold","var:text/default",label)}</Frame>')
         flagrow = f'<Frame w="fill" flex="row" gap={{6}}>{ff}</Frame>'
-    action = (dbtn("Start", "Start " + name, "stethoscope", "navy", grow=False, size="sm") if now
-              else dbtn("Open", "Open " + name, "chevron-right", "ghost", grow=False, size="sm"))
+    msg = (f'<Frame name="Btn Msg {name}" flex="row" px={{9}} py={{7}} rounded={{9}} bg="var:bg/base" '
+           f'stroke="var:border/subtle" strokeWidth={{1}}>{I("message-circle",14,M_IC)}</Frame>')
+    action = msg + (dbtn("Start", "Start " + name, "stethoscope", "navy", grow=False, size="sm") if now
+                    else dbtn("Open", "Open " + name, "chevron-right", "ghost", grow=False, size="sm"))
+    mact = (dbtn("Start consultation", "Start " + name, "stethoscope", "navy", full=True, size="sm") if now
+            else (dbtn("Open the file", "Open " + name, "clipboard-list", "ghost", full=True, size="sm")
+                  + dbtn("Message", "Msg " + name, "message-circle", "ghost", full=True, size="sm")))
     if mobile:
         return (f'<Frame name="Btn {name}" w="fill" flex="col" gap={{9}} p={{13}} rounded={{14}} '
                 f'bg="var:bg/base" {edge}>'
@@ -304,7 +497,10 @@ def queue_row(time, avatar, who, meta, reason, kind, vtype, name, now=False, fla
                 f'<Frame flex="row" gap={{5}} items="center">{I(tic,12,A_IC)}{status_pill(kind,size=10)}</Frame></Frame>'
                 f'{flagrow}'
                 f'<Frame w="fill" flex="row" gap={{8}} items="center" px={{10}} py={{8}} rounded={{10}} bg="var:neutral/50">'
-                f'{I("file-text",11,M_IC)}{T(11,"regular","var:text/muted",reason,w="fill")}</Frame></Frame>')
+                f'{I("file-text",11,M_IC)}{T(11,"regular","var:text/muted",reason,w="fill")}</Frame>'
+                # Desktop puts Start/Open at the end of the header row; at 390 that row is already
+                # full, so the same action gets its own line rather than being dropped.
+                f'<Frame w="fill" flex="row" gap={{8}}>{mact}</Frame></Frame>')
     return (f'<Frame name="Btn {name}" w="fill" flex="col" gap={{10}} p={{14}} rounded={{14}} bg="var:bg/base" {edge}>'
             f'<Frame w="fill" flex="row" gap={{13}} items="center">'
             f'<Frame w={{54}} flex="col" gap={{1}} items="center">'

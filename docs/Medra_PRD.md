@@ -408,7 +408,7 @@ Screen groups expand into individual screens plus states (empty, loading, error,
 | Authentication (all four roles) | 35 | 70 | 4 | Done |
 | Member app, batch 1 — Find & Book | 11 | 46 | 2 | Done |
 | Member app, batch 2 — Visits · Records · Medicines · Profile | 44 | 108 | 6 | Done |
-| Doctor app — full module (rebuilt) | 45 | 114 | 8 | Done |
+| Doctor app — full module (rebuilt) | 46 | 116 | 8 | Done |
 | Institution admin portal | — | — | — | Not started |
 | Platform admin | — | — | — | Not started |
 
@@ -520,11 +520,14 @@ and confirmation of the commission and family-plan prices with the pilot clinics
 The first doctor build was judged too basic, with mobile screens carrying less than desktop and
 a look too close to the member app. It was rebuilt rather than patched.
 
-**A separate visual system.** The doctor app now uses an **88px icon rail plus a 236px
-contextual panel** instead of the member's single sidebar, a **graph-paper ground** instead of
-the soft mesh, 14–18px corners instead of 24–28px, a **dark command strip** carrying the day's
-progress and the urgent count, and on mobile a **navy header block** with a raised centre
-action in the tab bar. It is recognisable as a different product at a glance, on the same brand.
+**A separate visual system.** The doctor app is structurally a different product: the whole app
+is a **white card floating on a soft blue canvas** with **three columns** — a 206px labelled navy
+sidebar, the main column, and a **292px light right rail** holding a month calendar, what is next
+and what is already done — against the member app's full-bleed two columns. Corners are 14–18px
+inside a 28px card, the palette adds a **warm coral/amber** alongside the brand teal for counts
+and attention, and on mobile the chrome is a **floating brand-gradient header card** with a
+raised centre action in the tab bar. It is recognisable as a different product at a glance, on
+the same brand.
 
 **Mobile parity.** Every mobile screen now carries the same cards as its desktop twin, with the
 desktop side-rail folded in underneath and the panel's key numbers absorbed into the header.
@@ -567,6 +570,47 @@ justifying to doctors, because it is two charges on the same transaction.
 Still open by agreement: a medical doctor reviews every clinical string before build; the 50%
 no-show split is a pilot policy; referral rewards are indicative; the institution admin portal
 and a lab technician's own screen are separate modules.
+
+### 15.5 Doctor module — third pass: the reference direction, and a prototype that holds
+
+The product owner approved the second pass's structure and asked for the warmth of a reference
+dashboard, and for the screens to be prototyped rather than merely drawn.
+
+**The reference direction.** The floating card, the pastel two-letter code chips (`Rx` `Lab`
+`Ref` `Note`), the donut, the per-patient progress bars, the media table and the month calendar
+in the right rail all come from it. The structure — three columns, a floating card — is what
+keeps the doctor app distinct from the member app; the reference supplied the warmth, not the
+information architecture.
+
+**The prototype is now audited, not assumed.** A new offline check (`tools/figma/proto_check.py`)
+reads the frames off disk, walks the transition table and reports unreachable screens, broken
+hotspots and unwired controls. Its first run found real defects, all now fixed:
+
+- **45 transitions pointed at hotspots that did not exist** — mostly on mobile, where the
+  affordance had simply not been drawn. That is the same "mobile carries less than desktop"
+  complaint, showing up as broken links rather than as missing content.
+- **Four of the eight sidebar destinations had no mobile route at all.** A phone tab bar carries
+  five; Schedule, Consults, Money and Growth had none. A new screen, **K9 "Everything"**, is the
+  fifth tab and now the only mobile route to them; on desktop the same directory is what the
+  app-grid button in the top bar opens.
+- **S8 Account & Security was unreachable** — nothing linked to it. So were four of the six
+  States screens, which happen because of a condition rather than a tap; each now carries a
+  small state switcher, explicitly labelled as a review control rather than product.
+- **Every page had one flow starting point, on desktop only**, so the mobile row was not a
+  prototype at all. Each page now declares two.
+
+Current state: **116 frames, 46 screens at both breakpoints, 92 of 92 reachable, 626 explicit
+transitions and 1,196 navigation links, no broken hotspots, no horizontal overflow at 390 or
+1440.** The flows are documented in `figma/medra-doctor/PROTOTYPE.md`.
+
+**One judgement made in the process.** Where a desktop right-rail section would only repeat what
+the mobile main column already said — "Next up" on a screen that already lists the queue — it is
+left out rather than folded in. Parity means the same information is reachable, not that every
+desktop container is duplicated; the difference is roughly 900px of scroll on the busiest screen.
+
+Nothing outside the doctor module was created, edited or re-rendered; the design-system,
+authentication and member pages are untouched, and `CLI-PROMPT.md` states that constraint to the
+terminal that renders into Figma.
 
 ---
 
