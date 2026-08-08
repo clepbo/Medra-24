@@ -499,3 +499,68 @@ def sheet_wrap(title, body, actions, close="Btn Close sheet"):
 def mob_sub(text):
     """A one-line subtitle sitting under the mobile appbar."""
     return f'<Frame w="fill" px={{20}} pb={{2}}>{T(13,"regular","var:text/muted",text,w="fill")}</Frame>'
+
+
+# =====================================================================================
+# HUB → SECTION → SHEET  (mobile only)
+#
+# The doctor module proved the pattern out and the product owner asked for it here too.
+# A phone screen becomes:
+#   hub      what the screen is about, the one thing you act on, and a short list of ways in
+#   section  one subject per screen, reached by tapping a row on the hub
+#   sheet    one decision, over a dimmed hub — the "dialogue" case
+#
+# These use the member chrome (light appbar, five-tab bottom nav), not the doctor's, so the
+# two apps stay visually distinct while behaving the same way.
+# =====================================================================================
+
+def m_sec_row(ic, label, summary, name, value=None, tint=None):
+    """A way into a section. Carries a count so the hub still describes the screen without
+    unrolling it."""
+    return list_row(ic, label, value=value, name=name, sub=summary, tint=tint)
+
+
+def m_hub_list(rows, title="More on this screen"):
+    return group_card(title, rows, p=16)
+
+
+def m_sheet(name, title, sub, body, actions=None, peek=None):
+    """A bottom sheet over a dimmed screen. The DSL has no opacity, so the dim is painted
+    rather than composited — in build it is the screen behind at 55% black.
+    Tapping the scrim closes it, the same as the X."""
+    top = (f'<Frame name="Btn Close sheet" w="fill" grow={{1}} flex="col" bg="#2A3948" '
+           f'overflow="hidden">{peek or ""}</Frame>')
+    acts = (f'<Frame w="fill" flex="col" gap={{10}} pt={{4}}>{actions}</Frame>') if actions else ''
+    card_ = (f'<Frame w="fill" flex="col" gap={{15}} px={{20}} pt={{12}} pb={{24}} rounded={{30}} '
+             f'bg="var:bg/base">'
+             f'<Frame w="fill" flex="row" justify="center"><Rect w={{42}} h={{4}} rounded={{999}} '
+             f'bg="var:neutral/300" /></Frame>'
+             f'<Frame w="fill" flex="row" justify="between" items="start" gap={{12}}>'
+             f'<Frame grow={{1}} flex="col" gap={{3}}>{T(19,"bold","var:text/strong",title)}'
+             + (T(13, "regular", "var:text/muted", sub, w="fill") if sub else '')
+             + f'</Frame><Frame name="Btn Close sheet" w={{34}} h={{34}} rounded={{999}} '
+             f'bg="var:bg/muted" flex="col" justify="center" items="center">{I("x",17,N_IC)}</Frame></Frame>'
+             f'{body}{acts}</Frame>')
+    return (f'<Frame name="{name}" w={{390}} minH={{844}} flex="col" bg="#2A3948" overflow="hidden">'
+            f'{top}{card_}</Frame>')
+
+
+def m_sheet_pick(ic, label, sub, name, tint=None):
+    """A row inside a sheet. Bigger tap target than a list row — a sheet is a decision."""
+    return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{14}} items="center" p={{14}} '
+            f'rounded={{18}} bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>'
+            f'<Frame w={{40}} h={{40}} rounded={{14}} bg="{tint or "var:bg/muted"}" flex="col" '
+            f'justify="center" items="center">{I(ic,19,A_IC)}</Frame>'
+            f'<Frame grow={{1}} flex="col" gap={{2}}>{T(14,"semibold","var:text/strong",label)}'
+            + (T(11, "regular", "var:text/muted", sub, w="fill") if sub else '')
+            + f'</Frame>{I("chevron-right",16,M_IC)}</Frame>')
+
+
+# The strip of the screen that stays visible behind a sheet.
+M_SHEET_PEEK = (f'{statusbar(dark=True)}'
+                f'<Frame w="fill" flex="col" gap={{12}} px={{26}} pt={{20}}>'
+                f'<Frame w="fill" h={{86}} rounded={{26}} bg="#22303E" />'
+                f'<Frame w="fill" flex="row" gap={{10}}>'
+                f'<Frame grow={{1}} h={{58}} rounded={{18}} bg="#22303E" />'
+                f'<Frame grow={{1}} h={{58}} rounded={{18}} bg="#22303E" /></Frame>'
+                f'<Frame w="fill" h={{80}} rounded={{20}} bg="#22303E" /></Frame>')

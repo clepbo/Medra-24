@@ -30,6 +30,57 @@ def add(page, fid, d, m):
     frames.append((page, f"{fid}-d.jsx", d)); frames.append((page, f"{fid}-m.jsx", m))
     NAMES[fid] = (re.search(r'name="([^"]+)"', d).group(1), re.search(r'name="([^"]+)"', m).group(1))
     ORDER.setdefault(page, []).append(fid)
+    r = ROWS.setdefault(page, {"d": [], "m": []})
+    r["d"].append(nm_of(d)); r["m"].append(nm_of(m))
+    FAMILY[fid] = [nm_of(m)]
+
+# =====================================================================================
+# HUB → SECTION → SHEET
+# A phone screen is a hub plus its own sections and sheets. The frames, the rows that open
+# them, the way back and the motion class are all generated here, so the transition table
+# never has to know they exist.
+# =====================================================================================
+MOBILE_EXTRA = []   # section and sheet frames — mobile only
+AUTO = []           # generated hub ⇄ section and hub ⇄ sheet links
+FAMILY = {}         # fid -> every mobile frame that makes up that screen, hub first
+ROWS = {}           # per page: the desktop row and the mobile row, in canvas order
+
+def nm_of(jsx): return re.search(r'name="([^"]+)"', jsx).group(1)
+
+def addx(page, fid, desktop, appbar_, pinned="", sections=(), nav=None, sheets=(),
+         foot="", sec_title="More on this screen"):
+    """sections: (key, icon, label, summary, value, tint, body)
+       sheets:   (key, icon, label, summary, tint, title, sub, body, actions)"""
+    base = nm_of(desktop) + " · Mobile"
+    rows, subs = [], []
+    for key, ic, label, summary, value, tint, body in sections:
+        sname = f"{base} · {label}"
+        rows.append(m_sec_row(ic, label, summary, f"Sec {fid} {key}", value, tint))
+        subs.append((f"{fid}-m-{key}.jsx",
+                     mob(sname, appbar(label, back=True)
+                         + f'<Frame grow={{1}} w="fill" flex="col" gap={{14}} px={{20}} pt={{4}} pb={{8}}>'
+                         + body + '</Frame>', nav=nav)))
+        AUTO.append([base, f"Btn Sec {fid} {key}", sname, "push"])
+        AUTO.append([sname, "Btn Back", base, "pop"])
+    for key, ic, label, summary, tint, title, sub, body, actions in sheets:
+        sname = f"{base} · {label} sheet"
+        rows.append(m_sec_row(ic, label, summary, f"Sheet {fid} {key}", None, tint))
+        subs.append((f"{fid}-m-{key}-sheet.jsx",
+                     m_sheet(sname, title, sub, body, actions, peek=M_SHEET_PEEK)))
+        AUTO.append([base, f"Btn Sheet {fid} {key}", sname, "sheet"])
+        AUTO.append([sname, "Btn Close sheet", base, "pop"])
+
+    body = (pinned or '') + (m_hub_list(rows, sec_title) if rows else '') + (foot or '')
+    hub = mob(base, appbar_ + f'<Frame grow={{1}} w="fill" flex="col" gap={{14}} px={{20}} pt={{4}} pb={{8}}>'
+              + body + '</Frame>', nav=nav)
+    frames.append((page, f"{fid}-d.jsx", desktop)); frames.append((page, f"{fid}-m.jsx", hub))
+    NAMES[fid] = (nm_of(desktop), base)
+    FAMILY[fid] = [base] + [nm_of(j) for _, j in subs]
+    ORDER.setdefault(page, []).append(fid)
+    r = ROWS.setdefault(page, {"d": [], "m": []})
+    r["d"].append(nm_of(desktop)); r["m"].append(base)
+    for fn, jsx in subs:
+        frames.append((page, fn, jsx)); MOBILE_EXTRA.append(nm_of(jsx)); r["m"].append(nm_of(jsx))
 
 PAGE_FIGMA = {
   "Visits":    "Medra Member — Visits &amp; Virtual Care",

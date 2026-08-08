@@ -9,7 +9,8 @@ from medra_ui import *          # shared "Soft Clinical" vocabulary
 OUT = "/home/user/Medra-24/figma/medra-member"
 os.makedirs(OUT, exist_ok=True)
 
-from member_kit import *     # member chrome: nav, dashboard shell, cards
+from member_kit import *
+from member2_kit import (m_sec_row, m_hub_list, m_sheet, m_sheet_pick, M_SHEET_PEEK, list_row, group_card)     # member chrome: nav, dashboard shell, cards
 
 
 frames=[]; NAMES={}; ORDER={}
@@ -17,6 +18,57 @@ def add(page,fid,d,m):
     frames.append((page,f"{fid}-d.jsx",d)); frames.append((page,f"{fid}-m.jsx",m))
     NAMES[fid]=(re.search(r'name="([^"]+)"',d).group(1), re.search(r'name="([^"]+)"',m).group(1))
     ORDER.setdefault(page,[]).append(fid)
+    r = ROWS.setdefault(page, {"d": [], "m": []})
+    r["d"].append(nm_of(d)); r["m"].append(nm_of(m))
+    FAMILY[fid] = [nm_of(m)]
+
+# =====================================================================================
+# HUB → SECTION → SHEET
+# A phone screen is a hub plus its own sections and sheets. The frames, the rows that open
+# them, the way back and the motion class are all generated here, so the transition table
+# never has to know they exist.
+# =====================================================================================
+MOBILE_EXTRA = []   # section and sheet frames — mobile only
+AUTO = []           # generated hub ⇄ section and hub ⇄ sheet links
+FAMILY = {}         # fid -> every mobile frame that makes up that screen, hub first
+ROWS = {}           # per page: the desktop row and the mobile row, in canvas order
+
+def nm_of(jsx): return re.search(r'name="([^"]+)"', jsx).group(1)
+
+def addx(page, fid, desktop, appbar_, pinned="", sections=(), nav=None, sheets=(),
+         foot="", sec_title="More on this screen"):
+    """sections: (key, icon, label, summary, value, tint, body)
+       sheets:   (key, icon, label, summary, tint, title, sub, body, actions)"""
+    base = nm_of(desktop) + " · Mobile"
+    rows, subs = [], []
+    for key, ic, label, summary, value, tint, body in sections:
+        sname = f"{base} · {label}"
+        rows.append(m_sec_row(ic, label, summary, f"Sec {fid} {key}", value, tint))
+        subs.append((f"{fid}-m-{key}.jsx",
+                     mob(sname, appbar(label, back=True)
+                         + f'<Frame grow={{1}} w="fill" flex="col" gap={{14}} px={{20}} pt={{4}} pb={{8}}>'
+                         + body + '</Frame>', nav=nav)))
+        AUTO.append([base, f"Btn Sec {fid} {key}", sname, "push"])
+        AUTO.append([sname, "Btn Back", base, "pop"])
+    for key, ic, label, summary, tint, title, sub, body, actions in sheets:
+        sname = f"{base} · {label} sheet"
+        rows.append(m_sec_row(ic, label, summary, f"Sheet {fid} {key}", None, tint))
+        subs.append((f"{fid}-m-{key}-sheet.jsx",
+                     m_sheet(sname, title, sub, body, actions, peek=M_SHEET_PEEK)))
+        AUTO.append([base, f"Btn Sheet {fid} {key}", sname, "sheet"])
+        AUTO.append([sname, "Btn Close sheet", base, "pop"])
+
+    body = (pinned or '') + (m_hub_list(rows, sec_title) if rows else '') + (foot or '')
+    hub = mob(base, appbar_ + f'<Frame grow={{1}} w="fill" flex="col" gap={{14}} px={{20}} pt={{4}} pb={{8}}>'
+              + body + '</Frame>', nav=nav)
+    frames.append((page, f"{fid}-d.jsx", desktop)); frames.append((page, f"{fid}-m.jsx", hub))
+    NAMES[fid] = (nm_of(desktop), base)
+    FAMILY[fid] = [base] + [nm_of(j) for _, j in subs]
+    ORDER.setdefault(page, []).append(fid)
+    r = ROWS.setdefault(page, {"d": [], "m": []})
+    r["d"].append(nm_of(desktop)); r["m"].append(base)
+    for fn, jsx in subs:
+        frames.append((page, fn, jsx)); MOBILE_EXTRA.append(nm_of(jsx)); r["m"].append(nm_of(jsx))
 
 DOCTORS=[("avatar-4.jpg","Dr. Ngozi Okafor","Cardiologist","Garki Medical Centre","₦15,000","4.9","10:30"),
          ("avatar-1.jpg","Dr. Chuka Eze","General practice","Wuse Clinic","₦8,000","4.8","11:00"),
@@ -63,7 +115,7 @@ add("Member","H1-home",
         f'<Frame grow={{1}} flex="col" gap={{18}}>{DOCS_PANEL}{MEDS_PANEL}</Frame>'
         f'<Frame w={{380}} flex="col" gap={{18}}>{next_visit_card()}{SPEC_PANEL}{RECORDS_PANEL}</Frame></Frame>'),
     mob("Member · Home — H1 Home · Mobile",
-        f'{greet_bar()}<Frame grow={{1}} w="fill" flex="col" gap={{14}} px={{20}} pt={{6}} pb={{8}}>{home_body}</Frame>',
+        f'{greet_bar()}<Frame grow={{1}} w="fill" flex="col" gap={{12}} px={{20}} pt={{2}} pb={{6}}>{home_body}</Frame>',
         nav=bottom_nav(0)))
 
 # ============================================================ H2 HOME (new member, empty)
@@ -138,6 +190,14 @@ filter_body=(f'<Frame w="fill" flex="col" gap={{20}}>'
              f'{field_chips("Distance",["Under 2 km","Under 5 km","Under 10 km","Any"],1,"FDist")}'
              f'{field_chips("Price",["Any","Under ₦10k","₦10k – ₦20k","₦20k+"],0,"FPrice")}'
              f'{field_chips("Language",["Any","English","Hausa","Yoruba","Igbo"],0,"FLang")}</Frame>')
+# The phone sheet cannot carry all five groups and still fit 844 — measured at 961px in
+# Figma. Price and language move behind a disclosure; desktop keeps all five.
+filter_body_m = (f'<Frame w="fill" flex="col" gap={{16}}>'
+             f'{ADDRESS_FILTER}'
+             f'{field_chips("When",["Today","Tomorrow","This week","Any"],0,"FWhen")}'
+             f'{field_chips("Visit type",["Any","In person","Virtual"],0,"FType")}'
+             f'{list_row("sliders-horizontal","Distance, price and language",sub="Under 5 km · any price · any language",name="More filters")}</Frame>')
+
 add("Member","S2-filters",
     desk("Member · Search — S2 Filters",
         f'{head_chip([("Refine your",False),("search",True)],30)}{filter_body}'
@@ -150,7 +210,7 @@ add("Member","S2-filters",
         f'<Frame w="fill" flex="row" justify="center"><Rect w={{44}} h={{5}} rounded={{999}} bg="var:neutral/300" /></Frame>'
         f'<Frame w="fill" flex="row" justify="between" items="center">{T(20,"bold","var:text/strong","Filters")}'
         f'<Frame name="Btn Close filters" flex="row">{I("x",21,N_IC)}</Frame></Frame>'
-        f'{filter_body}'
+        f'{filter_body_m}'
         f'<Frame w="fill" flex="row" gap={{12}}>'
         f'<Frame grow={{1}} flex="col">{ghost("Reset","Reset filters")}</Frame>'
         f'<Frame grow={{1}} flex="col">{cta("Show 24","Apply filters")}</Frame></Frame></Frame></Frame>'))
@@ -243,7 +303,7 @@ add("Member","B1-slot",
         f'{cta("Review booking","Review B1")}</Frame></Frame>', 1),
     mob("Member · Booking — B1 Choose a Time · Mobile",
         f'{appbar("Choose a time")}'
-        f'<Frame grow={{1}} w="fill" flex="col" gap={{15}} px={{20}} pt={{4}} pb={{10}}>'
+        f'<Frame grow={{1}} w="fill" flex="col" gap={{12}} px={{20}} pt={{2}} pb={{8}}>'
         f'{date_strip()}'
         f'{card(T(15,"semibold","var:text/default","Morning &amp; afternoon")+slot_grid(),p=18,gap=13)}'
         f'{TYPE_CARD_M}'
@@ -324,7 +384,7 @@ add("Member","B3-review",
         f'{cta("Continue to payment","Pay B3","credit-card")}{ghost("Back to times","Back times B3","arrow-left")}</Frame></Frame>', 1),
     mob("Member · Booking — B3 Review &amp; Confirm · Mobile",
         f'{appbar("Review")}'
-        f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{10}}>{REVIEW_M}'
+        f'<Frame grow={{1}} w="fill" flex="col" gap={{10}} px={{20}} pt={{2}} pb={{8}}>{REVIEW_M}'
         f'<Frame grow={{1}} />{cta("Continue to payment","Pay B3","credit-card")}</Frame>'))
 
 
@@ -405,7 +465,7 @@ add("Member","C1-confirmed",
         f'<Frame grow={{1}} flex="col">{cta("View my visits","View visits C1")}</Frame></Frame></Frame></Frame>', 2),
     mob("Member · Booking — C1 Confirmed · Mobile",
         f'{appbar(None, back=False, right=circle_btn("x","Close confirm"))}'
-        f'<Frame grow={{1}} w="fill" flex="col" gap={{14}} px={{20}} pt={{6}} pb={{10}}>{CONFIRM_M}'
+        f'<Frame grow={{1}} w="fill" flex="col" gap={{11}} px={{20}} pt={{2}} pb={{8}}>{CONFIRM_M}'
         f'<Frame grow={{1}} />{cta("View my visits","View visits C1")}'
         f'{ghost("Add to calendar","Add calendar C1","calendar-plus")}</Frame>'))
 
