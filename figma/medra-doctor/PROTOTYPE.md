@@ -2,8 +2,8 @@
 
 Everything is wired by `link-doctor.js`. Nothing needs to be connected by hand in Figma.
 
-**626 explicit transitions · 1,196 navigation links · 1,481 controls that stay on their own
-screen · 92 of 92 screens reachable · 0 broken hotspots.**
+**906 explicit transitions · 2,795 navigation links · 1,444 controls that stay on their own
+screen · 215 of 215 screens reachable · 0 broken hotspots.**
 
 Verify it before rendering, and again after:
 
@@ -17,10 +17,19 @@ python3 tools/figma/proto_check.py figma/medra-doctor link-doctor.js
 
 Three passes, in this order.
 
-**1 — Explicit transitions.** A hand-written table of `(screen, hotspot, destination)`. Every
-entry is resolved twice, once for the desktop frame and once for its mobile twin, so a route
-that exists on one breakpoint exists on both. A transition naming a hotspot that is not on that
-frame is a **build error**, not a silent skip — `proto_check.py` fails on it.
+**1 — Explicit transitions.** A hand-written table of `(screen, hotspot, destination)`. The
+table describes a **screen**, and on mobile a screen is a hub plus its sections and sheets, so
+each entry is attached to whichever frame of that family actually carries the control — found by
+scanning the generated frames at build time, not guessed. A transition naming a hotspot that
+exists nowhere in the family is a **build error**, not a silent skip; `proto_check.py` fails on
+it. A hotspot prefixed `~` in the table is breakpoint-optional: mobile carries a per-row action
+that the capped desktop list does not, and its absence there is expected rather than broken.
+
+**1b — Hub ⇄ section ⇄ sheet.** These are generated, never hand-written. Declaring a section on
+a screen emits the section frame, the row that opens it (`Btn Sec <screen> <key>`, push), and its
+`Btn Back` (pop). Declaring a sheet emits the sheet frame, the row that opens it
+(`Btn Sheet <screen> <key>`, slide up from the bottom), and two ways out — the X and tapping the
+scrim.
 
 **2 — Navigation sweep.** Twelve global hotspots — the eight sidebar items, notifications,
 patient search, start-consult and help — applied to every frame that carries them. A frame that
@@ -89,6 +98,13 @@ sidebar footer goes to `S6` from every desktop screen. `X1 Subscription Locked` 
 ### Growth (AARRR)
 `R1 Insights` → **Fix my hours** → `K7 Availability`; → **My booking link** → `R3`;
 → **Invite a colleague** → `G3`. `S1` → **Ratings** → `R2` → **My public profile** → `S1`.
+
+### Mobile: the hub pattern
+Every mobile screen opens as a hub. Tap a row and you get that subject on its own screen with a
+back arrow; tap a sheet row and it slides up over a dimmed hub. Worth clicking:
+`K1 Queue` → **Waiting** → back → **Quick actions** (sheet) → **I am running late** → `K3`.
+`C1 In Progress` → **The consultation note** → back → **Add to this visit** (sheet) →
+**Prescription** → `C3`. `S1 Public Profile` → **Practice settings** → any settings screen.
 
 ### Mobile-only: the More tab
 The fifth tab is `K9 Everything`, not Settings. It is the only mobile route to Schedule,

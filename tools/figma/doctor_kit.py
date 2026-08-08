@@ -726,3 +726,92 @@ def chart(series, h=140, unit=""):
 
 def field_dr(label, ic, value, ph=True, helper=None, prefix=None, trailing=None, focus=False):
     return field(label, ic, value, ph=ph, helper=helper, prefix=prefix, trailing=trailing, focus=focus)
+
+
+# =====================================================================================
+# DENSITY — the third pass.
+#
+# The screens were complete but overloaded: the average mobile screen was two full
+# viewports of stacked cards and the busiest was five. Completeness is not the same as
+# legibility, and a doctor between patients reads the first screenful or nothing.
+#
+# Mobile is now **hub → section → sheet**:
+#   hub      what is happening now, plus a short list of ways in
+#   section  one subject per screen, reached by tapping a row on the hub
+#   sheet    one decision, over a dimmed hub — the "dialogue" case
+#
+# Desktop keeps its three columns but obeys a budget: at most two groups per column,
+# lists capped at four rows, and a "See all N" row pointing at whichever screen owns
+# the full list. Nothing is deleted; it moves to where it belongs.
+# =====================================================================================
+
+def see_all(label, name, count=None):
+    """The disclosure that replaces rows five and beyond. It is a row, not a link, because
+    it has to look like the thing it continues."""
+    txt = f"See all {count} {label}" if count else label
+    return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{9}} justify="center" items="center" '
+            f'py={{11}} rounded={{11}} bg="var:bg/subtle">'
+            f'{T(12,"semibold","var:text/accent",txt)}{I("arrow-right",14,A_IC)}</Frame>')
+
+def capped(rows, keep, label, name, footer=None):
+    """A dgroup that shows `keep` rows and sends the rest to the screen that owns them."""
+    total = len(rows)
+    body = hr().join(rows[:keep])
+    tail = (hr() + see_all(label, name, total)) if total > keep else ''
+    return body + tail
+
+def sec_row(ic, label, summary, name, value=None, tone=None):
+    """A way into a section. Carries a count so the hub still tells you the shape of the
+    day without unrolling it."""
+    return drow(ic, label, value=value, name=name, sub=summary, tone=tone)
+
+def hub_sections(rows, title="More on this screen"):
+    return dgroup(title, rows, p=14)
+
+def mob_hub(name, head, pinned, sections, tab=None, foot=None, sec_title="More on this screen"):
+    """The mobile landing for a desktop screen. Header, the one thing you act on now, and
+    a short list of ways in. Everything else lives one tap away."""
+    body = (pinned or '') + (hub_sections(sections, sec_title) if sections else '') + (foot or '')
+    return dr_mob(name, head, body, tab)
+
+def mob_section(name, title, sub, body, tab=None, stats=None, foot=None, right=None):
+    """One subject, one screen. Back always returns to the hub that opened it."""
+    return dr_mob(name, dr_head(title, sub, back=True, stats=stats, right=right),
+                  body + (foot or ''), tab)
+
+def dr_sheet(name, title, sub, body, actions=None, behind=None, peek=None):
+    """A bottom sheet over a dimmed hub — the "opens like a dialogue" case. Used only for a
+    single decision; anything with its own scroll is a section, not a sheet.
+
+    `peek` is the strip of the screen underneath that stays visible. The DSL has no opacity,
+    so the dim is a flat slate fill rather than a translucent one; in build it is 55% black.
+    """
+    # Tapping the scrim closes the sheet, the same as the X.
+    top = (f'<Frame name="Btn Close sheet" w="fill" grow={{1}} flex="col" bg="#2A3948" '
+           f'overflow="hidden">{peek or ""}</Frame>')
+    acts = (f'<Frame w="fill" flex="col" gap={{9}} pt={{4}}>{actions}</Frame>') if actions else ''
+    card = (f'<Frame w="fill" flex="col" gap={{14}} px={{18}} pt={{12}} pb={{22}} rounded={{26}} '
+            f'bg="var:bg/base">'
+            f'<Frame w="fill" flex="row" justify="center"><Rect w={{40}} h={{4}} rounded={{999}} '
+            f'bg="var:neutral/300" /></Frame>'
+            f'<Frame w="fill" flex="row" justify="between" items="start" gap={{12}}>'
+            f'<Frame grow={{1}} flex="col" gap={{3}}>{T(18,"bold","var:text/strong",title)}'
+            + (T(12, "regular", "var:text/muted", sub, w="fill") if sub else '')
+            + f'</Frame><Frame name="Btn Close sheet" w={{32}} h={{32}} rounded={{999}} '
+            f'bg="var:bg/muted" flex="col" justify="center" items="center">{I("x",16,N_IC)}</Frame></Frame>'
+            f'{body}{acts}</Frame>')
+    return (f'<Frame name="{name}" w={{390}} minH={{844}} flex="col" bg="#2A3948" overflow="hidden">'
+            f'{top}{card}</Frame>')
+
+def sheet_pick(ic, label, sub, name, tone=None):
+    """A row inside a sheet. Bigger tap target than a list row — a sheet is a decision."""
+    tint = {"warn": "var:state/warning-bg", "err": "var:state/error-bg", "ok": "var:state/success-bg",
+            "info": "var:state/info-bg", None: "var:bg/muted"}[tone]
+    hexc = {"warn": WARN_IC, "err": ERR_IC, "ok": OK_IC, "info": A_IC, None: A_IC}[tone]
+    s = T(11, "regular", "var:text/muted", sub, w="fill") if sub else ""
+    return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{13}} items="center" p={{13}} '
+            f'rounded={{14}} bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>'
+            f'<Frame w={{38}} h={{38}} rounded={{12}} bg="{tint}" flex="col" justify="center" '
+            f'items="center">{I(ic,18,hexc)}</Frame>'
+            f'<Frame grow={{1}} flex="col" gap={{2}}>{T(13,"semibold","var:text/strong",label)}{s}</Frame>'
+            f'{I("chevron-right",15,M_IC)}</Frame>')

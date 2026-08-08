@@ -14,6 +14,17 @@ should never be watching an animation finish.
 | Attach to a visit | Move In | Bottom | **300 ms** | Prescribe, order tests, upload a result, refer, templates, running late, outcome |
 | Stay on screen | Smart Animate | — | **10 ms** | Toggles, radios, filters — controls whose real behaviour is state, not navigation |
 
+Mobile adds two, both generated rather than hand-wired:
+
+| Transition | Type | Direction | Duration | Used for |
+|---|---|---|---|---|
+| Hub → section | Move In | Left | **240 ms** | Every `Btn Sec …` row on a mobile hub |
+| Hub → sheet | Move In | Bottom | **300 ms** | Every `Btn Sheet …` row; the X and the scrim reverse it |
+
+A section is navigation and behaves like one. A sheet is a decision taken without leaving the
+screen, so it rises over a dimmed hub and the hub stays visible behind it — which is why closing
+it is a Move Out and not a back-navigation.
+
 The state switcher on the States page uses the default 260 ms Smart Animate. It is a review
 control, not a real one — it exists so the page can be clicked through.
 

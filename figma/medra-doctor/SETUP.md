@@ -1,15 +1,22 @@
 # Medra — Doctor / Medical Practitioner module
 
-**116 frames · 8 Figma pages · Desktop 1440×900 + Mobile 390 · doctor-module only**
+**239 frames · 8 Figma pages · Desktop 1440×900 + Mobile 390 · doctor-module only**
 
-46 screens, every one drawn at both breakpoints, plus 24 component-state frames that become
-10 interactive component sets.
+46 desktop screens. On mobile each of those is a **hub plus its own sections and sheets** —
+169 mobile frames in total — plus 24 component-state frames that become 10 component sets.
 
 Offline validation
-- `node validate.js` → **ALL 116 CLEAN, FULLY OFFLINE ✓** (197 icons, 41 tokens, 0 warnings)
+- `node validate.js` → **ALL 239 CLEAN, FULLY OFFLINE ✓** (203 icons, 41 tokens, 0 warnings)
 - `python3 tools/figma/preview_bundle.py` + headless measurement → **0 horizontal overflow** at 390 and 1440
 - `python3 tools/figma/proto_check.py figma/medra-doctor link-doctor.js` → **PROTOTYPE COMPLETE ✓**
-  92/92 screens reachable, 626 explicit links, 1,196 navigation links, no broken hotspots
+  215/215 screens reachable, 906 explicit links, 2,795 navigation links, no broken hotspots
+
+| | Before this pass | Now |
+|---|---|---|
+| Tallest mobile screen | 4,096px (≈5 viewports) | **1,467px** |
+| Median mobile screen | ~1,750px | **844px — one viewport** |
+| Tallest desktop screen | 1,691px | **1,365px** |
+| Median desktop screen | ~1,150px | **1,029px** |
 
 ---
 
@@ -39,33 +46,44 @@ it always holds what that section needs next. Today shows the month, who is next
 already signed; Requests shows the inbox split; Consultation shows who you are with, the elapsed
 timer and what you can attach; Money shows the next payout and the trial countdown.
 
-## 2. Mobile carries the same information as desktop
+## 2. Mobile is a hub, not a scroll
 
-The previous version trimmed mobile, which was the second complaint. It no longer does, and
-this pass closed the last of it:
+The screens were complete but overloaded. The average mobile screen was two full viewports of
+stacked cards and the busiest was five, because every desktop card had simply been folded into
+one column. Completeness is not legibility: a doctor between patients reads the first screenful
+or nothing.
 
-- the **consult tab strip** (Note / Rx / Tests / Files / Refer) is now on the phone, so C1, C3,
-  C4 and C6 can move between each other exactly as desktop can;
-- a mobile **queue row carries its own actions** — "Open the file" and "Message" — because the
-  desktop row puts them at the end of a line that does not exist at 390;
-- K4 gained "Ask for history" and "Send the link"; K6 gained "Edit my hours" and "Block time
-  off"; K8 gained "Offer everyone my next open slot"; S5 gained statements and billing; S7 and
-  S8 gained their save and sign-out-everywhere actions;
-- S1 carries the whole settings list the desktop keeps in its right rail, and R1/R2/R3 carry the
-  growth rail;
-- **K9 "Everything"** is new. The sidebar has eight destinations and a phone tab bar has five,
-  so Schedule, Consults, Money and Growth had no mobile route at all. K9 is that route, and on
-  desktop the same directory is what the app-grid button in the top bar opens.
+Mobile is now **hub → section → sheet**.
 
-Where the desktop rail would only repeat the main column — "Next up" on a screen that already
-lists the queue — it is left out rather than pasted in. That is the difference between parity
-and duplication.
+- **Hub** — the header with the day's numbers, the one thing you act on now, and a short list of
+  ways in. Nothing else. The hub for Today is the next patient and clinic progress; for a
+  consultation it is who you are with, the timer and the tab strip.
+- **Section** — one subject, one screen, reached by tapping a row on the hub. `Btn Back` always
+  returns to the hub that opened it. The consultation note, the waiting queue, the safety checks,
+  the audit trail: each gets a screen with room to breathe instead of a slot in a stack.
+- **Sheet** — one decision, over a dimmed hub. This is the "opens like a dialogue" case: quick
+  actions on Today, *Add to this visit* in a consultation, *Change this week* on the schedule,
+  *Before you start* on a patient file. Anything with its own scroll is a section, not a sheet.
 
-These are **scrolling frames** — `minH={844}`, so Figma grows them rather than clipping. The
-tallest is K1 (today's queue) at about 4,100px, which is a genuinely long screen because it is
-a whole clinic day; then S1 at 2,700 and C1 at 2,600. What is guaranteed is that **nothing
-overflows horizontally** at 390 and that the primary action of each screen sits in the first
-viewport.
+Nothing was deleted. Every card that was on a mobile screen before is still in the bundle, one
+tap away and labelled with a count so the hub still tells you the shape of the day without
+unrolling it.
+
+The pattern is generated, not hand-assembled: a screen declares its sections and sheets, and the
+builder emits the frames, the rows that open them, the way back, and the motion class. That is
+why 169 mobile frames carry no hand-written wiring and none of them can drift out of sync.
+
+### Desktop got a budget too
+
+Not a rewrite — a limit. At most two groups per column; lists capped at four rows with a
+**See all N** row pointing at whichever screen owns the full list; anything beyond that moved to
+the right rail or to the screen it belongs to. Today's queue shows two of five and links to the
+day list. Ratings dropped a third side column. The consultation room gives the note the whole
+main column and puts what supports it — allergies, adherence, what she flagged — beside it
+rather than beneath it.
+
+These are still **scrolling frames** — `minH={844}` on mobile, so Figma grows them rather than
+clipping. The difference is that the first screenful is now the whole answer for most screens.
 
 ## 3. Screens
 
@@ -216,7 +234,7 @@ See `CLI-PROMPT.md` for the exact instruction to hand to the terminal.
 .\render-doctor.ps1
 ```
 
-It creates the eight `Medra Doctor —` pages, renders 116 frames into them, builds the component
+It creates the eight `Medra Doctor —` pages, renders 239 frames into them, builds the component
 sets on the doctor components page only, then wires the prototype. **It does not touch the
 design-system, authentication or member pages.** The one cross-module link is Sign out, which
 points at `Auth · Doctor — D6 Log In` if that frame exists and is skipped if it does not.
@@ -238,10 +256,10 @@ python3 tools/figma/proto_check.py figma/medra-doctor link-doctor.js
 It reads the frames off disk, walks the transition table, and answers three questions without
 opening Figma: is every screen reachable from a flow start, does every explicit transition name
 a hotspot that actually exists on that frame, and how many `Btn` nodes are wired explicitly
-versus swept. Current result: **92/92 reachable, 0 broken links**.
+versus swept. Current result: **215/215 reachable, 0 broken links**.
 
 ## 8. Preview without Figma
 ```bash
 python3 tools/figma/preview_bundle.py figma/medra-doctor
 ```
-`medra-doctor-overview.png` is the contact sheet for all 116 frames.
+`medra-doctor-overview.png` is the contact sheet for all 239 frames.

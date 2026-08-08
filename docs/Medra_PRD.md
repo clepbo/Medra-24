@@ -408,7 +408,7 @@ Screen groups expand into individual screens plus states (empty, loading, error,
 | Authentication (all four roles) | 35 | 70 | 4 | Done |
 | Member app, batch 1 — Find & Book | 11 | 46 | 2 | Done |
 | Member app, batch 2 — Visits · Records · Medicines · Profile | 44 | 108 | 6 | Done |
-| Doctor app — full module (rebuilt) | 46 | 116 | 8 | Done |
+| Doctor app — full module (rebuilt) | 46 | 239 | 8 | Done |
 | Institution admin portal | — | — | — | Not started |
 | Platform admin | — | — | — | Not started |
 
@@ -611,6 +611,44 @@ desktop container is duplicated; the difference is roughly 900px of scroll on th
 Nothing outside the doctor module was created, edited or re-rendered; the design-system,
 authentication and member pages are untouched, and `CLI-PROMPT.md` states that constraint to the
 terminal that renders into Figma.
+
+### 15.6 Doctor module — fourth pass: density
+
+The product owner accepted the coverage and the direction, and raised the remaining problem:
+the screens were overloaded, mobile especially. That was true and measurable — the average
+mobile screen was two full viewports of stacked cards and the busiest was five, because every
+desktop card had been folded into one column. Completeness is not legibility.
+
+**Mobile is now hub → section → sheet.**
+
+| | What it is |
+|---|---|
+| **Hub** | The header numbers, the one thing you act on now, and a short list of ways in. Nothing else. |
+| **Section** | One subject, one screen, opened by tapping a row on the hub. Back always returns to the hub. |
+| **Sheet** | One decision, over a dimmed hub — quick actions, *Add to this visit*, *Change this week*. Anything with its own scroll is a section, not a sheet. |
+
+Nothing was removed. Every card is still in the bundle, one tap away, with a count on the hub row
+so the hub still tells you the shape of the day without unrolling it. The pattern is generated
+rather than hand-assembled: a screen declares its sections and sheets and the builder emits the
+frames, the rows that open them, the way back and the motion class — which is why 169 mobile
+frames carry no hand-written wiring.
+
+**Desktop got a budget, not a rewrite:** at most two groups per column, lists capped at four rows
+with a *See all N* row pointing at the screen that owns the full list, and anything beyond that
+moved to the right rail or to where it belongs.
+
+| | Third pass | Fourth pass |
+|---|---|---|
+| Tallest mobile screen | 4,096px (≈5 viewports) | **1,467px** |
+| Median mobile screen | ~1,750px | **844px — one viewport** |
+| Tallest desktop screen | 1,691px | **1,365px** |
+| Frames | 116 | **239** (46 desktop screens, 169 mobile frames, 24 component states) |
+| Prototype | 92/92 reachable | **215/215 reachable**, 906 explicit links, 0 broken hotspots |
+
+The prototype audit was extended with it: the transition table now describes a *screen* rather
+than a frame, and each entry is attached to whichever frame of a mobile family actually carries
+the control, found by scanning the generated frames at build time. A hotspot that exists nowhere
+in the family fails the build.
 
 ---
 
