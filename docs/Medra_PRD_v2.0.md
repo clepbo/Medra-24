@@ -2,21 +2,35 @@
 
 **A unified medical records & consultation-booking platform for Nigeria**
 
-> ⚠️ **Superseded.** This is v1.0 (23 July 2026). The current document is
-> **`Medra_PRD_v2.0.md`**, which adds the clinical chain (nurse, laboratory, pharmacy),
-> the organisation module, verification state on health data, the scoped external-access
-> link, and the widened identity model. Kept for history.
-
 | | |
 |---|---|
 | **Product** | Medra |
-| **Document type** | Product Requirements Document (PRD) v1.0 |
+| **Document type** | Product Requirements Document (PRD) |
+| **Version** | **v2.0** |
 | **Status** | Draft for review |
 | **Owner** | Godwin Okwor (Product) |
 | **Contributors** | Israel Oni (UI/UX Design) |
 | **Launch market** | Abuja, Nigeria (pilot) |
-| **Date** | 23 July 2026 |
-| **Related docs** | UI/UX Design Brief (call transcript, 10 Jul 2026) · UI/UX Design Scope · Medra MVP Feature Set |
+| **Date** | 10 August 2026 |
+| **Supersedes** | v1.0 (23 July 2026) |
+| **Related docs** | UI/UX Design Brief (10 Jul 2026) · Product review (1 Aug 2026) · **Second product review (9 Aug 2026)** · UI/UX Design Scope · Medra MVP Feature Set |
+
+---
+
+## 0. Version history
+
+| Version | Date | What changed |
+|---|---|---|
+| v1.0 | 23 Jul 2026 | First full PRD. Three roles in practice — member, doctor, institution admin. Booking loop, records, subscription. |
+| **v2.0** | **10 Aug 2026** | **The 9 August review changed the shape of the product, not just the screens.** Five changes carry structural weight: (1) the **clinical chain** — nurses, lab technicians and pharmacists are first-class roles, because a doctor consumes work other people produce; (2) the **organisation module** is specified, with departments rather than individuals as the unit of onboarding and billing; (3) **self-reported health data is marked unverified** and stays marked until a clinician or lab vets it; (4) **external parties reach a record through a scoped, single-use link**, so a lab that is not on Medra can still return a result; (5) **identity widens** — NIN, mandatory date of birth, NHIS and private insurance. §24 records the decisions and the questions still open. |
+
+### What v2.0 does *not* change
+
+The member-owned record was already the spine of v1.0 and the review ratified it: the member is
+the connector between institutions, not the institution. Booking, availability, consultation
+notes, consent-scoped sharing, the subscription model and the design language all stand. The
+existing 439 rendered frames are extended and retrofitted, not discarded — §15.7 lists exactly
+what has to change and what does not.
 
 ---
 
@@ -24,11 +38,12 @@
 
 Medra is a mobile-responsive web platform that digitises how Nigerians find care, book consultations, and carry their medical history. Today most private hospitals in Nigeria run on paper filing and WhatsApp/phone booking. There is no shared medical database, so a patient's history lives on paper they must physically carry between doctors — creating avoidable risks such as clashing drug prescriptions, and wasted trips to unavailable doctors.
 
-Medra solves this in three layers:
+Medra solves this in four layers:
 
-1. **A patient-facing booking experience** — find a verified doctor or institution, see real availability, and book (in-person or virtual) before leaving home.
-2. **A hospital/clinic operating system** — a shared database that institutions use internally to manage bookings, allocate doctors, hold patient records, and communicate between staff.
-3. **A portable medical history** — each patient owns a continuous, structured record (diagnoses, prescriptions, results, recommendations) that any authorised doctor can read to make safer decisions.
+1. **A member-facing booking experience** — find a verified doctor or institution, see real availability, and book (in-person or virtual) before leaving home.
+2. **A hospital/clinic operating system** — a shared database that institutions use internally to manage bookings, allocate work across departments, hold records, and communicate between staff.
+3. **The clinical chain** — nurses, lab technicians and pharmacists enter the work they actually do, so the doctor reads a prepared record instead of typing one. A platform that models only doctors either loses that data or turns the doctor into a data-entry clerk; both destroy the reason to use it.
+4. **A portable medical history** — each member owns a continuous, structured record (diagnoses, prescriptions, results, recommendations) that any authorised clinician can read to make safer decisions, with every fact carrying whether it has been **medically verified** or merely self-reported.
 
 **Business model:** Institutions and independent practitioners pay a subscription to be on the platform (priced by size, with enterprise/multi-branch plans). Patients use the platform for free and pay institutions directly for services rendered.
 
@@ -124,26 +139,58 @@ Wants to cover employee medical costs like a corporate health plan by enrolling 
 
 ## 6. User Roles & Permissions
 
-Five roles. RBAC is a core, security-sensitive requirement because of medical-data sensitivity.
+**Nine roles.** v1.0 had five and flagged the gap as an open item; the 9 August review closed it.
+RBAC is a core, security-sensitive requirement because of medical-data sensitivity.
 
-| Capability | Patient | Doctor / Staff | Institution Admin | Private Practitioner | Platform Admin |
-|---|:--:|:--:|:--:|:--:|:--:|
-| Browse institutions/practitioners | ✅ | — | — | — | ✅ |
-| Book / cancel own appointment | ✅ | — | — | — | — |
-| View **own** medical history | ✅ | — | — | — | — |
-| View **assigned patient** history | — | ✅ | ✅ (manage) | ✅ | — |
-| Write consultation note / prescription | — | ✅ | — | ✅ | — |
-| Set availability / calendar | — | ✅ | ✅ (for staff) | ✅ | — |
-| Confirm/decline/complete/no-show booking | — | ✅ | ✅ | ✅ | — |
-| Allocate booking to a doctor | — | — | ✅ | — | — |
-| Manage staff (roles & permissions) | — | — | ✅ | — | — |
-| Manage subscription/billing | — | — | ✅ | ✅ | — |
-| Internal staff messaging | — | ✅ | ✅ | — | — |
-| Approve institutions / verify MDCN | — | — | — | — | ✅ |
-| Configure subscription plans | — | — | — | — | ✅ |
-| Platform-wide analytics | — | — | — | — | ✅ |
+| Role | What it is | Why it exists |
+|---|---|---|
+| **Member** | A person using Medra for their own care and their dependants' | Owns the record; the connector between institutions |
+| **Doctor / Medical practitioner** | Consults, diagnoses, prescribes, refers, signs | The clinical decision |
+| **Nurse** | Vitals, injections, dressings, observations, prep before and after a consultation | Produces most of what a doctor reads. Without this role, either the data is lost or the doctor types it |
+| **Lab technician** | Runs ordered tests and returns structured results | Results are the second-largest thing in a record after notes |
+| **Pharmacist / dispensary** | Dispenses against a prescription, records what was actually given | Closes the loop between prescribed and taken |
+| **Front desk / receptionist** | Registers walk-ins, checks people in, manages the day's queue, takes payment | The first and last person a patient meets |
+| **Organisation admin** | Onboards the organisation, its branches, departments and staff; manages seats and billing | The buyer |
+| **Independent practitioner** | A doctor with no institution behind them | §11.4 — a large share of the Abuja pilot |
+| **Platform admin** | Verifies organisations and practitioners, configures plans | Medra's own back office |
 
-> **Open item:** institution staff roles beyond "doctor" — nurses, receptionists, lab techs — may need distinct permission sets. Confirm before finalising the RBAC matrix (see §17).
+### 6.1 Permission matrix
+
+| Capability | Member | Doctor | Nurse | Lab tech | Pharmacist | Front desk | Org admin | Platform admin |
+|---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| Browse providers, book, cancel own visit | ✅ | — | — | — | — | ✅ (on behalf) | — | — |
+| View **own** record | ✅ | — | — | — | — | — | — | — |
+| View a member's record | — | ✅ scoped | ✅ scoped | ⚠️ order only | ⚠️ prescription only | ❌ | ❌ | — |
+| Write consultation note, diagnose, prescribe, refer, **sign** | — | ✅ | — | — | — | — | — | — |
+| Record vitals and observations | — | ✅ | ✅ | — | — | — | — | — |
+| Administer and record an injection or procedure | — | ✅ | ✅ | — | — | — | — | — |
+| Receive a test order; enter a **structured result** | — | — | — | ✅ | — | — | — | — |
+| Release a result to the member | — | ✅ | — | ❌ | — | — | — | — |
+| Dispense against a prescription; record what was given | — | — | — | — | ✅ | — | — | — |
+| Register a walk-in, check in, take payment | — | — | — | — | — | ✅ | ✅ | — |
+| Allocate a booking to a practitioner | — | — | — | — | — | ✅ | ✅ | — |
+| Create a **scoped external-access link** | — | ✅ | — | — | — | — | ✅ | — |
+| Manage departments, seats and staff | — | — | — | — | — | — | ✅ | — |
+| Manage subscription and billing | — | ✅ (own) | — | — | — | — | ✅ | — |
+| Verify organisations and practitioners | — | — | — | — | — | — | — | ✅ |
+| Platform-wide analytics | — | — | — | — | — | — | — | ✅ |
+
+Legend: ✅ full · ⚠️ limited to the task in hand · ❌ explicitly denied · — not applicable.
+
+Two denials are deliberate and worth stating plainly, because they are the ones a clinic will
+push back on:
+
+- **Front desk cannot read clinical content.** They register, schedule, check in and take money.
+  Giving the busiest, highest-turnover seat in the building a window into diagnoses is the
+  fastest way to lose a member's trust and breach the NDPA.
+- **A lab technician cannot release a result to a member.** They enter it; a doctor releases it.
+  An out-of-range value arriving on a phone with nobody to explain it is a harm, not a feature.
+
+### 6.2 Scope of access, and how it ends
+
+Access is granted **per episode of care**, not per person and not forever. A nurse assigned to
+today's clinic sees today's patients; access ends when the visit is marked complete. Every read
+is logged and visible to the member (§12).
 
 ---
 
@@ -157,7 +204,11 @@ Medra's full vision spans four portals. The **MVP** ships a mobile-responsive we
 | Doctor availability & dashboard | ✅ | Analytics | — |
 | Medical records | ✅ Basic structured note | Attachments, lab results, ICD codes | Interoperability/exports |
 | Telemedicine | ✅ Virtual type + manual link via SMS | Automated Daily.co link generation | In-app video UI |
-| Institution admin portal | ⚠️ Minimum (login, allocate, staff basics) | Full staff mgmt, multi-branch, internal messaging | Enterprise SSO |
+| **Organisation portal** | ✅ Onboarding, verification, departments, seats, allocation, billing | Multi-branch analytics, internal messaging | Enterprise SSO |
+| **Clinical chain** (nurse, lab, pharmacy) | ✅ Task-scoped apps for each | Inventory, rostering | Device integration |
+| **External access link** | ✅ Scoped, single-use, consent-gated | Two-way messaging with the external party | Partner API |
+| **Verification state** on health data | ✅ Marked everywhere it appears | Bulk verification at a visit | Automated lab attestation |
+| **Insurance** | ✅ NHIS and private insurer captured on the profile | Eligibility check with partners | Claims submission |
 | Subscription & payments | ✅ Clinic pays via Paystack, 30-day trial | Tiered/enterprise plans, employer sponsors | Patient-to-institution payments |
 | Platform admin | ⚠️ Manual/back-office at MVP | Self-serve plan config, analytics | — |
 | Drug-interaction checks | Manual (doctor reads history) | Assisted flags | Automated interaction warnings |
@@ -168,16 +219,33 @@ Legend: ✅ in scope · ⚠️ partial/minimum · — later.
 
 ## 8. MVP Functional Requirements (by Module)
 
-The MVP is organised into nine modules (source: Medra MVP Feature Set).
+The MVP is organised into **thirteen** modules. Modules 1–9 come from the original MVP Feature Set; **Modules 10–13 were added in v2.0** after the 9 August review and are the reason this version exists.
 
-### Module 1 — Authentication *(foundation)*
-- Patient registration (phone number + OTP).
-- Institution registration (with document verification — practice licences).
-- Doctor registration (phone + **MDCN** number).
-- Facility admin login.
-- Login and onboarding for all user types.
-- Forgot password (OTP reset).
-- Role-based redirect after login (patient → home, doctor → dashboard, admin → portal).
+### Module 1 — Authentication & identity *(foundation)* — **revised in v2.0**
+- Member registration (phone or email + OTP, or Google).
+- Doctor registration (phone + **MDCN** number + **NIN**).
+- **Organisation registration** — see Module 10.
+- Staff registration — invited into an organisation by its admin, never self-serve into a
+  clinical role (Module 10.3).
+- Login and onboarding for all user types; forgot password (OTP reset).
+- Role-based redirect after login.
+
+**v2.0 identity changes.** Nigeria's population makes name collisions common, and a medical
+record attached to the wrong person is the worst failure this product can have. So:
+
+| Field | Who | Rule |
+|---|---|---|
+| **NIN** | Doctors **and** members | Captured at onboarding. Second identifier alongside MDCN for a doctor, and the strongest one a member has |
+| **Date of birth** | Members | **Mandatory, full date.** An age-only fallback was proposed and rejected — age is not an identifier and decays |
+| **Medra ID** | Members | Fixed minimum length so IDs cannot collide as the population grows; short enough to read aloud over a phone |
+| **NHIS number** | Members | Optional. Used where a partner institution accepts it |
+| **Private insurance** | Members | Optional: insurer + policy number |
+| **RC number + organisation licence** | Organisations | **Both.** See Module 10.1 |
+
+**Data-privacy clause.** Doctors and organisations must accept an explicit data-privacy
+undertaking during onboarding — not a link in a footer, a step they cannot skip, recorded with
+a timestamp and the version of the text they accepted. This is what makes a later breach a
+breach of something they signed, and it is a condition of the NDPA 2023 posture in §12.
 
 ### Module 2 — Doctor / Institution Profile & Availability *(the product core)*
 - Doctor profile setup: name, specialisation, bio, photo, fee, MDCN.
@@ -223,6 +291,111 @@ The MVP is organised into nine modules (source: Medra MVP Feature Set).
 - Edit profile (all user types), change password, logout.
 
 ---
+
+### Module 10 — Organisation onboarding & administration *(new in v2.0)*
+
+**10.1 Registration and verification**
+- Organisation name, type (hospital · clinic · diagnostic laboratory · pharmacy · multi-service).
+- **RC number** (CAC) **and** **organisation practice licence number** — both are required. An RC
+  number alone proves a company exists, not that it may practise medicine; anyone determined
+  enough can register a company. The licence is the clinical credential.
+- Documents uploaded for review: CAC certificate, organisation practice licence, and any further
+  registration a medical organisation of that type must hold. *(Open: the definitive document
+  list per organisation type — §24.)*
+- **A named contact person signs up on behalf of the organisation** — typically the admin or the
+  front-desk lead. Their own details are captured and they are verified as an individual too,
+  because they will hold the most privileged seat in the account.
+- Verification is by a person at Medra, as with practitioners. Until it completes, the
+  organisation can continue filling in details but cannot receive bookings.
+
+**10.2 Sizing, which drives the plan**
+Asked once, at onboarding, and editable afterwards: number of practitioners · number of branches
+or locations · number of front-desk staff · average patients per month. These size the plan
+rather than gate the product; every input stays adjustable on the pricing screen and the price
+recalculates live.
+
+**10.3 Departments are the unit, not individuals**
+A hospital does not want to onboard a lab technician; it wants to onboard **the laboratory**.
+An organisation creates **departments** — laboratory, pharmacy, nursing, front desk, and one per
+clinical specialty — and buys **seats** within them. Staff are invited into a department and
+inherit its role and permissions. This matters commercially as well as structurally: the price
+follows practitioners, branches and seats, so the unit of billing and the unit of administration
+are the same thing.
+
+A **standalone laboratory or pharmacy** registers as an organisation whose only department is
+that one. Nigeria has high-quality independent labs that are not attached to a hospital, and a
+doctor referring out to one is a normal event, not an edge case.
+
+**10.4 What the admin does day to day**
+Allocate bookings to practitioners · add, suspend and remove staff · move a seat between people ·
+see the day across branches · manage the subscription and invoices · hold the organisation's
+public profile.
+
+### Module 11 — The clinical chain *(new in v2.0)*
+
+A doctor consumes work other people produce. The vitals were taken by a nurse, the blood drawn
+and run by a laboratory, the drug handed over by a pharmacist. v1.0 modelled only the doctor,
+which left two bad options: lose that data, or make the doctor type it. Neither is acceptable —
+"you cannot jump one, two, three and just do the doctors."
+
+Each role gets a **task-scoped app**, not a copy of the doctor's:
+
+| Role | Sees | Does |
+|---|---|---|
+| **Nurse** | Today's assigned patients, the reason for each visit, standing orders | Record vitals · administer and record injections and procedures · pre-consultation prep · post-consultation observations · flag anything urgent to the doctor |
+| **Lab technician** | Only the orders addressed to their department, and only the clinical detail attached to each | Accept an order · enter a **structured result** · attach the raw report · mark done |
+| **Pharmacist** | Only prescriptions directed to them | Dispense · record what was actually given and when · flag a substitution or a stock-out back to the prescriber |
+
+**11.1 Structured results, not prose**
+A result is entered against a **template per test**: analyte, value, unit, reference range. The
+technician fills numbers into a form, not a paragraph. This is what makes a value trendable, what
+lets Medra flag out-of-range without reading English, and what makes a result from Lab A
+comparable with one from Lab B. Free text is available for a comment, never for the values.
+
+**11.2 The order is the unit of work**
+A doctor raises an order (test, injection, dispense). It appears in exactly one department's
+queue, carries only the clinical detail that department needs, and is closed by the person who
+does it. The record shows who ordered, who performed, and when — which is also the audit trail.
+
+### Module 12 — External access: the scoped, single-use link *(new in v2.0)*
+
+Most Nigerian labs and clinics will not be on Medra on day one, and a referral to one must not
+force the member back to carrying paper. So a doctor (or an organisation admin) can generate a
+**scoped public link or QR code** for a single external party.
+
+- **The member consents before it exists.** No link is created without it.
+- **The creator selects exactly what the other side may see** — the reason for the referral, the
+  tests to run, and nothing else. The default is the minimum.
+- **On opening, the external party sees a privacy notice** naming the member, what they are being
+  given access to, and the undertaking they are accepting. They continue only by accepting it.
+- **They can upload the result** against the same structured template a Medra lab would use.
+- **The link expires the moment they mark it done** — single-use, not a standing door. It also
+  expires on a timer if nothing happens.
+- **The address is short and human** — of the form `medra.ng/<Medra ID>` — so it can be read over
+  a phone or written on a referral slip. A link nobody can type is a link nobody uses, and the
+  whole point is that it must be easier than the paper route it replaces.
+
+This is also the acquisition path for the labs themselves: an organisation that keeps receiving
+these links can onboard properly and stop using them.
+
+### Module 13 — Verification state on health data *(new in v2.0)*
+
+Members may enter their own blood group, genotype, weight, allergies and long-term conditions.
+Many people in Nigeria have been told their blood group rather than tested for it.
+
+- Self-entered clinical facts are labelled **"Not medically verified"** — on the member's own
+  dashboard, and everywhere the value travels, including into another hospital's view.
+- The label is **part of the datum**, not a badge on one screen. A value that arrives somewhere
+  without its provenance is worse than no value.
+- Only a **clinician or a lab result** flips it to verified, and the record keeps who verified it
+  and when.
+- These fields stay **optional** at onboarding, with an explicit "I'll do this later" — a large
+  share of members genuinely do not know their genotype, and forcing a guess manufactures exactly
+  the false data this rule exists to prevent.
+
+The reasoning is worth preserving verbatim from the review: if a member says group A because a
+parent once told them so, and Medra shows that to a surgical team as fact, the harm and the
+liability are Medra's. **Medra must never project unverified data as verified.**
 
 ## 9. Explicitly Out of MVP Scope
 
@@ -353,9 +526,30 @@ Format: *As a [role], I want [capability], so that [benefit].* Each story carrie
 
 Core entities and key relationships (to be detailed in developer-handoff specs):
 
-- **User** (base) → specialises into **Patient**, **Doctor/Staff**, **InstitutionAdmin**, **PlatformAdmin**.
-- **Institution** ── has many ──> **Branch**, **Staff (Doctor/Admin)**; ── has one ──> **Subscription**.
-- **PractitionerProfile** (doctor or private practitioner): specialisation, bio, photo, fee, MDCN, verification status.
+- **User** (base) → specialises into **Member**, **Doctor**, **Nurse**, **LabTechnician**,
+  **Pharmacist**, **FrontDesk**, **OrgAdmin**, **PlatformAdmin**. Identity carries **NIN**;
+  members also carry **date of birth** (required) and **Medra ID**.
+- **Organisation** ── has many ──> **Branch**, **Department**, **Seat**, **StaffMembership**;
+  ── has one ──> **Subscription**; ── holds ──> **RC number**, **licence number**, **documents**,
+  **verification status**.
+- **Department** (laboratory · pharmacy · nursing · front desk · a clinical specialty) ── has
+  many ──> **Seat**. A **StaffMembership** binds a User to a Department and carries the role. It
+  is the membership that grants permission, never the person.
+- **Order** (test · injection/procedure · dispense): raised by a Doctor → routed to one
+  Department → performed by a StaffMembership. Carries only the clinical detail that department
+  needs. Status: raised → accepted → done, with actor and timestamp at each step.
+- **LabResult**: order → **ResultTemplate** (analyte, unit, reference range) → values, plus an
+  optional attachment and comment. Released to the member only by a Doctor.
+- **HealthFact** (blood group, genotype, weight, allergy, long-term condition): value +
+  **VerificationState** (self-reported | verified) + verifier + verified-at. The state travels
+  with the value into every view, internal or external.
+- **Insurance**: member → NHIS number and/or private insurer + policy number.
+- **ExternalAccessGrant**: created by a Doctor or OrgAdmin, consented to by the Member, scoped to
+  a named set of records and one task; short public URL; accepted-privacy-notice record;
+  single-use; expiry on completion and on a timer.
+- **PrivacyUndertaking**: user or organisation → text version, accepted-at, IP. Required at
+  onboarding for doctors and organisations.
+- **PractitionerProfile** (doctor or private practitioner): specialisation, bio, photo, fee, MDCN, **NIN**, verification status.
 - **Availability**: practitioner → weekly schedule → **Slot** (date/time, duration, open/booked).
 - **Appointment**: patient × practitioner × slot; type (in-person/virtual); status (pending/confirmed/declined/complete/no-show/cancelled); booking reference.
 - **MedicalRecord / ConsultationNote**: appointment → complaint, diagnosis, treatment plan, **Prescription**(s), follow-up date, doctor's comment, private notes.
@@ -369,10 +563,12 @@ Core entities and key relationships (to be detailed in developer-handoff specs):
 
 ## 14. Information Architecture (Sitemap Overview)
 
-- **Patient app:** Onboarding/Auth · Home/Search · Filters · Provider Profile · Booking Flow (slot → type → confirm) · Dashboard (upcoming/past) · Medical History (timeline → detail) · Profile/Settings/Notifications.
-- **Doctor/Practitioner view:** Auth/Enrolment · Daily Dashboard/Queue · Patient Record (read + write) · Availability/Calendar · Profile/Settings.
-- **Institution Admin portal:** Registration/Plan selection · Admin Dashboard · Booking Management/Allocation · Staff Management · Patient Records · Internal Messaging · Multi-branch view · Subscription/Billing.
-- **Platform Admin:** Institution Approval/Onboarding · Plan Configuration · (Phase 2) Analytics.
+- **Member app:** Onboarding/Auth · Home/Search · Filters · Provider Profile · Booking Flow (slot → type → confirm) · Visits (upcoming/past) · Records (timeline → detail, with verification state) · Medicines · Profile/Settings/Insurance/Notifications.
+- **Doctor app:** Auth/Enrolment · Today's queue · Patient record (read + write) · Consultation (note, prescribe, order, refer, sign) · Availability · Practice & money · Growth · Settings.
+- **Organisation portal *(new)*:** Registration (RC + licence + documents + contact person) · Verification · Sizing & plan · Branches · **Departments & seats** · Staff invitations & roles · Booking allocation · Day view across branches · Subscription & invoices · Organisation public profile.
+- **Department apps *(new)*:** **Nursing** (today's patients, vitals, injections, observations) · **Laboratory** (order queue, structured result entry, attachments) · **Pharmacy** (prescription queue, dispense, substitutions) · **Front desk** (walk-in registration, check-in, queue, payment).
+- **External party *(new)*:** the scoped link — privacy notice → what to do → structured result upload → done, link expires.
+- **Platform Admin:** Organisation & practitioner approval · Plan configuration · (Phase 2) Analytics.
 
 ---
 
@@ -655,6 +851,56 @@ than a frame, and each entry is attached to whichever frame of a mobile family a
 the control, found by scanning the generated frames at build time. A hotspot that exists nowhere
 in the family fails the build.
 
+### 15.7 What v2.0 does to the design already built
+
+490 frames are rendered across five bundles: design system 27 · authentication 70 · member 154 ·
+doctor 239. The review reads as "alter the design from the beginning", and for the **product**
+that is fair — but it is not a rebuild of the file. Most of the work survives; three kinds of
+change land on it.
+
+**A. Retrofit — small, mechanical, across existing screens**
+
+| Change | Where | Size |
+|---|---|---|
+| NIN field | Auth: doctor sign-up, member sign-up | 4 frames |
+| Date of birth mandatory, age-only fallback removed | Auth: member details | 2 frames |
+| Data-privacy undertaking as a step | Auth: doctor and organisation onboarding | 4 frames |
+| NHIS and private insurance | Member: profile, personal details | 4 frames |
+| **"Not medically verified" state** on blood group, genotype, weight, allergies, conditions | Member home, records, profile; doctor's patient file and consultation room | ~18 frames + one new component with two variants |
+
+The verification state is the only one of these with teeth. It is a **component state**, so it is
+drawn once and applied — but it has to appear everywhere the value does, including inside the
+doctor's view of someone else's record, which is precisely the place a badge is most often
+dropped.
+
+**B. Extend — existing modules gain screens**
+
+| Addition | Module | Est. screens |
+|---|---|---|
+| Raise an order to a department (test, injection, dispense) | Doctor consultation | 2 |
+| Generate a scoped external link + consent | Doctor, member | 3 |
+| Structured result template — the doctor's view of one | Doctor | 1 |
+| Member-side consent to an external share, and its receipt | Member records | 2 |
+
+**C. New — the modules that do not exist yet**
+
+| Module | Est. screens | Notes |
+|---|---|---|
+| **Organisation portal** | 18–22 | Registration with RC + licence + documents · contact person · verification · sizing · plan · branches · **departments & seats** · staff invitations · allocation · day view · billing · public profile |
+| **Nursing app** | 6–8 | Today's patients · vitals · injections and procedures · observations · escalate |
+| **Laboratory app** | 6–8 | Order queue · accept · structured result entry · attach · done |
+| **Pharmacy app** | 5–6 | Prescription queue · dispense · substitution · stock-out |
+| **Front desk app** | 6–8 | Walk-in registration · check-in · queue · payment · allocation |
+| **External party flow** | 4–5 | Privacy notice · what to do · structured upload · done and expired |
+
+Roughly **45–57 new screens**, which at both breakpoints and with the mobile hub pattern is the
+largest single block of design work remaining — comparable to the doctor module. The department
+apps share one shell and one component set, so they cost less than their screen count suggests.
+
+**What does not change:** the member-owned record, the booking loop, consent-scoped sharing, the
+subscription model, the design language, the hub → section → sheet mobile pattern, and the
+generation-and-audit pipeline. The order of work in §21 changes; the foundation does not.
+
 ---
 
 ## 16. Brand & Design Direction
@@ -683,9 +929,14 @@ in the family fails the build.
 - **Who pays:** Institutions and independent practitioners (subscription). **Members** (people
   using Medra for their own care) use the platform **free**; they pay institutions directly for
   services rendered.
-- **Sizing before pricing:** onboarding asks for **practitioners, branches, admin seats and
+- **Sizing before pricing:** onboarding asks for **practitioners, branches, front-desk staff and
   monthly patient volume**, then recommends a plan. Every input stays editable on the pricing
   screen, and the price recalculates live.
+- **Departments and seats (v2.0):** an organisation buys seats inside departments, not licences
+  for named individuals. A seat can be reassigned when a technician leaves. Non-clinical seats
+  (front desk) and clinical support seats (nursing, laboratory, pharmacy) are priced below a
+  practitioner seat — they are numerous and they are what makes the record complete, so pricing
+  them like a consultant would defeat the point of having them.
 
 ### 18.1 Plans (indicative — validate with pilot clinics)
 
@@ -741,9 +992,25 @@ in the family fails the build.
 
 ## 21. Roadmap (Phased)
 
-- **Phase 1 — MVP (this PRD):** Modules 1–9; manual telemedicine link; Paystack trial→paid; basic records; Abuja pilot.
-- **Phase 2:** Automated Daily.co links; rescheduling/waitlists; fuller admin portal (staff mgmt, multi-branch, internal messaging); doctor analytics; assisted drug-interaction flags; tiered/enterprise plans.
-- **Phase 3+:** In-app video UI; employer-sponsored plans; patient-to-institution payments; record attachments/lab results/ICD codes; ratings/reviews; multi-language; offline; interoperability/exports.
+**Revised in v2.0.** The clinical chain moved from "later" into the MVP, because without it the
+record is incomplete and the doctor becomes a typist — which removes the reason to buy.
+
+- **Phase 1 — MVP (this PRD):** Modules 1–13. Member booking loop · doctor consultation and
+  records · **organisation portal with departments and seats** · **nursing, laboratory and
+  pharmacy apps** · **front desk** · **scoped external-access link** · **verification state on
+  health data** · identity (NIN, DOB, insurance) · manual telemedicine link · Paystack
+  trial→paid · Abuja pilot.
+- **Phase 2:** Automated Daily.co links; rescheduling and waitlists; multi-branch analytics;
+  internal staff messaging; doctor analytics; assisted drug-interaction flags; tiered and
+  enterprise plans; insurance eligibility checks with partners.
+- **Phase 3+:** In-app video UI; employer-sponsored plans; claims submission; ICD coding;
+  ratings and reviews; multi-language; offline; interoperability and exports; partner API to
+  replace the external link for high-volume labs.
+
+> The MVP is now materially larger than v1.0's. If the pilot date is fixed, the honest lever is
+> **breadth of the clinical chain**, not its existence: ship nursing and laboratory, and let
+> pharmacy and front desk follow. Dropping the chain entirely returns the product to the thing
+> the review said would not work.
 
 ---
 
@@ -789,7 +1056,70 @@ A candid list of things not fully addressed in the brief/scope/MVP that typicall
 
 ---
 
-## 23. Glossary
+## 23. Second Review — 9 August 2026 · decisions and open questions
+
+Participants: Godwin Okwor, Israel Oni. The review covered authentication and onboarding for
+doctors, organisations and members, and stopped partway through the member dashboard; it
+continues Friday.
+
+### 23.1 Decisions taken
+
+| # | Decision | Where it lands |
+|---|---|---|
+| 1 | A platform that models only doctors cannot work. Nurses, lab technicians and pharmacists are first-class roles | §6, Module 11 |
+| 2 | Organisations onboard **departments**, not individuals; seats are bought within them | Module 10.3, §18 |
+| 3 | Organisation identity needs **RC number and practice licence** — an RC number alone proves nothing clinical | Module 10.1 |
+| 4 | A named contact person registers on behalf of the organisation and is verified as an individual | Module 10.1 |
+| 5 | A standalone laboratory or pharmacy is a valid organisation type | Module 10.3 |
+| 6 | The **member is the connector** between institutions — records are member-based, not institution-based *(ratifies v1.0)* | §1, §13 |
+| 7 | External parties reach a record by a **scoped, single-use, consent-gated link**, short enough to read aloud | Module 12 |
+| 8 | Lab results are entered against a **structured template** — analyte, value, unit, range — never as prose | Module 11.1 |
+| 9 | Self-reported health data is marked **"Not medically verified"** and stays marked until a clinician or lab vets it | Module 13 |
+| 10 | Those fields stay **optional** at onboarding, with an explicit "I'll do this later" | Module 13 |
+| 11 | **NIN** for doctors and members; **date of birth mandatory** — the age-only shortcut is rejected | Module 1 |
+| 12 | **NHIS and private insurance** captured on the member profile | Module 1, §13 |
+| 13 | A **data-privacy undertaking** is an unskippable onboarding step for doctors and organisations | Module 1, §12 |
+| 14 | Free trial then paid at launch; price follows practitioners, branches and seats | §18 |
+| 15 | The people using Medra for their own care are **members**, not "patients" | Throughout |
+
+### 23.2 Open questions — these block design, and are worth answering before Friday
+
+1. **Is a nurse a distinct role, or a practitioner variant?** The review said both at different
+   moments — that nurses are "presented as a doctor", and that nursing is as important as
+   medicine and needs its own place. This PRD assumes a **distinct role with its own task-scoped
+   app**, because a nurse's screen is a work queue and a doctor's is a decision surface. Confirm.
+2. **Who creates staff accounts?** Assumed: the organisation admin invites, the person completes
+   their own identity and credential check. The alternative — staff self-register and request to
+   join — is friendlier but lets an unverified person sit in a clinical queue.
+3. **What is the definitive document list per organisation type?** CAC certificate and practice
+   licence are settled. A diagnostic laboratory and a pharmacy will each have their own
+   regulator's registration; naming them is a prerequisite for the upload screen.
+4. **Who can flip a health fact to verified?** Assumed: any doctor at the point of care, or a lab
+   result that measures it directly. Should a nurse-recorded weight count as verified?
+5. **Is insurance storage only, or eligibility and claims?** Assumed **storage only** at MVP —
+   the number sits on the profile and a partner institution uses it. Claims submission is a large
+   integration and is not in this scope.
+6. **Does the front desk take payment inside Medra, or record one taken elsewhere?** This decides
+   whether the payment rail is one-sided (member pays before booking) or two-sided.
+7. **The subscription contradiction from v1.0 is still open.** §4 says practitioners pay a
+   subscription and members pay providers directly; the 1 August review added payment before
+   booking, which means Medra collects and pays out. Both are designed. It needs deciding before
+   build, because "both" means two charges on the same transaction.
+
+### 23.3 Sequencing recommendation
+
+The organisation module is the buyer's module and the department apps hang off it, so it comes
+first. But the **verification-state retrofit is small, safety-critical and touches screens that
+already exist** — it should be done immediately rather than queued behind a new module, because
+every day the design shows unverified data as fact is a day that assumption spreads into build.
+
+Suggested order: verification-state retrofit → identity and privacy-clause retrofit →
+organisation portal → laboratory app (it unlocks the external link and the result template) →
+nursing → front desk → pharmacy → external party flow.
+
+---
+
+## 24. Glossary
 
 - **MDCN** — Medical and Dental Council of Nigeria (doctor licensing/identity).
 - **NDPA / NDPR** — Nigeria Data Protection Act 2023 / Regulation.
@@ -798,6 +1128,13 @@ A candid list of things not fully addressed in the brief/scope/MVP that typicall
 - **RBAC** — Role-Based Access Control.
 - **Institution / Enterprise** — a clinic/hospital; enterprise = multi-branch billed as one.
 - **Verified badge** — visible marker that Medra confirmed a provider's MDCN/licence.
+- **NIN** — National Identification Number (Nigeria); a second identifier for members and doctors.
+- **RC number** — company registration number issued by the CAC. Proves a company exists, not that it may practise medicine.
+- **NHIS** — National Health Insurance Scheme.
+- **Department** — the unit an organisation onboards and buys seats in (laboratory, pharmacy, nursing, front desk, a clinical specialty).
+- **Order** — a unit of work a doctor raises for a department: a test, an injection or procedure, or a dispense.
+- **Not medically verified** — the state of a health fact a member entered themselves, which travels with the value until a clinician or lab confirms it.
+- **External access grant** — a scoped, single-use, consent-gated link that lets a party who is not on Medra read what they need and return a result.
 
 ---
 
