@@ -1632,11 +1632,13 @@ addx("Patients", "P1-patients",
 P2_HEAD = dcard(
     f'<Frame w="fill" flex="row" gap={{14}} items="center">'
     f'<Image image="assets/img/avatar-2.jpg" w={{62}} h={{62}} rounded={{18}} />'
-    f'<Frame grow={{1}} flex="col" gap={{4}}>{T(19,"bold","var:text/strong","Amara Okeke")}'
-    f'<Frame flex="row" gap={{8}} items="center">'
-    f'<Frame flex="row" px={{8}} py={{3}} rounded={{6}} bg="var:bg/muted">'
-    f'{T(10,"semibold","var:text/accent","MDR-8842-19")}</Frame>'
-    f'{T(12,"regular","var:text/muted","34 · female · +234 801 234 5678 · Garki, Abuja")}</Frame></Frame>'
+    # The ID chip and the meta line were competing for one row with the status pill and both
+    # wrapped. Name and ID on one line, everything else underneath.
+    # A pill inside a grow column shrinks below its text. The ID is a plain line instead.
+    f'<Frame grow={{1}} flex="col" gap={{4}}>'
+    f'{T(19,"bold","var:text/strong","Amara Okeke",w="fill")}'
+    f'{T(12,"semibold","var:text/accent","MDR-8842-19",w="fill")}'
+    f'{T(12,"regular","var:text/muted","34 · female · Garki, Abuja · +234 801 234 5678",w="fill")}</Frame>'
     f'{status_pill("shared","Access until 21 Aug, 11:00")}</Frame>'
     + rows_of([kv("Height", "1.68 m", "ruler"), kv("Weight", "74 kg", "weight"),
                kv("Visits with you", "3", "history"), kv("On Medra since", "Jan 2026", "calendar-days")], 4, 12)
