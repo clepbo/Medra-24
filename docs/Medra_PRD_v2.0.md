@@ -868,6 +868,10 @@ change land on it.
 | NHIS and private insurance | Member: profile, personal details | 4 frames |
 | **"Not medically verified" state** on blood group, genotype, weight, allergies, conditions | Member home, records, profile; doctor's patient file and consultation room | ~18 frames + one new component with two variants |
 
+> **Applied 10 August 2026.** All of row A is done. `health_fact()` is a shared primitive in
+> `medra_ui.py`, so the member, doctor and organisation modules render provenance identically and
+> the label genuinely travels with the value rather than being re-implemented per screen.
+
 The verification state is the only one of these with teeth. It is a **component state**, so it is
 drawn once and applied — but it has to appear everywhere the value does, including inside the
 doctor's view of someone else's record, which is precisely the place a badge is most often

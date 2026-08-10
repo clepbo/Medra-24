@@ -267,3 +267,44 @@ def desk_form(name, panel, eyebrow_t, head_parts, sub, body, primary, extras=(),
         f'{T(15,"regular","var:text/muted",sub,w="fill")}</Frame>{body}'
         f'<Frame w="fill" flex="col" gap={{11}}>{primary}{"".join(extras)}</Frame>')
 
+
+
+# =====================================================================================
+# VERIFICATION STATE  (PRD v2.0 Module 13)
+#
+# A member may enter their own blood group, genotype, weight, allergies and conditions.
+# Many Nigerians have been *told* their blood group rather than tested for it. So a
+# self-reported clinical fact never appears without saying so — and the label is part of
+# the datum, not a badge on one screen: it travels into the doctor's view, the nurse's
+# view and another organisation's view.
+#
+# If a member says group A because a parent once told them so, and Medra shows that to a
+# surgical team as fact, the harm and the liability are Medra's.
+# =====================================================================================
+def verify_tag(verified=False, size=10):
+    if verified:
+        return (f'<Frame flex="row" gap={{5}} items="center" px={{8}} py={{3}} rounded={{7}} '
+                f'bg="var:state/success-bg">{I("badge-check",size+1,OK_IC)}'
+                f'{T(size,"semibold","var:state/success","Verified")}</Frame>')
+    return (f'<Frame flex="row" gap={{5}} items="center" px={{8}} py={{3}} rounded={{7}} '
+            f'bg="var:state/warning-bg">{I("circle-help",size+1,WARN_IC)}'
+            f'{T(size,"semibold","var:state/warning","Not medically verified")}</Frame>')
+
+
+def health_fact(label, value, verified=False, name=None, by=None):
+    """A clinical fact with its provenance. Stacked rather than tabular — the badge is long
+    by design and a 344px rail cannot hold label + value + badge on one line."""
+    meta = T(10, "regular", "var:text/faint", by, w="fill") if by else ""
+    return (f'<Frame name="Btn {name or label}" w="fill" flex="col" gap={{6}} py={{10}}>'
+            f'<Frame w="fill" flex="row" gap={{11}} items="center">'
+            f'{T(12,"regular","var:text/muted",label,w="fill")}'
+            f'{T(14,"semibold","var:text/strong",value)}</Frame>'
+            f'<Frame w="fill" flex="row" gap={{8}} items="center">{verify_tag(verified)}{meta}</Frame></Frame>')
+
+
+def unverified_note(tone="warn"):
+    """The one-line explanation that belongs next to any group of self-reported facts."""
+    return note("circle-help",
+                "Values you enter yourself are shown to every doctor as “not medically verified”, "
+                "until a clinician or a laboratory result confirms them. That mark travels with the "
+                "value, so nobody ever treats a guess as a fact.", tone)

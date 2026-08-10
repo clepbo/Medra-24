@@ -313,29 +313,10 @@ def perm_row(label, allowed, why=None):
             + (T(11, "regular", "var:text/muted", why, w="fill") if why else "") + '</Frame></Frame>')
 
 
-def unverified(label, value, verified=False, name=None):
-    # Stacked, not tabular: the badge is long by design and a 344px rail cannot hold
-    # label + value + "Not medically verified" on one line.
-    """The v2.0 rule made visible: a self-reported clinical fact never appears without saying so,
-    and the label travels with the value into every organisation's view."""
-    if verified:
-        tag = (f'<Frame flex="row" gap={{5}} items="center" px={{8}} py={{3}} rounded={{7}} '
-               f'bg="var:state/success-bg">{I("badge-check",11,OK_IC)}'
-               f'{T(10,"semibold","var:state/success","Verified")}</Frame>')
-    else:
-        tag = (f'<Frame flex="row" gap={{5}} items="center" px={{8}} py={{3}} rounded={{7}} '
-               f'bg="var:state/warning-bg">{I("circle-help",11,WARN_IC)}'
-               f'{T(10,"semibold","var:state/warning","Not medically verified")}</Frame>')
-    return (f'<Frame name="Btn {name or label}" w="fill" flex="col" gap={{6}} py={{10}}>'
-            f'<Frame w="fill" flex="row" gap={{11}} items="center">'
-            f'{T(12,"regular","var:text/muted",label,w="fill")}'
-            f'{T(13,"semibold","var:text/strong",value)}</Frame>'
-            f'<Frame w="fill" flex="row">{tag}</Frame></Frame>')
+# The verification component lives in medra_ui so the member, doctor and organisation
+# modules all render it identically. `unverified` is kept as the org-local alias.
+unverified = health_fact
 
-
-# ---------------------------------------------------------------- mobile variants
-# A console is full of tables. A table with fixed columns is the one thing that cannot be
-# shrunk to 390 — it has to be re-laid out, not squeezed.
 
 def branch_row_m(name_, addr, staff, open_h, nm, main=False):
     tag = (f'<Frame flex="row" px={{8}} py={{3}} rounded={{6}} bg="var:state/info-bg">'

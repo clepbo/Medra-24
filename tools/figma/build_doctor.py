@@ -628,8 +628,15 @@ K4_WHO = (f'<Frame w="fill" flex="row" gap={{14}} items="center">'
           f'{T(10,"semibold","var:text/accent","MDR-8842-19")}</Frame>'
           f'{T(12,"regular","var:text/muted","34 · female · Garki, Abuja · +234 801 234 5678")}</Frame></Frame>'
           f'{dbtn("Open full record","Open record P2","clipboard-list","ghost",grow=False,size="sm")}</Frame>')
-K4_VITALS = rows_of([kv("Blood group", "O+", "droplet"), kv("Genotype", "AA", "activity"),
-                     kv("Weight", "74 kg", "weight"), kv("Visits with you", "3", "history")], 4, 12)
+K4_VITALS = (rows_of([kv("Height", "1.68 m", "ruler"), kv("Weight", "74 kg", "weight"),
+                      kv("Visits with you", "3", "history"), kv("On Medra since", "Jan 2026", "calendar-days")], 4, 12)
+             + hr()
+             + health_fact("Blood group", "O+", verified=False, name="Fact blood",
+                           by="She entered this herself when she joined")
+             + health_fact("Genotype", "AA", verified=False, name="Fact geno",
+                           by="She entered this herself when she joined")
+             + health_fact("Penicillin allergy", "Rash and swelling", verified=True, name="Fact allergy",
+                           by="Confirmed by you, 12 June 2026"))
 K4_HEAD = dcard(K4_META + K4_WHO + K4_VITALS, p=18)
 
 K4_SAFETY = alert_strip("triangle-alert", "Allergic to penicillin",
@@ -1051,7 +1058,8 @@ C_HISTORY = dcard(
     bg="var:state/info-bg", stroke=None)
 
 C_SIDE = dgroup("While you talk", [
-    drow("triangle-alert", "Allergic to penicillin", sub="Rash and swelling · Jun 2026", name="Side allergy", tone="err", chevron=False),
+    drow("triangle-alert", "Allergic to penicillin", sub="Rash and swelling · Jun 2026 · confirmed by you", name="Side allergy", tone="err", chevron=False),
+    drow("circle-help", "Blood group O+ · genotype AA", sub="Not medically verified — she told us, nobody tested it", name="Side unverified", tone="warn", chevron=False),
     drow("pill", "On Amlodipine 5 mg", sub="96% taken on time over 30 days", name="Side meds"),
     drow("activity", "BP trend", sub="142/92 in March down to 128/82 this month", name="Side vitals", tone="ok"),
     drow("flask-conical", "Outstanding test", sub="Fasting blood sugar, ordered 12 Jun, never done", name="Open tests C4", tone="warn"),
@@ -1630,9 +1638,16 @@ P2_HEAD = dcard(
     f'{T(10,"semibold","var:text/accent","MDR-8842-19")}</Frame>'
     f'{T(12,"regular","var:text/muted","34 · female · +234 801 234 5678 · Garki, Abuja")}</Frame></Frame>'
     f'{status_pill("shared","Access until 21 Aug, 11:00")}</Frame>'
-    + rows_of([kv("Blood group", "O+", "droplet"), kv("Genotype", "AA", "activity"),
-               kv("Height", "1.68 m", "ruler"), kv("Weight", "74 kg", "weight"),
-               kv("Visits with you", "3", "history"), kv("On Medra since", "Jan 2026", "calendar-days")], 3, 12))
+    + rows_of([kv("Height", "1.68 m", "ruler"), kv("Weight", "74 kg", "weight"),
+               kv("Visits with you", "3", "history"), kv("On Medra since", "Jan 2026", "calendar-days")], 4, 12)
+    + hr()
+    + health_fact("Blood group", "O+", verified=False, name="Fact blood",
+                  by="She entered this herself · no laboratory result on file")
+    + health_fact("Genotype", "AA", verified=False, name="Fact geno",
+                  by="She entered this herself · no laboratory result on file")
+    + note("circle-help",
+           "Two values on this record have never been tested. Do not act on them as fact — order a "
+           "group and screen if it matters for what you are about to do.", "warn"))
 
 P2_SAFETY = alert_strip("triangle-alert", "Penicillin allergy · hypertension",
     "Shown to any doctor treating her, whatever else she has shared. Reaction: rash and swelling, June 2026.", "err")

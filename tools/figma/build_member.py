@@ -77,7 +77,7 @@ DOCTORS=[("avatar-4.jpg","Dr. Ngozi Okafor","Cardiologist","Garki Medical Centre
 
 # ============================================================ H1 HOME (returning)
 HEALTH_CARD=card(section_head("Your health","Records","Nav Records")
-    + summary_row("droplet","Blood group","O+")
+    + health_fact("Blood group","O+",verified=False,name="Blood group")
     + summary_row("pill","Active prescriptions","2 medicines")
     + summary_row("triangle-alert","Allergies","Penicillin"), p=20, gap=14)
 home_body=(f'{searchbar()}{next_visit_card()}'
@@ -89,7 +89,7 @@ DASH_STATS=rows_of([
     stat_card("calendar-check","2","Upcoming visits","Next in 2 days","tint-teal.jpg"),
     stat_card("pill","2","Active medicines","1 due at 6pm","tint-blue.jpg"),
     stat_card("clipboard-list","8","Visits on record","Since Jan 2026","tint-ocean.jpg"),
-    stat_card("shield-check","O+","Blood group","Allergy: penicillin","tint-navy.jpg"),
+    stat_card("shield-check","O+","Blood group","Not medically verified","tint-navy.jpg"),
 ], 4, 16)
 
 MEDS_PANEL=card(section_head("Today’s medicines","See all","Nav Meds")

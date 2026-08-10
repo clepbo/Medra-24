@@ -6,8 +6,8 @@ what is left. Kept current — it is updated in the same commit as the work it d
 
 | | |
 |---|---|
-| **Document version** | **v1.0** |
-| **Last updated** | 10 August 2026 |
+| **Document version** | **v1.1** |
+| **Last updated** | 10 August 2026 (v2.0 retrofit applied) |
 | **Repo** | `clepbo/Medra-24` |
 | **Working branch** | `claude/new-project-prd-stories-ss2qlr` |
 | **Current PRD** | `docs/Medra_PRD_v2.0.md` (v1.0 kept, marked superseded) |
@@ -62,9 +62,9 @@ Six rendered bundles, **707 frames**, all validated clean and fully offline.
 | Bundle | Frames | Pages | Status |
 |---|---:|---:|---|
 | `figma/medra-ds` — design system + journeys | 27 | 1 | Done |
-| `figma/medra-auth` — authentication, 4 roles | 70 | 4 | Done · needs v2.0 retrofit |
-| `figma/medra-member` — batch 1, find & book | 46 | 2 | Done · needs v2.0 retrofit |
-| `figma/medra-member-2` — visits, records, medicines, profile | 108 | 6 | Done · needs v2.0 retrofit |
+| `figma/medra-auth` — authentication, 4 roles | 70 | 4 | Done · **v2.0 retrofit applied** |
+| `figma/medra-member` — batch 1, find & book | 46 | 2 | Done · **v2.0 retrofit applied** |
+| `figma/medra-member-2` — visits, records, medicines, profile | 108 | 6 | Done · **v2.0 retrofit applied** |
 | `figma/medra-doctor` — full doctor module | 239 | 8 | Done |
 | `figma/medra-org` — organisation + clinical chain + external | 217 | 8 | **New — not yet rendered into Figma** |
 
@@ -238,20 +238,24 @@ Decisions that are expensive to reverse, with the reasoning, so nobody re-litiga
 
 ## 8. What is left
 
-### A. Retrofit to existing modules (small, mechanical, safety-critical)
+### A. Retrofit to existing modules — **DONE (10 Aug)**
 
-| Change | Where | Size |
-|---|---|---|
-| **"Not medically verified" state** | Member home/records/profile; doctor's patient file and consultation | ~18 frames + one component, two variants |
-| NIN field | Auth: doctor and member sign-up | 4 frames |
-| Date of birth mandatory | Auth: member details | 2 frames |
-| Data-privacy undertaking step | Auth: doctor and organisation onboarding | 4 frames |
-| NHIS + private insurance | Member profile and personal details | 4 frames |
+`health_fact()`, `verify_tag()` and `unverified_note()` live in `tools/figma/medra_ui.py` so
+every module renders provenance identically. `org_kit.unverified` is an alias of the same thing.
 
-**Do this first.** It is small, it touches screens that already exist, and every day the design
-shows unverified data as fact is a day that assumption spreads into build.
+| Change | Where it landed |
+|---|---|
+| **"Not medically verified"** | Member: H1 health card, H1 stat tile, R1 health summary, P0 profile tiles, P2 details, P4 dependant, R10 printed summary (asterisk + legend). Doctor: K4 read-the-file, P2 record (with an explicit "do not act on these as fact — order a group and screen" note), C1 side rail. Organisation: D2 nursing vitals |
+| NIN | Auth M3 (member) and D1 (doctor); member P2 personal details |
+| Date of birth mandatory | Auth M3 — the "Just my age" toggle is **removed**, not hidden |
+| Data-privacy undertaking | Auth D1 (doctor) and I2 (institution): three clauses visible, a required checkbox, version-stamped |
+| NHIS + private insurance | Auth M5, member P2 |
+| RC **and** practice licence | Auth I1; regulator registration upload added to I2 |
 
-### B. Extend the doctor module
+Verified after: every bundle validates clean, zero horizontal overflow at 390 and 1440, and the
+doctor and organisation prototypes still audit complete.
+
+### B. Extend the doctor module — next
 
 Raise an order to a department (2) · generate a scoped external link + consent (3) · the doctor's
 view of a structured result (1) · member-side consent to an external share (2).

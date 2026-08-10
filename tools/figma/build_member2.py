@@ -597,12 +597,17 @@ R_SHARE_BANNER = (f'<Frame name="Btn Open access R6" w="fill" flex="row" gap={{1
                   f'{I("chevron-right",18,A_IC)}</Frame>')
 
 R_SUMMARY = group_card("Your health summary", [
-    list_row("droplet", "Blood group", value="O+", name="Blood group", chevron=False),
-    list_row("triangle-alert", "Allergies", value="Penicillin", name="Allergies", tint="var:state/warning-bg", chevron=False),
-    list_row("heart-pulse", "Conditions", value="Hypertension", sub="Diagnosed Jun 2026", name="Conditions", chevron=False),
+    health_fact("Blood group", "O+", verified=False, name="Blood group",
+                by="You entered this when you joined"),
+    health_fact("Genotype", "AA", verified=False, name="Genotype",
+                by="You entered this when you joined"),
+    health_fact("Allergies", "Penicillin", verified=True, name="Allergies",
+                by="Confirmed by Dr. Ngozi Okafor, 12 June 2026"),
+    health_fact("Conditions", "Hypertension", verified=True, name="Conditions",
+                by="Diagnosed by Dr. Ngozi Okafor, June 2026"),
     list_row("pill", "Current medicines", value="2", name="Open meds R1"),
     list_row("syringe", "Immunisations", value="Up to date", name="Open vaccines"),
-], footer="Allergies and current medicines are shared automatically with any doctor you see, so nobody prescribes something unsafe.")
+], footer="Blood group and genotype came from you, not from a test. Every doctor sees them marked that way until a laboratory result confirms them — which is what stops a guess being treated as a fact.")
 
 R_STATS = rows_of([
     stat_card("clipboard-list", "14", "Records", "Across 3 clinics", "tint-teal.jpg"),
@@ -1201,9 +1206,10 @@ P0_HEAD = (f'<Frame w="fill" flex="col" gap={{16}} p={{20}} rounded={{28}} bg="v
            f'{T(12,"medium","var:state/success","Phone verified")}</Frame></Frame>'
            f'{mini_btn("Edit","Open details P2","pencil","ghost",grow=False)}</Frame>'
            f'<Frame w="fill" flex="row" gap={{10}}>'
-           f'{stat_cell_v4("droplet","O+","Blood group")}'
-           f'{stat_cell_v4("triangle-alert","Penicillin","Allergy")}'
-           f'{stat_cell_v4("heart-pulse","Hypertension","Condition")}</Frame></Frame>')
+           f'{stat_cell_v4("droplet","O+","Blood group · unverified")}'
+           f'{stat_cell_v4("triangle-alert","Penicillin","Allergy · verified")}'
+           f'{stat_cell_v4("heart-pulse","Hypertension","Condition · verified")}</Frame>'
+           f'<Frame w="fill" flex="row">{verify_tag(False)}</Frame></Frame>')
 
 P0_ACCOUNT = group_card("Account", [
     list_row("circle-user", "Personal details", sub="Name, date of birth, phone, address", name="Open details P2"),
@@ -1277,11 +1283,16 @@ add("Profile", "P0-profile",
 P2_FORM = (f'{field("Full name","circle-user","Amara Chinaza Okeke",ph=False,helper="Use the name on your ID — clinics check it at reception")}'
            f'<Frame w="fill" flex="row" gap={{14}}>'
            f'<Frame grow={{1}} flex="col">{field("Date of birth","calendar-days","14 March 1992",ph=False)}</Frame>'
-           f'<Frame grow={{1}} flex="col">{field("Blood group","droplet","O+",ph=False)}</Frame></Frame>'
+           f'<Frame grow={{1}} flex="col">{field("Blood group","droplet","O+",ph=False,helper="Not medically verified")}</Frame></Frame>'
+           f'{field("NIN","id-card","1234 5678 9012",ph=False,helper="Never shown to a doctor or an organisation. It is only used to tell you apart from someone with the same name.")}'
            f'{field_chips("Sex", ["Female", "Male", "Prefer not to say"], 0, "Sex")}'
            f'{field("Phone number","phone","801 234 5678",ph=False,prefix="+234",helper="Verified — used for visit confirmations",trailing=("badge-check","Phone verified"))}'
            f'{field("Email (optional)","mail","amara.okeke@gmail.com",ph=False,helper="For record downloads and receipts",trailing=("send","Verify email"))}'
-           f'{field("Where you live","map-pin","Area 3, Garki, Abuja",ph=False,helper="Only used to show doctors near you")}')
+           f'{field("Where you live","map-pin","Area 3, Garki, Abuja",ph=False,helper="Only used to show doctors near you")}'
+           f'{eyebrow("Insurance")}'
+           f'{field("NHIS number (optional)","shield-check","NHIS-4471-88",ph=False,helper="We show a partner hospital whether they accept it. Nothing is claimed automatically.")}'
+           f'{field("Private insurance (optional)","credit-card","Insurer and policy number")}'
+           f'{unverified_note("info")}')
 P2_EMERGENCY = group_card("Emergency contact", [
     list_row("phone-call", "Ijeoma Okeke", value="Sister", sub="+234 805 998 1122", name="Emergency contact"),
     list_row("plus", "Add another contact", name="Add emergency", chevron=False),
@@ -1348,7 +1359,7 @@ P4_FORM = (f'{field_chips("Who is this?", ["Child", "Parent", "Spouse", "Other"]
            f'{field("Their full name","circle-user","Chidi Emeka Okeke")}'
            f'<Frame w="fill" flex="row" gap={{14}}>'
            f'<Frame grow={{1}} flex="col">{field("Date of birth","calendar-days","2 May 2020")}</Frame>'
-           f'<Frame grow={{1}} flex="col">{field("Blood group (optional)","droplet","Not known")}</Frame></Frame>'
+           f'<Frame grow={{1}} flex="col">{field("Blood group (optional)","droplet","Not known",helper="Marked unverified")}</Frame></Frame>'
            f'{field_chips("Sex", ["Female", "Male", "Prefer not to say"], 1, "Dep sex")}'
            f'{field("Their phone (optional)","phone","Leave empty for a child",prefix="+234",helper="An adult gets an SMS to confirm you may manage their records")}')
 P4_CONSENT = (f'<Frame w="fill" flex="col" gap={{12}} p={{18}} rounded={{22}} bg="var:state/info-bg">'
@@ -1791,7 +1802,7 @@ R10_PICK = group_card("What goes on the page?", [
     consent_row("flask-conical", "Latest lab results", "Full blood count, 12 Jun", "Print labs", on=False),
     consent_row("syringe", "Immunisations", "Yellow fever, tetanus", "Print vaccines", on=False),
     consent_row("phone-call", "Emergency contact", "Ijeoma Okeke · +234 805 998 1122", "Print emergency"),
-], footer="Blood group and allergies always print. In an emergency they are the two lines that matter.")
+], footer="Blood group and allergies always print. In an emergency they are the two lines that matter — and anything you told us yourself is printed with an asterisk, so a stranger reading it in a hurry knows it was never tested.")
 
 R10_PREVIEW = (f'<Frame w="fill" flex="col" gap={{13}} p={{22}} rounded={{22}} bg="var:bg/base" '
                f'stroke="var:border/default" strokeWidth={{1}}>'
@@ -1802,7 +1813,9 @@ R10_PREVIEW = (f'<Frame w="fill" flex="col" gap={{13}} p={{22}} rounded={{22}} b
                f'<Frame w="fill" flex="col" gap={{2}}>{T(18,"bold","var:text/strong","Amara Chinaza Okeke")}'
                f'{T(12,"regular","var:text/muted","MDR-8842-19 · 34 years · Area 3, Garki, Abuja")}</Frame>'
                f'{hr()}'
-               f'{kv_pair(kv("Blood group","O+","droplet"), kv("Genotype","AA","activity"))}'
+               f'{kv_pair(kv("Blood group","O+*","droplet"), kv("Genotype","AA*","activity"))}'
+               f'<Frame w="fill" flex="row" gap={{7}} items="center">{verify_tag(False,9)}'
+               f'{T(10,"regular","var:text/faint","* self-reported",w="fill")}</Frame>'
                f'{kv("Allergies","Penicillin — rash and swelling","triangle-alert")}'
                f'{kv("Conditions","Hypertension (Jun 2026)","heart-pulse")}'
                f'{kv("Medicines","Amlodipine 5 mg morning · Metformin 500 mg evening · Vitamin D 1000 IU","pill")}'

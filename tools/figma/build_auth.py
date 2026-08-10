@@ -266,6 +266,12 @@ def desk_form(name, panel, eyebrow_t, head_parts, sub, body, primary, extras=(),
         f'<Frame w="fill" flex="col" gap={{11}}>{primary}{"".join(extras)}</Frame>')
 
 frames=[]; NAMES={}; ORDER={}
+# v2.0: the verification-state vocabulary is shared, so member, doctor, organisation and
+# auth all render it identically.
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from medra_ui import health_fact, verify_tag, unverified_note
+
 def add(page,fid,d,m):
     frames.append((page,f"{fid}-d.jsx",d)); frames.append((page,f"{fid}-m.jsx",m))
     NAMES[fid]=(re.search(r'name="([^"]+)"',d).group(1), re.search(r'name="([^"]+)"',m).group(1))
@@ -372,8 +378,9 @@ NAME_B=(f'<Frame w="fill" flex="col" gap={{18}}>'
         f'<Frame name="Btn Add photo" flex="row" gap={{8}} items="center" px={{16}} py={{11}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>'
         f'{I("upload",16,N_IC)}{T(13,"semibold","var:text/default","Add a photo (optional)")}</Frame></Frame>'
         f'{field("Full name","user","Amara Okeke",ph=False,helper="Required — this is how we and your doctor address you.")}'
-        f'{segmented(["Date of birth","Just my age"],0,"Age method")}'
-        f'{field("Date of birth","calendar-days","12 March 1994",ph=False,helper="Don’t know the exact date? Switch to “Just my age” and we’ll work out the year.")}</Frame>')
+        f'{field("Date of birth","calendar-days","12 March 1994",ph=False,helper="Required. Two people can share a name; far fewer share a name and a birthday.")}'
+        f'{field("NIN","id-card","1234 5678 9012",helper="Strongly recommended. It is what stops the wrong record being opened for you next year — and it is how a hospital you have never visited knows you are you.")}'
+        f'{note("shield-check","Your NIN is used only to tell you apart from someone with the same name. It is never shown to a doctor or an organisation.","info")}</Frame>')
 add("Member","M3-name",
     desk_form("Auth · Member — M3 Your Name",
         MP(eyebrow_t="For members",head_parts=[("Care that",False),("knows you",True)],
@@ -382,11 +389,11 @@ add("Member","M3-name",
         "Step 3 of 5",[("What should we",False),("call you?",True)],
         "We need your name — nobody wants to be greeted as +234 801 234 5678.",
         NAME_B,cta("Continue","Continue M3"),
-        [note("info","Your name and age are the only things we ask for here — everything after this step can wait.","info")],step=(2,5)),
+        [note("info","Name and date of birth are required. Everything after this step can wait.","info")],step=(2,5)),
     mob_form("Auth · Member — M3 Your Name · Mobile","Step 3 of 5",
         [("What should we",False),("call you?",True)],"This is the name your doctor will see.",
         NAME_B,cta("Continue","Continue M3"),
-        [note("info","Name and age are required. Everything after this step can wait.","info")],step=(2,5)))
+        [note("info","Name and date of birth are required. The rest can wait.","info")],step=(2,5)))
 
 ABOUT_B=(f'<Frame w="fill" flex="col" gap={{18}}>'
          f'{field_chips("Gender",["Female","Male","Non-binary","Prefer not to say"],0,"Gender")}'
@@ -405,6 +412,7 @@ add("Member","M4-about",
         ABOUT_B,cta("Continue","Continue M4"),[link("","Skip for now","Skip M4")],step=(3,5)))
 
 HEALTH_B=(f'<Frame w="fill" flex="col" gap={{16}}>'
+          f'{unverified_note("warn")}'
           f'{field_chips("Blood group",["A+","A-","B+","B-","O+","O-","AB+","Not sure"],4,"Blood")}'
           f'{field_chips("Genotype",["AA","AS","SS","AC","SC","Not sure"],0,"Genotype")}'
           f'<Frame w="fill" flex="row" gap={{14}}>'
@@ -413,7 +421,9 @@ HEALTH_B=(f'<Frame w="fill" flex="col" gap={{16}}>'
           f'{field("Allergies","triangle-alert","e.g. penicillin, peanuts")}'
           f'{field("Long-term conditions","heart-pulse","e.g. asthma, hypertension")}'
           f'{field("Medicines you take now","pill","e.g. metformin 500mg")}'
-          f'{field("Emergency contact","phone-call","802 000 0000",prefix="+234")}</Frame>')
+          f'{field("Emergency contact","phone-call","802 000 0000",prefix="+234")}'
+          f'{field("NHIS number (optional)","shield-check","NHIS-4471-88",helper="If you have national health insurance. We show a partner hospital whether they accept it — nothing is claimed automatically.")}'
+          f'{field("Private insurance (optional)","credit-card","Insurer and policy number")}</Frame>')
 add("Member","M5-health",
     desk_form("Auth · Member — M5 Health Basics",
         MP(eyebrow_t="For members",head_parts=[("Safer",False),("prescriptions",True)],
@@ -421,7 +431,7 @@ add("Member","M5-health",
            proofs=[proof("heart-pulse","Clinical safety"),proof("pill","Drug-clash aware")]),
         "Step 5 of 5",[("Your",False),("health basics",True)],
         "Optional, but it helps doctors keep you safe. You can add more anytime.",
-        HEALTH_B,cta("Finish and go to my home","Finish M5"),[link("","I’ll do this later","Skip M5")],step=(4,5)),
+        HEALTH_B,cta("Finish and go to my home","Finish M5"),[link("","I’ll do this later — I am not sure of some of these","Skip M5")],step=(4,5)),
     mob_form("Auth · Member — M5 Health Basics · Mobile","Step 5 of 5",
         [("Your",False),("health basics",True)],"Optional — but it helps doctors keep you safe.",
         HEALTH_B,cta("Finish","Finish M5"),[link("","I’ll do this later","Skip M5")],step=(4,5)))
@@ -515,6 +525,7 @@ D1B=(f'<Frame w="fill" flex="col" gap={{16}}>{field("Full name","user","Dr. Ngoz
      f'{field("Work email","mail","dr.okafor@clinic.ng",ph=False,helper="You can sign in with this, your phone or your MDCN number.")}'
      f'{field("Phone number","phone","803 555 0110",prefix="+234")}'
      f'{field("MDCN number","id-card","MDCN/45201",helper="Your Medical &amp; Dental Council of Nigeria registration number.")}'
+     f'{field("NIN","fingerprint","1234 5678 9012",helper="A second identifier alongside your MDCN number. Checked once, never shown to members.")}'
      f'{field("Specialisation","stethoscope","General practice",ph=False,trailing=("chevron-down","Specialty dropdown"),helper="Pick from the list — the Medra team keeps it current. Choose “Other” to type your own.")}'
      f'<Frame w="fill" flex="col" gap={{9}}>{T(13,"medium","var:text/default","Also practises")}'
      f'<Frame w="fill" flex="row" gap={{9}}>'
@@ -522,6 +533,24 @@ D1B=(f'<Frame w="fill" flex="col" gap={{16}}>{field("Full name","user","Dr. Ngoz
      f'{T(13,"medium","var:text/default","Internal medicine")}{I("x",13,M_IC)}</Frame>'
      f'<Frame name="Btn Add specialty" flex="row" gap={{7}} items="center" px={{13}} py={{9}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>'
      f'{I("plus",13,N_IC)}{T(13,"medium","var:text/default","Add another")}</Frame></Frame></Frame></Frame>')
+
+# An unskippable step, not a link in a footer. It is what makes a later breach a breach of
+# something the person signed — and it is a condition of the NDPA 2023 posture.
+UND_LEAD = "You are about to hold other people’s medical records. Three things you are agreeing to:"
+UNDERTAKING = (f'<Frame w="fill" flex="col" gap={{13}} p={{18}} rounded={{22}} bg="var:state/info-bg">'
+               f'<Frame flex="row" gap={{9}} items="center">{I("shield-check",17,A_IC)}'
+               f'{T(15,"semibold","var:text/strong","Data-privacy undertaking")}</Frame>'
+               f'{T(13,"regular","var:text/default",UND_LEAD,w="fill")}'
+               f'<Frame w="fill" flex="col" gap={{9}}>'
+               f'<Frame w="fill" flex="row" gap={{9}} items="start">{I("eye-off",14,A_IC)}'
+               f'{T(12,"regular","var:text/default","You look at a record only when you are caring for that person.",w="fill")}</Frame>'
+               f'<Frame w="fill" flex="row" gap={{9}} items="start">{I("users",14,A_IC)}'
+               f'{T(12,"regular","var:text/default","You never share your login. Every read is logged against your name.",w="fill")}</Frame>'
+               f'<Frame w="fill" flex="row" gap={{9}} items="start">{I("triangle-alert",14,A_IC)}'
+               f'{T(12,"regular","var:text/default","You tell us within 72 hours if a record is exposed, as the NDPA 2023 requires.",w="fill")}</Frame></Frame>'
+               f'{checkbox("I have read and accept the undertaking (v2.1)","Accept undertaking")}'
+               f'{link("","Read the full text","Read undertaking")}</Frame>')
+
 add("Doctor","D1-create",
     desk_form("Auth · Doctor — D1 Create Account",
         DP(eyebrow_t="For doctors",head_parts=[("Your practice,",False),("amplified",True)],
@@ -530,11 +559,11 @@ add("Doctor","D1-create",
            stats=[("180+","Doctors"),("2,400+","Patients"),("48h","To verify")]),
         "Step 1 of 4",[("Join Medra as a",False),("doctor",True)],
         "We verify every doctor's MDCN licence before your profile goes live — that's why patients trust Medra.",
-        D1B,cta("Continue","Continue D1","arrow-right","btn-navy.jpg"),
+        D1B + UNDERTAKING,cta("Continue","Continue D1","arrow-right","btn-navy.jpg"),
         [link("Already registered?","Log in","Login D")],step=(0,4)),
     mob_form("Auth · Doctor — D1 Create Account · Mobile","Step 1 of 4",
         [("Join as a",False),("doctor",True)],"We verify your MDCN licence before your profile goes live.",
-        D1B,cta("Continue","Continue D1","arrow-right","btn-navy.jpg"),
+        D1B + UNDERTAKING,cta("Continue","Continue D1","arrow-right","btn-navy.jpg"),
         [link("Already registered?","Log in","Login D")],step=(0,4)))
 
 OTP_D=f'<Frame w="fill" flex="col" gap={{14}}>{otp("58")}{link("Didn’t get it?","Resend in 0:20","Resend D2")}</Frame>'
@@ -713,6 +742,7 @@ I1_CONTACT = ('<Frame w="fill" flex="col" gap={13} p={18} rounded={24} bg="var:b
 I1B=(f'<Frame w="fill" flex="col" gap={{16}}>{field("Institution name","hospital","Garki Medical Centre",ph=False)}'
      f'{field("Type of institution","building-2","Private hospital",ph=False,trailing=("chevron-down","Itype dropdown"),helper="Private hospital · Clinic · Public or government hospital · Diagnostic centre · Laboratory · Pharmacy · Other")}'
      f'{field("RC number (CAC)","receipt","RC 1284005",ph=False,helper="We check this against the CAC register.")}'
+     f'{field("Organisation practice licence","badge-check","MDCN-F/2026/1189",helper="Required as well as the RC number. Anyone determined enough can register a company — the practice licence is the clinical credential.")}'
      f'{I1_CONTACT}</Frame>')
 add("Institution","I1-register",
     desk_form("Auth · Institution — I1 Register",
@@ -731,7 +761,9 @@ add("Institution","I1-register",
 
 DOCS=(f'<Frame w="fill" flex="col" gap={{13}}>{upload("Upload licence",done=True)}'
       f'{upload("Upload cac",done=False,label="CAC certificate")}'
-      f'{note("shield-check","Documents are encrypted and used only to verify your institution.","info")}</Frame>')
+      f'{upload("Upload regulator",done=False,label="Regulator registration (laboratory or pharmacy)")}'
+      f'{note("shield-check","Documents are encrypted and used only to verify your institution.","info")}'
+      f'{UNDERTAKING}</Frame>')
 add("Institution","I2-documents",
     desk_form("Auth · Institution — I2 Verify Documents",
         IP(eyebrow_t="For institutions",head_parts=[("Verified",False),("institutions only",True)],
