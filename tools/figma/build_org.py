@@ -1655,10 +1655,10 @@ E3_TRACK = dgroup("What happens next", [
 E3_LINK = dcard(
     eyerow("The link they will get")
     + f'<Frame w="fill" flex="row" gap={{9}} items="center" px={{14}} py={{12}} rounded={{12}} bg="var:neutral/50">'
-    + I("link", 15, M_IC) + T(13, "regular", "var:text/strong", "medra.ng/MDR-8842-19", w="fill")
+    + I("link", 15, M_IC) + T(13, "regular", "var:text/strong", "medra.ng/s/7fQ2-K9mR-4vXt", w="fill")
     + f'<Frame name="Btn Copy link E3" flex="row">{I("copy",15,N_IC)}</Frame></Frame>'
     + T(11, "regular", "var:text/muted",
-        "Short enough to read down a phone. It opens one job, expires when they finish it, and shows them a privacy notice before anything else.", w="fill")
+        "A random token, never the member's Medra ID — nobody can reach a record by guessing, and one link tells you nothing about any other. It opens one job, expires when they finish it, and shows a privacy notice before anything else.", w="fill")
     + f'<Frame w="fill" flex="row" gap={{9}}>'
     + dbtn("Send on WhatsApp", "Send wa E3", "message-circle", "navy")
     + dbtn("Print the slip", "Print slip E3", "printer", "ghost") + '</Frame>')
@@ -1675,7 +1675,7 @@ addx("Referral", "E3-sent",
     pinned=E3_DONE,
     sections=[
       ("track", "list-checks", "What happens next", "Four steps, you are told at each", "4", None, E3_TRACK, None),
-      ("link", "link", "The link they will get", "medra.ng/MDR-8842-19", None, None, E3_LINK, None),
+      ("link", "link", "The link they will get", "medra.ng/s/7fQ2-K9mR-4vXt", None, None, E3_LINK, None),
     ],
     tab_items=TAB_ADMIN, tab=3)
 
@@ -1842,7 +1842,7 @@ def ext_desk(name, children):
             f'<Frame w="fill" flex="row" gap={{11}} items="center" pb={{4}}>'
             f'<Image image="assets/logo/appicon.png" w={{34}} h={{34}} rounded={{11}} />'
             f'<Frame grow={{1}} flex="col" gap={{1}}>{T(15,"bold","var:text/strong","Medra")}'
-            f'{T(11,"regular","var:text/muted","medra.ng/MDR-9012-44")}</Frame>'
+            f'{T(11,"regular","var:text/muted","medra.ng/s/3jT8-Wp5N-2bQy")}</Frame>'
             f'<Frame name="Btn Open help" flex="row" gap={{7}} items="center" px={{11}} py={{7}} '
             f'rounded={{10}} bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>'
             f'{I("circle-help",14,N_IC)}{T(12,"medium","var:text/default","Help")}</Frame></Frame>'
@@ -1854,7 +1854,7 @@ def ext_mob(name, children):
             f'<Frame w="fill" flex="row" gap={{10}} items="center" px={{18}} pt={{10}} pb={{8}}>'
             f'<Image image="assets/logo/appicon.png" w={{30}} h={{30}} rounded={{10}} />'
             f'<Frame grow={{1}} flex="col" gap={{1}}>{T(13,"bold","var:text/strong","Medra")}'
-            f'{T(10,"regular","var:text/muted","medra.ng/MDR-9012-44")}</Frame>'
+            f'{T(10,"regular","var:text/muted","medra.ng/s/3jT8-Wp5N-2bQy")}</Frame>'
             f'<Frame name="Btn Open help" flex="row" px={{9}} py={{7}} rounded={{9}} bg="var:bg/base" '
             f'stroke="var:border/subtle" strokeWidth={{1}}>{I("circle-help",14,N_IC)}</Frame></Frame>'
             f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{16}} pt={{4}} pb={{14}}>{children}</Frame></Frame>')

@@ -815,3 +815,60 @@ def sheet_pick(ic, label, sub, name, tone=None):
             f'items="center">{I(ic,18,hexc)}</Frame>'
             f'<Frame grow={{1}} flex="col" gap={{2}}>{T(13,"semibold","var:text/strong",label)}{s}</Frame>'
             f'{I("chevron-right",15,M_IC)}</Frame>')
+
+# ---------------------------------------------------------------- routing an order outward
+def dept_choice(ic, label, desc, name, sel=False, tone="info", meta=None):
+    """Where an order goes. Wider than outcome_choice because the deciding information is
+    the third line — how busy they are, how long they take, what they cannot do."""
+    tint = {"info": "var:state/info-bg", "ok": "var:state/success-bg", "warn": "var:state/warning-bg",
+            "err": "var:state/error-bg", "muted": "var:neutral/100"}[tone]
+    c = {"info": A_IC, "ok": OK_IC, "warn": WARN_IC, "err": ERR_IC, "muted": M_IC}[tone]
+    bd = "var:border/accent" if sel else "var:border/subtle"
+    bw = 2 if sel else 1
+    m = (f'<Frame w="fill" flex="row" gap={{7}} items="center" px={{10}} py={{6}} rounded={{8}} '
+         f'bg="var:neutral/50">{I("info",12,M_IC)}'
+         f'{T(11,"regular","var:text/muted",meta,w="fill")}</Frame>') if meta else ''
+    return (f'<Frame name="Btn {name}" w="fill" flex="col" gap={{9}} p={{14}} rounded={{14}} '
+            f'bg="var:bg/base" stroke="{bd}" strokeWidth={{{bw}}}>'
+            f'<Frame w="fill" flex="row" gap={{12}} items="start">'
+            f'<Frame w={{36}} h={{36}} rounded={{12}} bg="{tint}" flex="col" justify="center" items="center">'
+            f'{I(ic,17,c)}</Frame>'
+            f'<Frame grow={{1}} flex="col" gap={{2}}>{T(13,"semibold","var:text/strong",label)}'
+            f'{T(11,"regular","var:text/muted",desc,w="fill")}</Frame>'
+            f'{I("circle-check",18,T_IC) if sel else I("circle",18,M_IC)}</Frame>{m}</Frame>')
+
+def track_step(label, when, done=False, current=False, sub=None):
+    """One step of an order's life. Three states — done, happening, not yet — because a
+    doctor's question is never "where is it" but "should I be chasing it"."""
+    if done:
+        dot = (f'<Frame w={{26}} h={{26}} rounded={{999}} bg="var:brand/teal" flex="col" justify="center" '
+               f'items="center">{I("check",14,W_IC)}</Frame>')
+        col, wcol = "var:text/muted", "var:text/faint"
+    elif current:
+        dot = (f'<Frame w={{26}} h={{26}} rounded={{999}} bg="var:state/warning-bg" flex="col" justify="center" '
+               f'items="center">{I("loader",14,WARN_IC)}</Frame>')
+        col, wcol = "var:text/strong", "var:state/warning"
+    else:
+        dot = '<Rect w={26} h={26} rounded={999} bg="var:bg/base" stroke="var:border/strong" strokeWidth={1} />'
+        col, wcol = "var:text/faint", "var:text/faint"
+    s = T(11, "regular", "var:text/muted", sub, w="fill") if sub else ""
+    return (f'<Frame w="fill" flex="row" gap={{12}} items="start" py={{9}}>{dot}'
+            f'<Frame grow={{1}} flex="col" gap={{2}}>{T(13,"semibold",col,label)}{s}</Frame>'
+            f'{T(11,"semibold" if current else "regular",wcol,when)}</Frame>')
+
+def link_row_dr(who, what, state, when, name):
+    """A single-use link in the doctor's own list. The state pill is the whole point of the
+    row: open, used and expired need three different reactions from a doctor."""
+    conf = {"open":    ("var:state/warning-bg", "var:state/warning", "Open", WARN_IC),
+            "used":    ("var:state/success-bg", "var:state/success", "Used", OK_IC),
+            "expired": ("var:neutral/100", "var:text/muted", "Expired", M_IC),
+            "revoked": ("var:state/error-bg", "var:state/error", "Revoked", ERR_IC)}[state]
+    return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{12}} items="center" py={{11}}>'
+            f'<Frame w={{34}} h={{34}} rounded={{11}} bg="{conf[0]}" flex="col" justify="center" items="center">'
+            f'{I("link",16,conf[3])}</Frame>'
+            f'<Frame grow={{1}} flex="col" gap={{2}}>{T(13,"semibold","var:text/strong",who)}'
+            f'{T(11,"regular","var:text/muted",what,w="fill")}</Frame>'
+            f'<Frame flex="col" gap={{3}} items="end">'
+            f'<Frame flex="row" px={{9}} py={{4}} rounded={{7}} bg="{conf[0]}">'
+            f'{T(10,"semibold",conf[1],conf[2])}</Frame>'
+            f'{T(10,"regular","var:text/faint",when)}</Frame>{I("chevron-right",15,M_IC)}</Frame>')

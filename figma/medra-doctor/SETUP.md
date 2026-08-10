@@ -1,15 +1,15 @@
 # Medra — Doctor / Medical Practitioner module
 
-**239 frames · 8 Figma pages · Desktop 1440×900 + Mobile 390 · doctor-module only**
+**270 frames · 8 Figma pages · Desktop 1440×900 + Mobile 390 · doctor-module only**
 
-46 desktop screens. On mobile each of those is a **hub plus its own sections and sheets** —
-169 mobile frames in total — plus 24 component-state frames that become 10 component sets.
+52 desktop screens. On mobile each of those is a **hub plus its own sections and sheets** —
+194 mobile frames in total — plus 24 component-state frames that become 10 component sets.
 
 Offline validation
-- `node validate.js` → **ALL 239 CLEAN, FULLY OFFLINE ✓** (203 icons, 41 tokens, 0 warnings)
+- `node validate.js` → **ALL 270 CLEAN, FULLY OFFLINE ✓** (206 icons, 41 tokens, 0 warnings)
 - `python3 tools/figma/preview_bundle.py` + headless measurement → **0 horizontal overflow** at 390 and 1440
 - `python3 tools/figma/proto_check.py figma/medra-doctor link-doctor.js` → **PROTOTYPE COMPLETE ✓**
-  215/215 screens reachable, 906 explicit links, 2,795 navigation links, no broken hotspots
+  246/246 screens reachable, 1,024 explicit links, 3,198 navigation links, no broken hotspots
 
 | | Before this pass | Now |
 |---|---|---|
@@ -114,12 +114,17 @@ clipping. The difference is that the first screenful is now the whole answer for
 | C2 | **Templates** | Five templates with a live preview, auto-suggest, and clinic-shared sets |
 | C3 | **Prescribe** | Drug search, dose builder, refills, patient-facing instructions, reminder — and a **hard block on a penicillin prescription for a penicillin-allergic patient**, overridable only with a written reason. Five safety checks, including "kidney function unknown" |
 | C4 | **Order tests** | Test search with prices, where she should go, clinical details for the lab, urgent flag, and a nudge if it is not done in 7 days |
-| C5 | **Result** | Photograph it, we read the values, **you check them before release**, one line in plain language, hold-until-spoken, and the other results waiting |
+| C5 | **Result** (photographed) | Photograph it, we read the values, **you check them before release**, one line in plain language, hold-until-spoken, and the other results waiting |
 | C6 | **Refer onward** | Named colleagues with next slots, a referral letter, urgency, what to share — and the loop that brings their reply back to you |
 | C7 | **Review & sign** | Nine per-section switches for what the patient sees, a live preview of her phone, and an immutable signature block |
 | C8 | **Signed** | Where everything went, what was released, the next patient |
 | C9 | **Unsigned notes** | Two drafts, what an unsigned note costs the patient, the pharmacy and your payout, a recovered note, and reminders to stop it happening |
 | C10 | **Virtual visit** | **PRD D5.** Your link, proof it reached her by three routes, the waiting room, and four fallbacks when the video fails |
+| C11 | **Send the order** | Where the order actually goes: your own laboratory, your imaging room, a Medra partner, a single-use link to somewhere that is not on Medra, or paper. Each option carries the deciding information — how busy they are, how long they take, what they cannot do — and a list of exactly what the recipient will see |
+| C12 | **Order status** | The five steps of an order's life, what Amara sees while it runs (not the values — not until you have read them), what to do if it stalls, and your other open orders sorted by what is closest to going wrong |
+| C13 | **Send to someone not on Medra** | Recipient, the seven-item scope with two lines locked on, how long the link lives, and what a link is and is not. The address is a random token, never a Medra ID |
+| C14 | **Waiting on consent** | Nothing exists until the member says yes. What she was asked, in her words; the append-only trail; and four honest ways forward if she declines — none of them a workaround |
+| C15 | **The link is ready** | The token, four ways to send it, the four screens the recipient will see, your open links with their states, and the member's own audit trail |
 
 ### 4 · Patients
 | # | Screen | Why it exists |
@@ -131,6 +136,7 @@ clipping. The difference is that the first screenful is now the whole answer for
 | P5 | **Messages** | Four unread across WhatsApp, email and in-app, with a symptom-flagged message surfaced, quick replies, and your boundaries |
 | P6 | **Refills** | Approve / change / ask them in / decline, with the context that makes it a clinical decision rather than a blind renewal |
 | P7 | **Results** | Three waiting, with a trend chart for the abnormal one, and why a doctor releases results at all |
+| P8 | **Structured result** | A result that arrived as data rather than as a photograph: the laboratory's own values and ranges, the delta against the patient's own history, and full provenance — which laboratory, which scientist, which analyser, verified when. Plus what that buys you that a photograph never can |
 
 ### 5 · Practice & money
 | # | Screen | Why it exists |
@@ -224,7 +230,12 @@ a patient declining an access request.
 - **Referral rewards** (G3) are indicative.
 - **Institution-employed doctors** are represented in S7, but the facility admin's own portal
   (staff, seats, allocation, supervisor privileges) is a separate module.
-- **A lab technician's own screen** does not exist; C5 covers a doctor uploading a result.
+- **A lab technician's own screen** lives in the organisation module (D5–D8), not here. C5 is a
+  doctor photographing a result; P8 is one the laboratory returned as data. Both paths are real
+  in Nigeria today, and the file says so rather than pretending only one is.
+- **A single-use link's address is `medra.ng/s/<random token>`.** It was the member's own Medra
+  ID in an earlier draft, which made every link guessable by counting. That was a defect, not a
+  simplification, and it is fixed here and in the organisation module.
 
 ## 6. Render — doctor module only
 
@@ -256,7 +267,7 @@ python3 tools/figma/proto_check.py figma/medra-doctor link-doctor.js
 It reads the frames off disk, walks the transition table, and answers three questions without
 opening Figma: is every screen reachable from a flow start, does every explicit transition name
 a hotspot that actually exists on that frame, and how many `Btn` nodes are wired explicitly
-versus swept. Current result: **215/215 reachable, 0 broken links**.
+versus swept. Current result: **246/246 reachable, 0 broken links**.
 
 ## 8. Preview without Figma
 ```bash

@@ -2,8 +2,8 @@
 
 Everything is wired by `link-doctor.js`. Nothing needs to be connected by hand in Figma.
 
-**906 explicit transitions · 2,795 navigation links · 1,444 controls that stay on their own
-screen · 215 of 215 screens reachable · 0 broken hotspots.**
+**1,024 explicit transitions · 3,198 navigation links · 1,623 controls that stay on their own
+screen · 246 of 246 screens reachable · 0 broken hotspots.**
 
 Verify it before rendering, and again after:
 
@@ -85,6 +85,28 @@ record** → `C7`. `Hold` stays on `P7`, which is the point: holding is a decisi
 ### Consent
 `K4 Read the file` → **Ask for more history** → `P3` → **Send the request** → `P2 Record`.
 `P2` shows what she shared; what she has not is listed as explicitly locked and is inert.
+
+### An order leaving the building
+`C4 Order Tests` → **Send it to a laboratory** → `C11 Send the Order` → **Send to the
+laboratory** → `C12 Order Status`. `C12` → **Read the result that is ready** → `P8`.
+This is the chain the clinical modules share: `C11`'s in-house option is a department in the
+organisation console, and the order lands in that department's queue.
+
+### Somewhere that is not on Medra
+`C11` → **Somewhere not on Medra** → `C13 Send to Someone Not on Medra` → **Ask Amara to
+approve it** → `C14 Waiting on Consent` → **She approved** → `C15 The Link Is Ready`.
+`C6 Refer` → **Write a letter instead** lands on `C13` too, because a doctor who is not on
+Medra is the same problem as a laboratory that is not.
+
+Nothing exists between `C13` and `C15` until the member says yes: no link, no token, and the
+recipient has not been told her name. `C14`'s four ways forward if she declines are all real
+alternatives — none of them is "send it anyway on paper", which is the same share with the
+audit trail removed.
+
+### A result that came back as data
+`P7 Results` → the Musa row → `P8 Structured Result` → **Release it to Musa** → `P7`, one
+fewer. **Hold** goes to the same place, which is the point: holding is a decision, not a dead
+end. `P8` → a moving value → `P2 Record`.
 
 ### Virtual
 `K4` → **Send the meeting link** → `C10 Virtual Visit` → **Join the call** → `C1`.

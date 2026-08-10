@@ -69,7 +69,11 @@
     "R9-records-empty-d.jsx",
     "R9-records-empty-m.jsx",
     "R10-summary-d.jsx",
-    "R10-summary-m.jsx"
+    "R10-summary-m.jsx",
+    "R11-approve-d.jsx",
+    "R11-approve-m.jsx",
+    "R12-shared-d.jsx",
+    "R12-shared-m.jsx"
   ],
   "Medicines": [
     "M1-meds-d.jsx",

@@ -1290,7 +1290,9 @@ add("Records", "R6-access",
                      "One doctor has access right now. Everything else is closed.",
                      actions=mini_btn("Share with someone", "Share R5", "share-2", "teal", grow=False))
         + f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-          f'<Frame grow={{1}} flex="col" gap={{16}}>{R6_ACTIVE}{R6_AUDIT}</Frame>'
+          f'<Frame grow={{1}} flex="col" gap={{16}}>{R6_ACTIVE}'
+          f'{group_card("Shared outside Medra", [list_row("link","Lifebridge Diagnostics",value="Open",sub="Your MRI · four things · closes when the report arrives",name="Share outside",tint="var:state/warning-bg")], p=16)}'
+          f'{R6_AUDIT}</Frame>'
           f'<Frame w={{380}} flex="col" gap={{16}}>{R6_PAST}'
           f'<Frame name="Btn Revoke all" w="fill" flex="row" gap={{9}} justify="center" items="center" px={{20}} py={{15}} rounded={{999}} bg="var:state/error-bg">'
           f'{I("shield-off",17,ERR_IC)}{T(15,"semibold","var:state/error","Revoke every share now")}</Frame>'
@@ -2018,6 +2020,7 @@ add("Profile", "P9-delete",
 # ALERTS & SYSTEM STATES
 # =====================================================================================
 N1_TODAY = (f'<Frame w="fill" flex="col" gap={{10}}>{eyebrow("TODAY")}'
+            f'{notif_row("user-check","Dr. Okafor is asking to share your details","With Lifebridge Diagnostics, for your MRI. Nothing is sent until you say yes.","11 min ago","Notif share",unread=True,tone="warn")}'
             f'{notif_row("bell-ring","Visit tomorrow at 10:30","Dr. Ngozi Okafor · virtual. Tap to test your camera before then.","2 hours ago","Notif visit",unread=True,tone="info")}'
             f'{notif_row("eye","Dr. Okafor opened your records","She read “Hypertension review” at 09:12. You allowed this until 21 Aug.","3 hours ago","Notif audit",unread=True,tone="muted")}'
             f'{notif_row("pill","Metformin at 18:00","One tablet with food.","5 hours ago","Notif med",unread=True,tone="ok")}</Frame>')
@@ -2285,6 +2288,107 @@ add("Records", "R10-summary",
           f'<Frame grow={{1}} />{cta("Preview and print","Print now R10","printer")}'
           f'{ghost("Save as PDF","Save pdf R10","download")}</Frame>'))
 
+# ---------------- R11  somebody is asking to send your details outside Medra
+# The doctor's C13/C14 pair ends here. Nothing exists on the other side until this screen
+# gets a yes: no link, no token, and the recipient has not been told the member's name.
+R11_WHO = card(
+    f'<Frame w="fill" flex="row" gap={{14}} items="center">'
+    f'<Image image="assets/img/avatar-4.jpg" w={{58}} h={{58}} rounded={{18}} />'
+    f'<Frame grow={{1}} flex="col" gap={{3}}>'
+    f'<Frame flex="row" gap={{8}} items="center">{T(17,"bold","var:text/strong","Dr. Ngozi Okafor")}'
+    f'{I("badge-check",16,T_IC)}</Frame>'
+    f'{T(13,"regular","var:text/muted","Cardiologist · MDCN 71482 · you saw her today at 11:04",w="fill")}</Frame></Frame>'
+    + f'<Frame w="fill" flex="col" gap={{7}} p={{16}} rounded={{18}} bg="var:state/warning-bg">'
+    + T(15, "semibold", "var:text/strong", "She wants to send some of your details to Lifebridge Diagnostics")
+    + T(13, "regular", "var:text/default",
+        "They are the imaging centre that will do your MRI. They are not on Medra, so they would get a one-time page rather than an account.", w="fill")
+    + f'</Frame>', p=20, gap=14)
+
+R11_WHAT = group_card("Exactly what they would see", [
+    consent_row("user", "Your name, age and Medra ID", "Amara Chinaza Okeke · 34 · MDR-8842-19", "Ok identity", locked=True),
+    consent_row("triangle-alert", "Your allergies", "Penicillin", "Ok allergy", locked=True),
+    consent_row("file-text", "Why the scan was asked for", "Six weeks of low back pain, no red flags", "Ok reason"),
+    consent_row("clipboard-list", "The relevant part of your history", "Hypertension, on Amlodipine 5 mg", "Ok history"),
+    consent_row("flask-conical", "Your last blood results", "Full blood count, 12 June", "Ok labs", on=False),
+    consent_row("stethoscope", "Today's consultation note", "Everything Dr. Okafor wrote", "Ok note", on=False),
+    consent_row("phone", "Your phone number", "So they could call you directly", "Ok phone", on=False),
+], footer="The two locked lines always travel — who you are, and what you are allergic to. Everything else is yours to switch off, and switching one off does not cancel the rest.")
+
+R11_LIFE = group_card("What you are agreeing to", [
+    list_row("timer", "It dies when the scan is done", sub="And in 7 days regardless, even if they never open it", name="Ok life", chevron=False, tint="var:state/success-bg"),
+    list_row("user-x", "One recipient, one job", sub="They cannot pass it on, and it opens nothing else in your record", name="Ok one", chevron=False),
+    list_row("file-signature", "They sign a privacy undertaking first", sub="Before the page will show them anything", name="Ok undertaking", chevron=False),
+    list_row("shield-off", "You can revoke it at any moment", sub="From Who has access. They see an expired page immediately", name="Open access R6"),
+    list_row("history", "Every time they open it, you are told", sub="It goes into your access log, which nobody can edit", name="Ok log", chevron=False),
+])
+
+R11_FREE = note("info", "Saying no does not affect your care. Dr. Okafor can print the request and hand it to you instead, or use a laboratory that is on Medra. You will not be asked why, and she is not told anything except that you declined.", "info")
+
+R11_ACTIONS = (f'{cta("Yes, share these 4 things","Approve share R11","circle-check")}'
+               f'{ghost("No, do not share anything","Decline share R11","circle-x")}'
+               f'{link(None,"Ask Dr. Okafor a question first","Ask about share")}')
+
+add("Records", "R11-approve",
+    desk("Member · Records — R11 Approve a Share",
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",18,N_IC)}'
+        f'{T(14,"semibold","var:text/default","Notifications")}</Frame>'
+        + head_chip([("A request to", False), ("share your record", True)], 30)
+        + f'<Frame w="fill" flex="row" gap={{20}} items="start">'
+          f'<Frame grow={{1}} flex="col" gap={{16}}>{R11_WHO}{R11_WHAT}</Frame>'
+          f'<Frame w={{400}} flex="col" gap={{16}}>{R11_LIFE}{R11_ACTIONS}{R11_FREE}</Frame></Frame>',
+        SIDE["Records"]),
+    mob("Member · Records — R11 Approve a Share · Mobile",
+        appbar("Share request")
+        + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{10}}>'
+          f'{R11_WHO}'
+          f'{group_card("Exactly what they would see", [consent_row("user","Your name, age and Medra ID","Amara Chinaza Okeke · 34","Ok identity",locked=True),consent_row("triangle-alert","Your allergies","Penicillin","Ok allergy",locked=True),consent_row("file-text","Why the scan was asked for","Low back pain, six weeks","Ok reason"),consent_row("clipboard-list","Relevant history","Hypertension, on Amlodipine","Ok history"),consent_row("flask-conical","Your last blood results","Full blood count, 12 June","Ok labs",on=False),consent_row("phone","Your phone number","So they could call you","Ok phone",on=False)], p=16)}'
+          f'{R11_ACTIONS}{R11_FREE}</Frame>',
+        nav=bottom_nav(2)))
+
+# ---------------- R12  it is shared, and here is your handle on it
+R12_DONE = (f'<Frame w="fill" flex="col" gap={{14}} items="center" p={{26}} rounded={{26}} bg="var:bg/base" '
+            f'stroke="var:border/subtle" strokeWidth={{1}}>'
+            f'<Frame w={{82}} h={{82}} rounded={{999}} bg="var:state/success-bg" flex="col" justify="center" items="center">'
+            f'{I("circle-check",36,OK_IC)}</Frame>'
+            f'{T(20,"bold","var:text/strong","Shared with Lifebridge Diagnostics")}'
+            f'{T(14,"regular","var:text/muted","Four things, for one scan. It closes the moment they send the report back — you do not have to remember to switch it off.",w="fill",align="center")}</Frame>')
+
+R12_STATE = group_card("Right now", [
+    list_row("link", "The page has not been opened yet", value="Waiting", sub="Created 11:29 today", name="Sh opened", chevron=False, tint="var:state/warning-bg"),
+    list_row("timer", "It expires when the report arrives", value="or 7 days", sub="Whichever comes first — Sunday 18 August at the latest", name="Sh expiry", chevron=False),
+    list_row("user", "Only Lifebridge Diagnostics can open it", sub="Sent to +234 805 441 2290 and nowhere else", name="Sh who", chevron=False),
+    list_row("eye", "Four things travel, three do not", sub="Your blood results, today's note and your phone number stayed here", name="Sh scope", chevron=False, tint="var:state/success-bg"),
+])
+
+R12_STOP = group_card("If you change your mind", [
+    list_row("shield-off", "Revoke it now", sub="They see an expired page from that second. Dr. Okafor is told", name="Revoke share R12", danger=True),
+    list_row("circle-minus", "Take one thing off it", sub="Removes an item without cancelling the scan", name="Narrow share R12"),
+    list_row("message-square-text", "Ask Dr. Okafor why it is needed", sub="A real reply, usually the same day", name="Ask about share"),
+], footer="Revoking does not cancel your appointment and does not go on your record as a refusal. It is your record; you may change your mind about it.")
+
+R12_LOG = group_card("Your access log", [
+    audit_row("You", "Approved 4 items for Lifebridge Diagnostics", "Today, 11:29"),
+    audit_row("You", "Declined 3 items — blood results, today's note, phone number", "Today, 11:29"),
+    audit_row("Dr. Ngozi Okafor", "Created the link", "Today, 11:29"),
+    audit_row("Lifebridge Diagnostics", "Has not opened it", "—"),
+], footer="This log is append-only. Neither Medra nor your doctor can edit or remove a line from it — that is the whole point of keeping it.")
+
+add("Records", "R12-shared",
+    desk("Member · Records — R12 Shared Outside Medra",
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",18,N_IC)}'
+        f'{T(14,"semibold","var:text/default","Who has access")}</Frame>'
+        + f'<Frame w="fill" flex="row" gap={{20}} items="start">'
+          f'<Frame grow={{1}} flex="col" gap={{16}}>{R12_DONE}{R12_STATE}{R12_LOG}</Frame>'
+          f'<Frame w={{380}} flex="col" gap={{16}}>{R12_STOP}'
+          f'{mini_btn("See everyone who has access","Open access R6","shield-check","teal",full=True)}'
+          f'{note("info","Lifebridge keep their own copy of the report they write — the law requires it of them, exactly as it does of a clinic. Revoking closes their access to your Medra record, not their own file.","info")}</Frame></Frame>',
+        SIDE["Records"]),
+    mob("Member · Records — R12 Shared Outside Medra · Mobile",
+        appbar("Shared", right=circle_btn("shield-check", "Open access R6"))
+        + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{10}}>'
+          f'{R12_DONE}{R12_STATE}{R12_STOP}</Frame>',
+        nav=bottom_nav(2)))
+
 # ---------------- N0  the bell overlay
 # "once they click on the notification it shows an overlay with maybe five important
 #  notifications, then View all brings them to the full screen"
@@ -2296,6 +2400,7 @@ N0_PANEL = (f'<Frame w={{400}} flex="col" gap={{12}} p={{18}} rounded={{26}} bg=
             f'<Frame flex="row" px={{9}} py={{4}} rounded={{999}} bg="var:state/error-bg">'
             f'{T(11,"semibold","var:state/error","3 new")}</Frame>'
             f'<Frame name="Btn Close notif panel" flex="row">{I("x",18,M_IC)}</Frame></Frame></Frame>'
+            f'{notif_row("user-check","Dr. Okafor is asking to share your details","With Lifebridge Diagnostics, for your MRI","11m ago","Notif share",unread=True,tone="warn")}'
             f'{notif_row("bell-ring","Visit tomorrow at 10:30","Dr. Ngozi Okafor · virtual","2h ago","Notif visit",unread=True,tone="info")}'
             f'{notif_row("eye","Dr. Okafor opened your records","“Hypertension review” at 09:12","3h ago","Notif audit",unread=True,tone="muted")}'
             f'{notif_row("pill","Metformin at 18:00","One tablet with food","5h ago","Notif med",unread=True,tone="ok")}'
@@ -2321,7 +2426,8 @@ N0_PANEL_M = (f'<Frame w="fill" flex="col" gap={{11}} p={{16}} rounded={{26}} bg
               f'<Frame flex="row" px={{9}} py={{4}} rounded={{999}} bg="var:state/error-bg">'
               f'{T(11,"semibold","var:state/error","3 new")}</Frame>'
               f'<Frame name="Btn Close notif panel" flex="row">{I("x",18,M_IC)}</Frame></Frame></Frame>'
-              f'{notif_row("bell-ring","Visit tomorrow at 10:30","Dr. Ngozi Okafor · virtual","2h ago","Notif visit",unread=True,tone="info")}'
+              f'{notif_row("user-check","Dr. Okafor is asking to share your details","With Lifebridge Diagnostics, for your MRI","11m ago","Notif share",unread=True,tone="warn")}'
+            f'{notif_row("bell-ring","Visit tomorrow at 10:30","Dr. Ngozi Okafor · virtual","2h ago","Notif visit",unread=True,tone="info")}'
               f'{notif_row("eye","Dr. Okafor opened your records","“Hypertension review” at 09:12","3h ago","Notif audit",unread=True,tone="muted")}'
               f'{notif_row("pill","Metformin at 18:00","One tablet with food","5h ago","Notif med",unread=True,tone="ok")}'
               f'{notif_row("package","Refill approved","Waiting at Garki pharmacy","Tue","Notif refill",tone="ok")}'
@@ -2665,6 +2771,19 @@ TRN = [
     ("N1-notifs","~Btn Open notifs P6","P6-notifs"),("N1-notifs","~Btn Open lab R3","R3-lab"),
     ("N1-notifs","~Btn Open refill M3","M3-refill"),
     ("N2-notifs-empty","Btn Open notifs P6","P6-notifs"),
+    # ---- the doctor's request to share outside Medra ends on the member's phone
+    # Nothing exists on the other side until R11 gets a yes: no link, no token, and
+    # Lifebridge have not been told her name.
+    ("N0-panel","Btn Notif share","R11-approve"),("N1-notifs","Btn Notif share","R11-approve"),
+    ("R11-approve","Btn Approve share R11","R12-shared"),
+    ("R11-approve","Btn Decline share R11","R6-access"),
+    ("R11-approve","Btn Ask about share","R11-approve"),
+    ("R11-approve","Btn Back","N1-notifs"),("R11-approve","~Btn Open access R6","R6-access"),
+    ("R12-shared","Btn Back","R6-access"),("R12-shared","Btn Open access R6","R6-access"),
+    ("R12-shared","Btn Revoke share R12","R6-access"),
+    ("R12-shared","Btn Narrow share R12","R11-approve"),
+    ("R12-shared","Btn Ask about share","R12-shared"),
+    ("R6-access","~Btn Share outside","R12-shared"),
     ("X2-offline","Btn Retry X2","R1-records"),
     ("X3-error","Btn Retry X3","H1-home"),("X3-error","Btn Open support","X3-error"),
     # ---- the new member's app

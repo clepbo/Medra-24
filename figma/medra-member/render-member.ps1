@@ -18,7 +18,7 @@ foreach ($f in @('V1-visits-d.jsx', 'V1-visits-m.jsx', 'V2-past-d.jsx', 'V2-past
 
 # ---- Medra Member — 3 Records ----
 figma-cli eval "(async()=>{const t='Medra Member — 3 Records';let p=figma.root.children.find(n=>n.name===t);if(!p){p=figma.createPage();p.name=t;}await figma.setCurrentPageAsync(p);return p.name;})()"
-foreach ($f in @('R1-records-d.jsx', 'R1-records-m.jsx', 'R2-note-d.jsx', 'R2-note-m.jsx', 'R3-lab-d.jsx', 'R3-lab-m.jsx', 'R4-vitals-d.jsx', 'R4-vitals-m.jsx', 'R5-share-d.jsx', 'R5-share-m.jsx', 'R6-access-d.jsx', 'R6-access-m.jsx', 'R7-upload-d.jsx', 'R7-upload-m.jsx', 'R8-added-d.jsx', 'R8-added-m.jsx', 'R9-records-empty-d.jsx', 'R9-records-empty-m.jsx', 'R10-summary-d.jsx', 'R10-summary-m.jsx')) { figma-cli render (Get-Content $f -Raw) }
+foreach ($f in @('R1-records-d.jsx', 'R1-records-m.jsx', 'R2-note-d.jsx', 'R2-note-m.jsx', 'R3-lab-d.jsx', 'R3-lab-m.jsx', 'R4-vitals-d.jsx', 'R4-vitals-m.jsx', 'R5-share-d.jsx', 'R5-share-m.jsx', 'R6-access-d.jsx', 'R6-access-m.jsx', 'R7-upload-d.jsx', 'R7-upload-m.jsx', 'R8-added-d.jsx', 'R8-added-m.jsx', 'R9-records-empty-d.jsx', 'R9-records-empty-m.jsx', 'R10-summary-d.jsx', 'R10-summary-m.jsx', 'R11-approve-d.jsx', 'R11-approve-m.jsx', 'R12-shared-d.jsx', 'R12-shared-m.jsx')) { figma-cli render (Get-Content $f -Raw) }
 
 # ---- Medra Member — 4 Medicines ----
 figma-cli eval "(async()=>{const t='Medra Member — 4 Medicines';let p=figma.root.children.find(n=>n.name===t);if(!p){p=figma.createPage();p.name=t;}await figma.setCurrentPageAsync(p);return p.name;})()"

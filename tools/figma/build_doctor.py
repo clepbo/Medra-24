@@ -1252,7 +1252,8 @@ addx("Consult", "C4-tests",
         f'<Frame w="fill" flex="row" gap={{16}} items="start">'
         f'<Frame grow={{1}} flex="col" gap={{14}}>{C4_PICK}{C4_NOTE}</Frame>'
         f'<Frame w={{360}} flex="col" gap={{14}}>{C4_WHERE}{C4_ORDER}'
-        f'{dcta("Add to the visit","Open sign C7","check")}</Frame></Frame>',
+        f'{dcta("Send it to a laboratory","Open route C11","send")}'
+        f'{dbtn("Add to the visit without sending","Open sign C7","check","ghost",full=True)}</Frame></Frame>',
         NAV["Consults"], PANEL_CONSULT, urgent=0, badges=BADGES),
     dr_head("Order tests", "Amara Okeke · 2 selected",
             stats=[("2", "Tests"), ("₦8,500", "She pays"), ("1", "Overdue")],
@@ -1266,7 +1267,8 @@ addx("Consult", "C4-tests",
       ("note", "file-text", "For the laboratory", "Clinical details, urgency, reminder", None, None,
        C4_NOTE, None),
     ],
-    foot=dcta("Add to the visit", "Open sign C7", "check"),
+    foot=f'{dcta("Send it to a laboratory","Open route C11","send")}'
+         f'{dbtn("Add to the visit without sending","Open sign C7","check","ghost",full=True)}',
     tab=MTAB["Consult"])
 
 # ---------------- C5 upload / release a result
@@ -1571,6 +1573,314 @@ addx("Consult", "C10-virtual",
        C10_TROUBLE, None),
     ],
     foot=dcta("Admit her and start", "Start consult", "stethoscope"),
+    tab=MTAB["Consult"])
+
+# =====================================================================================
+# 3b. WHERE AN ORDER GOES, AND WHO IS ALLOWED TO SEE IT
+# C4 lets a doctor write an order. These five screens are what happens to it next: it is
+# routed to a department inside an organisation, to a partner on Medra, or — because most
+# Nigerian laboratories are not on Medra and will not sign up to run one test — to a
+# stranger through a link that carries the minimum, needs the member's consent, and dies
+# when the job is done.
+# =====================================================================================
+
+# ---------------- C11 route the order
+C11_WHERE = dgroup("Send this order to", [
+    dept_choice("hospital", "Garki Medical Centre — Laboratory", "Your own facility · in-house · results return structured · usually same day",
+                "Route dept", sel=True, tone="ok",
+                meta="Open now · 3 samples in the queue · median 4 hours"),
+    dept_choice("hospital", "Garki Medical Centre — Imaging", "Your own facility · X-ray and ultrasound only · no MRI",
+                "Route imaging", tone="info", meta="Open now · MRI would have to go outside"),
+    dept_choice("building-2", "Ketu Medical Laboratory", "On Medra · partner · results return structured · 2.1 km",
+                "Route partner", tone="info", meta="Accepts online orders · she pays them directly"),
+    dept_choice("link", "Somewhere not on Medra", "A laboratory you trust that has no Medra account — send a single-use link",
+                "Route external", tone="warn",
+                meta="They upload the result; the link dies when they do"),
+    dept_choice("printer", "Print it and give it to her", "The paper route. Nothing comes back to you automatically",
+                "Route paper", tone="muted", meta="Use this only if the others are impossible"),
+])
+
+C11_ORDER = dgroup("What you are sending", [
+    drow("flask-conical", "Fasting blood sugar", sub="Routine · fasting required · ₦3,500", name="Ord fbs", chevron=False),
+    drow("flask-conical", "HbA1c", sub="Routine · no fasting needed · ₦5,000", name="Ord hba1c", chevron=False),
+    drow("user", "Amara Okeke · MDR-8842-19", sub="34 · hypertension · penicillin allergy", name="Ord who", chevron=False),
+    drow("banknote", "₦8,500", sub="She pays the laboratory, not you. Medra takes nothing from this.", name="Ord fee", chevron=False),
+])
+
+C11_CARRY = dgroup("What the laboratory will see", [
+    scope_line("Her name, age and Medra ID", True, "They need to label the sample and match the result back"),
+    scope_line("The tests you ordered, and why", True, "“Hypertension review, screening for diabetes” — clinical detail changes how a lab reports"),
+    scope_line("Penicillin allergy", True, "Always travels. It is the line that prevents harm"),
+    scope_line("Her consultation notes", False, "Not needed to run a blood test"),
+    scope_line("Her other conditions and medicines", False, "Not needed to run a blood test"),
+    scope_line("Her phone number", False, "The lab reaches her through Medra, so a stranger never gets it"),
+], footer="A department sees what the job needs and nothing else. That is not a setting you have to remember — it is how the order is built.")
+
+C11_NOTE = dgroup("Anything the laboratory should know", [
+    note_field("For the laboratory", "file-text",
+        "Fasting sample please — she has been told to come before breakfast. Known hypertensive on Amlodipine. Flag the HbA1c urgently if it is above 8.",
+        "lab note", lines=3, template=False),
+    field_chips("How soon?", ["Routine — 48 hours", "Soon — same day", "Urgent — 2 hours"], 0, "Ord urgency"),
+    checkbox("Tell me the moment the result is verified", "Ord notify"),
+], footer="Urgency costs the laboratory something. Mark it urgent when it is, and they will believe you when it matters.")
+
+addx("Consult", "C11-route",
+    dr_desk("Doctor · Consult — C11 Send the Order", ["Consults", "Amara Okeke", "Tests"],
+        f'{C_STRIP}{C_TABS}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{C11_WHERE}{C11_NOTE}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{C11_ORDER}{C11_CARRY}'
+        f'{dcta("Send to the laboratory","Send order C11","send")}'
+        f'{dbtn("Back to the tests","Open tests C4","arrow-left","ghost",full=True)}</Frame></Frame>',
+        NAV["Consults"], PANEL_CONSULT, urgent=0, badges=BADGES),
+    dr_head("Send the order", "Amara Okeke · 2 tests · ₦8,500",
+            stats=[("2", "Tests"), ("4h", "Median"), ("3", "In queue")],
+            chips=c_chips(2)),
+    pinned=C11_WHERE,
+    sections=[
+      ("order", "receipt", "What you are sending", "Two tests · she pays ₦8,500", "2", None,
+       C11_ORDER, None),
+      ("carry", "shield-check", "What the laboratory will see", "Three things travel, three do not", "3", None,
+       C11_CARRY, [("3", "Sent"), ("3", "Withheld"), ("0", "Notes")]),
+      ("note", "file-text", "Anything they should know", "Clinical detail and urgency", None, None,
+       C11_NOTE, None),
+    ],
+    foot=f'{dcta("Send to the laboratory","Send order C11","send")}'
+         f'{dbtn("Back to the tests","Open tests C4","arrow-left","ghost",full=True)}',
+    tab=MTAB["Consult"])
+
+# ---------------- C12 the order, once it has left you
+C12_TRACK = dgroup("Fasting blood sugar · HbA1c", [
+    track_step("Sent to Garki laboratory", "Today 11:06", done=True,
+               sub="Received by Ifeoma Nwachukwu, laboratory scientist"),
+    track_step("She arrives and gives the sample", "Expected tomorrow, before 09:00", done=True,
+               sub="Sample GK-2291 · fasting confirmed at reception"),
+    track_step("Analysis", "In progress · started 08:41", current=True,
+               sub="Both tests on the same sample"),
+    track_step("A scientist verifies it", "Not yet", sub="No result leaves a laboratory unverified"),
+    track_step("It comes back to you", "Not yet", sub="You release it to her, or hold it until you have spoken"),
+], footer="You do not have to chase this. If it stops moving for longer than the laboratory promised, it appears in your Needs-you list on its own.")
+
+C12_STUCK = dgroup("If it stalls", [
+    drow("phone-call", "Call the laboratory", sub="Garki Medical Centre laboratory · extension 214", name="Ord call", tone="info"),
+    drow("message-square-text", "Message the department", sub="Goes to whoever is on shift, not to one person", name="Ord message"),
+    drow("repeat", "Send it somewhere else", sub="Cancels this order and takes you back to routing", name="Open route C11", tone="warn"),
+    drow("x", "Cancel the order", sub="She is told, and is not charged", name="Ord cancel", tone="err"),
+], footer="An order that has been sitting for two days is the single most common reason a member loses faith in a clinic. Chase it before they have to.")
+
+C12_HER = dgroup("What Amara sees right now", [
+    drow("smartphone", "“Your tests are being analysed”", sub="With where to go, what it costs, and whether to fast", name="Ord hers", chevron=False),
+    drow("bell", "She is told when you release it", sub="Not when it arrives — when you have looked at it", name="Ord told", chevron=False, tone="ok"),
+    drow("eye-off", "She cannot see the values yet", sub="A number out of range with nobody to explain it does harm", name="Ord hidden", chevron=False),
+], footer="The gap between a result arriving and a doctor reading it is the most dangerous hour in the whole system. Medra keeps her out of it.")
+
+C12_OTHER = dgroup("Your other open orders · 4", [
+    request_row("flask-conical", "Musa Ibrahim · troponin", "Ketu Medical Laboratory · verified · waiting on you", "2h", "Ord musa", "warn",
+                [dbtn("Read it", "Open result P8", "arrow-right", "navy", size="sm")]),
+    request_row("scan", "Emeka Nwosu · knee X-ray", "Zenith Imaging · single-use link · not opened yet", "1d", "Ord emeka", "info",
+                [dbtn("Chase it", "Open links C15", "link", "ghost", size="sm")]),
+    request_row("flask-conical", "Grace Okeke · HbA1c", "Garki laboratory · sample not given yet", "3d", "Ord grace", "err",
+                [dbtn("Remind her", "Ord remind", "bell", "ghost", size="sm")]),
+], footer="Sorted by what is closest to going wrong, not by when you sent it.")
+
+addx("Consult", "C12-order",
+    dr_desk("Doctor · Consult — C12 Order Status", ["Consults", "Amara Okeke", "Order"],
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",17,N_IC)}'
+        f'{T(13,"semibold","var:text/default","Tests")}</Frame>'
+        f'{C_STRIP}'
+        f'{dhead([("Order",False),("GK-2291",True)],26)}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{C12_TRACK}{C12_OTHER}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{C12_HER}{C12_STUCK}</Frame></Frame>',
+        NAV["Consults"], PANEL_CONSULT, urgent=1, badges=BADGES),
+    dr_head("Order GK-2291", "Amara Okeke · in analysis",
+            stats=[("3/5", "Steps"), ("08:41", "Started"), ("4", "Open orders")]),
+    pinned=C12_TRACK,
+    sections=[
+      ("hers", "smartphone", "What Amara sees right now", "Not the values — not until you have read them", None, None,
+       C12_HER, None),
+      ("stuck", "circle-help", "If it stalls", "Call, message, reroute or cancel", "4", "warn",
+       C12_STUCK, None),
+      ("other", "flask-conical", "Your other open orders", "One verified and waiting on you", "4", "warn",
+       C12_OTHER, [("4", "Open"), ("1", "Waiting"), ("3d", "Oldest")]),
+    ],
+    foot=dcta("Read the result that is ready", "Open result P8", "arrow-right"),
+    tab=MTAB["Consult"])
+
+# ---------------- C13 a link for someone who is not on Medra
+C13_WHO = dgroup("Who is this for?", [
+    field("Organisation or person", "building-2", "Lifebridge Diagnostics", ph=False,
+          helper="The name goes on the page they open, so they know it is not a phishing link."),
+    field("Their phone number", "phone", "805 441 2290", ph=False, prefix="+234",
+          helper="The link is sent here and nowhere else. It is not emailed, and it is not guessable from anything else you have typed."),
+    field_chips("What do you need from them?", ["Run a test", "Read an image", "Send a report", "Give an opinion"], 0, "Link job"),
+    drow("history", "You have sent to Lifebridge before", sub="Four times · they have always returned the report inside a day", name="Link history", chevron=False, tone="ok"),
+])
+
+C13_SCOPE = dgroup("What the link will carry", [
+    consent_row("user", "Her name, age and Medra ID", "Amara Okeke · 34 · MDR-8842-19", "Lk identity", locked=True),
+    consent_row("triangle-alert", "Allergies", "Penicillin", "Lk allergy", locked=True),
+    consent_row("file-text", "Why you are asking", "MRI lumbar spine — six weeks of low back pain, no red flags", "Lk reason"),
+    consent_row("clipboard-list", "The relevant part of her history", "Hypertension, on Amlodipine 5 mg", "Lk history"),
+    consent_row("flask-conical", "Her last blood results", "Full blood count, 12 June", "Lk labs", on=False),
+    consent_row("stethoscope", "Your full consultation note", "Everything you wrote today", "Lk note", on=False),
+    consent_row("phone", "Her phone number", "So they can call her directly", "Lk phone", on=False),
+], footer="Two lines always travel and cannot be switched off: who she is, and what she is allergic to. Everything else starts off. A radiographer does not need her medicine list to take a picture of her spine.")
+
+C13_LIFE = dgroup("How long it lives", [
+    field_chips("It dies when", ["They finish the job", "24 hours", "48 hours", "7 days"], 0, "Lk expiry"),
+    dtoggle("shield-check", "They must accept a privacy undertaking first", sub="Recorded with the time — this is what makes the share lawful under the NDPA", on=True, name="Lk undertaking"),
+    dtoggle("eye", "Tell me the moment they open it", sub="And again if they have not opened it in 24 hours", on=True, name="Lk watch"),
+    dtoggle("user-check", "Amara must approve before it exists", sub="Cannot be switched off. It is her record", on=True, name="Lk consent"),
+], footer="Whichever comes first. A link that outlives the job it was made for is just an unlocked door.")
+
+C13_RULES = dcard(
+    f'<Frame flex="row" gap={{9}} items="center">{I("shield-check",16,A_IC)}'
+    f'{T(14,"semibold","var:text/strong","What a link is, and is not")}</Frame>'
+    + T(12, "regular", "var:text/default",
+        "It is a page for one job, for one recipient, that closes behind them. It is not an account, not a login, and not a copy of her record. They cannot browse from it, cannot download the rest, and cannot come back tomorrow to look again.", w="fill")
+    + T(11, "regular", "var:text/muted",
+        "The address is a random token, not her Medra ID — nobody can guess a link by counting, and one link tells you nothing about any other.", w="fill"),
+    bg="var:state/info-bg", stroke=None)
+
+addx("Consult", "C13-link",
+    dr_desk("Doctor · Consult — C13 Send to Someone Not on Medra", ["Consults", "Amara Okeke", "External"],
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",17,N_IC)}'
+        f'{T(13,"semibold","var:text/default","Where the order goes")}</Frame>'
+        f'{C_STRIP}'
+        f'{dhead([("A link for",False),("Lifebridge Diagnostics",True)],26)}'
+        f'{T(14,"regular","var:text/muted","They have no Medra account and will not open one to read a single scan. This gives them exactly what the job needs.",w="fill")}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{C13_WHO}{C13_SCOPE}</Frame>'
+        f'<Frame w={{360}} flex="col" gap={{14}}>{C13_RULES}{C13_LIFE}'
+        f'{dcta("Ask Amara to approve it","Ask consent C13","user-check")}</Frame></Frame>',
+        NAV["Consults"], PANEL_CONSULT, urgent=0, badges=BADGES),
+    dr_head("Send outside Medra", "Lifebridge Diagnostics · MRI",
+            stats=[("4", "Items"), ("3", "Withheld"), ("1 job", "Lifespan")]),
+    pinned=C13_WHO,
+    sections=[
+      ("scope", "shield-check", "What the link will carry", "Four items on, three off, two locked", "4", None,
+       C13_SCOPE, [("4", "Shared"), ("3", "Withheld"), ("2", "Always")]),
+      ("life", "timer", "How long it lives", "One job, then it dies", None, None,
+       C13_LIFE, None),
+      ("rules", "info", "What a link is, and is not", "Not an account, not a copy", None, None,
+       C13_RULES, None),
+    ],
+    foot=dcta("Ask Amara to approve it", "Ask consent C13", "user-check"),
+    tab=MTAB["Consult"])
+
+# ---------------- C14 waiting on the member
+C14_WAIT = dcard(
+    f'<Frame w="fill" flex="col" gap={{13}} items="center">'
+    f'{big_icon("user-check","warn",84)}'
+    f'{T(22,"bold","var:text/strong","Waiting for Amara")}'
+    f'{T(14,"regular","var:text/muted","She has the request on her phone. Nothing exists until she says yes — there is no link to send, and Lifebridge has been told nothing.",w="fill",align="center")}'
+    f'<Frame flex="row" gap={{8}} items="center" px={{13}} py={{8}} rounded={{10}} bg="var:state/warning-bg">'
+    f'{I("clock",14,WARN_IC)}{T(12,"semibold","var:state/warning","Asked 2 minutes ago · she usually replies within the hour")}</Frame></Frame>')
+
+C14_SEES = dgroup("What she was asked", [
+    drow("user-check", "“Dr. Okafor wants to send your details to Lifebridge Diagnostics”", sub="With your name, your MDCN number and your photo, so she knows it is really you", name="Cs who", chevron=False),
+    drow("list-checks", "The four things it would carry", sub="Written out in full, not summarised as “your records”", name="Cs what", chevron=False),
+    drow("timer", "That it dies when the scan is done", sub="And that she can revoke it at any point before then", name="Cs life", chevron=False),
+    drow("circle-help", "That declining does not affect her care", sub="Stated plainly. A consent given out of fear is not consent", name="Cs free", chevron=False, tone="ok"),
+], footer="She is shown exactly what you ticked. Not a summary of it — the same list, in the same words.")
+
+C14_IF = dgroup("If she says no", [
+    outcome_choice("printer", "Print it and give it to her", "She carries the request to Lifebridge herself. Slower, and the report comes back on paper — but it is still her choice to make.", "Cn print", tone="info"),
+    outcome_choice("building-2", "Use a laboratory on Medra instead", "Ketu Medical Laboratory can do this scan. Nothing leaves the platform, so nothing needs a link.", "Cn partner", tone="ok"),
+    outcome_choice("message-circle", "Ask her why", "Sometimes it is one item on the list, not the whole idea. You can send a narrower request.", "Cn ask", tone="info"),
+    outcome_choice("x", "Do not do the scan", "Record that it was offered and declined. That belongs in the note.", "Cn none", tone="warn"),
+], footer="Do not send it anyway on paper without telling her. That is the same share with the audit trail removed.")
+
+C14_TRAIL = dgroup("What is being recorded", [
+    audit_row("You", "Asked to share 4 items with Lifebridge Diagnostics", "2 min ago"),
+    audit_row("Amara", "Opened the request", "1 min ago"),
+    audit_row("Medra", "Nothing sent — no link exists yet", "now"),
+], footer="This trail is hers. It is append-only, and neither you nor Medra can edit it — which is exactly why it is worth anything if she is ever asked what she agreed to.")
+
+addx("Consult", "C14-consent",
+    dr_desk("Doctor · Consult — C14 Waiting on Consent", ["Consults", "Amara Okeke", "Consent"],
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",17,N_IC)}'
+        f'{T(13,"semibold","var:text/default","Change what it carries")}</Frame>'
+        f'<Frame w="fill" flex="row" gap={{16}} justify="center" items="start" pt={{6}}>'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{C14_WAIT}{C14_SEES}</Frame>'
+        f'<Frame w={{380}} flex="col" gap={{14}}>{C14_TRAIL}'
+        f'{dcta("She approved — create the link","Open links C15","link")}'
+        f'{dbtn("Withdraw the request","Withdraw consent C14","x","ghost",full=True)}'
+        f'{C14_IF}</Frame></Frame>',
+        NAV["Consults"], PANEL_CONSULT, urgent=0, badges=BADGES),
+    dr_head("Waiting on Amara", "Lifebridge Diagnostics · asked 11:22",
+            stats=[("4", "Items asked"), ("2m", "Waiting"), ("<1h", "Usual reply")]),
+    pinned=C14_WAIT,
+    sections=[
+      ("sees", "smartphone", "What she was asked", "Your name, the four items, and that no is free", "4", None,
+       C14_SEES, None),
+      ("trail", "history", "What is being recorded", "Append-only, and it is hers", "3", None,
+       C14_TRAIL, None),
+      ("if", "circle-help", "If she says no", "Four ways forward, none of them a workaround", "4", "warn",
+       C14_IF, None),
+    ],
+    foot=f'{dcta("She approved — create the link","Open links C15","link")}'
+         f'{dbtn("Withdraw the request","Withdraw consent C14","x","ghost",full=True)}',
+    tab=MTAB["Consult"])
+
+# ---------------- C15 the link exists
+C15_LINK = dcard(
+    f'<Frame w="fill" flex="row" justify="between" items="center">'
+    f'<Frame flex="row" gap={{8}} items="center" px={{10}} py={{6}} rounded={{8}} bg="var:state/success-bg">'
+    f'{I("circle-check",13,OK_IC)}{T(11,"semibold","var:state/success","Amara approved it at 11:29")}</Frame>'
+    f'{T(11,"regular","var:text/muted","Expires when the report is uploaded")}</Frame>'
+    + f'<Frame w="fill" flex="row" gap={{11}} items="center" px={{15}} py={{14}} rounded={{13}} bg="var:neutral/50" '
+    + f'stroke="var:border/subtle" strokeWidth={{1}}>{I("link",16,M_IC)}'
+    + T(14, "semibold", "var:text/strong", "medra.ng/s/7fQ2-K9mR-4vXt", w="fill")
+    + f'<Frame name="Btn Copy link C15" flex="row">{I("copy",16,N_IC)}</Frame></Frame>'
+    + T(11, "regular", "var:text/muted",
+        "A random token, not her Medra ID. Nobody can reach her record by guessing, and this link tells you nothing about any other.", w="fill")
+    + rows_of([dbtn("Send on WhatsApp", "Send wa C15", "message-circle", "navy", size="sm"),
+               dbtn("Send by SMS", "Send sms C15", "message-square-text", "ghost", size="sm")], 2, 8)
+    + rows_of([dbtn("Show the QR", "Show qr C15", "qr-code", "ghost", size="sm"),
+               dbtn("Revoke it now", "Revoke C15", "ban", "danger", size="sm")], 2, 8))
+
+C15_THEY = dgroup("What Lifebridge will see", [
+    prep_step(1, "A privacy undertaking", "Three clauses, a name, and a tick. Recorded with the time — that is what makes this lawful"),
+    prep_step(2, "The job, and only the job", "Amara Okeke, 34, MDR-8842-19 · penicillin allergy · MRI lumbar spine · your clinical reason"),
+    prep_step(3, "A way to send the report back", "Photograph it or attach a file. It arrives in your list as a structured result, not an email"),
+    prep_step(4, "The page closing behind them", "The moment they mark it done, the link is dead. Opening it again shows an expired page"),
+], footer="Four screens, no account, no training, no way back in. Somebody who has never heard of Medra can finish this on a phone in a waiting room.")
+
+C15_ALL = dgroup("Your open links · 3", [
+    link_row_dr("Lifebridge Diagnostics", "Amara Okeke · MRI lumbar spine", "open", "Just created", "Link lifebridge"),
+    link_row_dr("Zenith Imaging", "Emeka Nwosu · knee X-ray", "open", "Not opened · 1 day", "Link zenith"),
+    link_row_dr("Ketu Medical Laboratory", "Musa Ibrahim · troponin", "used", "Report returned 09:40", "Open result P8"),
+    link_row_dr("St. Mary's Clinic", "Fatima Bello · discharge summary", "expired", "4 Aug", "Link stmarys"),
+], footer="Anything still unopened after 24 hours is chased for you. Anything you no longer want open is revoked here in one tap, and the recipient sees an expired page immediately.")
+
+C15_AUDIT = dgroup("Amara's audit trail", [
+    audit_row("You", "Created a link for Lifebridge Diagnostics", "11:29"),
+    audit_row("Amara", "Approved 4 items · declined 3", "11:29"),
+    audit_row("Lifebridge", "Has not opened it yet", "—"),
+], footer="She sees this list on her phone, in the same words, without asking you. She can revoke the link from there at any moment, and you are told when she does.")
+
+addx("Consult", "C15-links",
+    dr_desk("Doctor · Consult — C15 The Link Is Ready", ["Consults", "Amara Okeke", "Link"],
+        f'{dhead([("Send this to",False),("Lifebridge",True)],26)}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{C15_LINK}{C15_ALL}</Frame>'
+        f'<Frame w={{380}} flex="col" gap={{14}}>{C15_THEY}{C15_AUDIT}'
+        f'{dbtn("Back to the consultation","Open room C1","arrow-left","ghost",full=True)}</Frame></Frame>',
+        NAV["Consults"], PANEL_CONSULT, urgent=0, badges=BADGES),
+    dr_head("The link is ready", "Lifebridge Diagnostics · approved 11:29",
+            stats=[("4", "Items"), ("1 job", "Lifespan"), ("3", "Open links")]),
+    pinned=C15_LINK,
+    sections=[
+      ("they", "monitor-smartphone", "What Lifebridge will see", "Four screens, no account, no way back", "4", None,
+       C15_THEY, None),
+      ("all", "link", "Your open links", "Three open, one used, one expired", "3", "warn",
+       C15_ALL, [("3", "Open"), ("1", "Unopened"), ("1", "Expired")]),
+      ("audit", "history", "Amara's audit trail", "She sees this without asking you", "3", None,
+       C15_AUDIT, None),
+    ],
+    foot=dbtn("Back to the consultation", "Open room C1", "arrow-left", "ghost", full=True),
     tab=MTAB["Consult"])
 
 # =====================================================================================
@@ -1955,6 +2265,94 @@ addx("Patients", "P7-results",
       ("why", "info", "Why a doctor releases results", "And what happens if nobody does", None, None,
        P7_WHY, None),
     ],
+    tab=MTAB["Requests"])
+
+# ---------------- P8 a result that came back as data, not as a photograph
+# C5 is the photograph path: a doctor holds a piece of paper and types what it says. This is
+# the other one — a laboratory that is on Medra, or that used a single-use link, returns the
+# values themselves. The difference matters clinically: these numbers can be trended, flagged
+# and compared without anyone having read them off a page first.
+P8_HEAD = dcard(
+    f'<Frame w="fill" flex="row" gap={{13}} items="center">'
+    f'<Image image="assets/img/avatar-1.jpg" w={{44}} h={{44}} rounded={{14}} />'
+    f'<Frame grow={{1}} flex="col" gap={{3}}>'
+    f'<Frame flex="row" gap={{8}} items="center">{T(15,"semibold","var:text/strong","Musa Ibrahim")}'
+    f'<Frame flex="row" px={{8}} py={{2}} rounded={{6}} bg="var:bg/muted">'
+    f'{T(10,"semibold","var:text/accent","MDR-7714-02")}</Frame></Frame>'
+    f'{T(11,"regular","var:text/muted","51 · chest pain, seen 09:10 today · no known allergies",w="fill")}</Frame>'
+    f'{status_pill("pending","Not released")}</Frame>'
+    + f'<Frame w="fill" flex="row" gap={{9}} items="center" px={{13}} py={{10}} rounded={{11}} bg="var:state/success-bg">'
+    + I("database", 15, OK_IC)
+    + T(12, "semibold", "var:state/success", "Structured result — the laboratory sent the values, nobody typed them", w="fill")
+    + '</Frame>')
+
+P8_VALUES = dgroup("Troponin I · high sensitivity", [
+    lab_line("Troponin I", "12 ng/L", "0 – 14"),
+    lab_line("Repeat at 3 hours", "13 ng/L", "0 – 14"),
+    lab_line("Creatinine", "94 µmol/L", "62 – 106"),
+    lab_line("Potassium", "5.4 mmol/L", "3.5 – 5.1", "High"),
+    lab_line("eGFR", "78 mL/min", "> 90", "Low"),
+], footer="Five values, two outside range. The reference ranges came from the laboratory that ran it — not from Medra — because ranges differ by analyser and by population.")
+
+P8_DELTA = dgroup("Against his own history", [
+    drow("trending-up", "Potassium", value="4.8 → 5.4", sub="First time above range. Was 4.8 in April, 4.6 in January", name="Del k", tone="warn", chevron=False),
+    drow("trending-down", "eGFR", value="91 → 78", sub="Falling over eight months. Worth a look even though today's story is the chest pain", name="Del egfr", tone="warn", chevron=False),
+    drow("minus", "Troponin", value="Flat", sub="No rise between the two samples — that is the finding, not the number itself", name="Del trop", tone="ok", chevron=False),
+], footer="A single value is a number. Three of them across a year is the thing you actually treat. This is what a structured result buys you that a photograph of a page never can.")
+
+P8_PROV = dgroup("Where this came from", [
+    drow("building-2", "Ketu Medical Laboratory", sub="On Medra · MLSCN 4471 · accredited to 2027", name="Prov lab", chevron=False, tone="ok"),
+    drow("user-check", "Verified by Ifeoma Nwachukwu", sub="Laboratory scientist · MLSCN 22019 · today 09:38", name="Prov who", chevron=False),
+    drow("microscope", "Abbott Architect i2000SR", sub="Analyser and lot number are on the record. This is what makes the range meaningful", name="Prov machine", chevron=False),
+    drow("clock", "Sample taken 06:20, verified 09:38", sub="Three hours eighteen minutes — inside their published turnaround", name="Prov when", chevron=False),
+    drow("file-text", "The original report", sub="The laboratory's own PDF, unaltered, kept alongside the values", name="Prov pdf"),
+], footer="Every clinical fact on Medra carries who produced it and when. A number with no provenance is a rumour, and no doctor should have to act on one.")
+
+P8_ACT = dgroup("What happens next", [
+    note_field("One line for Musa", "message-circle",
+        "Your heart tracing and blood tests do not show a heart attack. One salt level is a little high and your kidney reading has drifted — nothing urgent, but I want to see you next week.",
+        "p8 explain", lines=3, template=False),
+    dtoggle("eye", "Release it to him now", sub="Turn this off to hold it until you have spoken to him", on=True, name="P8 release"),
+    dtoggle("bell-ring", "Tell him it has arrived", sub="App, WhatsApp and SMS", on=True, name="P8 notify"),
+    dtoggle("calendar-plus", "Book a follow-up", sub="Suggests your next three open slots", on=True, name="P8 followup"),
+    dtoggle("flask-conical", "Order a repeat potassium", sub="Adds it to a new order you can route in one tap", on=False, name="P8 repeat"),
+], footer="A result out of range with no explanation frightens people. One sentence from you prevents a call at 22:00 — and in this case it is the sentence that stops him thinking he has had a heart attack.")
+
+P8_VS = dcard(
+    f'<Frame flex="row" gap={{9}} items="center">{I("info",16,A_IC)}'
+    f'{T(14,"semibold","var:text/strong","Why this is not the same as a photograph")}</Frame>'
+    + T(12, "regular", "var:text/default",
+        "A photographed report is an image with a doctor's transcription attached. It cannot be trended, cannot be flagged against a range, and any typing error becomes part of the record silently. A structured result is the laboratory's own numbers, with its own ranges, its own analyser and its own verifier's name.", w="fill")
+    + T(11, "regular", "var:text/muted",
+        "Both are supported, because most laboratories still hand over paper. But every result that arrives structured is one a future doctor can rely on without re-reading a photograph.", w="fill"),
+    bg="var:state/info-bg", stroke=None)
+
+addx("Patients", "P8-result",
+    dr_desk("Doctor · Patients — P8 Structured Result", ["Requests", "Results", "Musa Ibrahim"],
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",17,N_IC)}'
+        f'{T(13,"semibold","var:text/default","Results waiting")}</Frame>'
+        f'{P8_HEAD}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{P8_VALUES}{P8_DELTA}{P8_PROV}</Frame>'
+        f'<Frame w={{380}} flex="col" gap={{14}}>{P8_ACT}'
+        f'{dcta("Release it to Musa","Release P8","badge-check")}'
+        f'{dbtn("Hold it until I have spoken to him","Hold P8","pause","ghost",full=True)}{P8_VS}</Frame></Frame>',
+        NAV["Requests"], PANEL_REQ, urgent=6, badges=BADGES),
+    dr_head("Troponin · Musa", "Verified 09:38 · 2 out of range",
+            stats=[("5", "Values"), ("2", "Out of range"), ("3h18", "Turnaround")]),
+    pinned=f'{P8_HEAD}{P8_VALUES}',
+    sections=[
+      ("delta", "trending-up", "Against his own history", "Potassium rising, eGFR falling", "3", "warn",
+       P8_DELTA, [("2", "Moving"), ("8mo", "Span"), ("1", "New")]),
+      ("prov", "shield-check", "Where this came from", "Laboratory, scientist, analyser, timing", "5", None,
+       P8_PROV, None),
+      ("act", "send", "What happens next", "One line for him, then release or hold", None, None,
+       P8_ACT, None),
+      ("vs", "info", "Why this is not a photograph", "Trendable, flagged, and nobody transcribed it", None, None,
+       P8_VS, None),
+    ],
+    foot=f'{dcta("Release it to Musa","Release P8","badge-check")}'
+         f'{dbtn("Hold it until I have spoken to him","Hold P8","pause","ghost",full=True)}',
     tab=MTAB["Requests"])
 
 # =====================================================================================
@@ -3073,6 +3471,35 @@ TRN = [
  ("P7-results","Btn Release Grace","C5-upload"),("P7-results","Btn Hold Grace","P7-results"),
  ("P7-results","Btn Book Grace","P4-followups"),("P7-results","Btn Release Musa","C5-upload"),
  ("P7-results","Btn Release Amara","C5-upload"),("P7-results","Btn Res Grace","C5-upload"),
+ ("P7-results","Btn Res Musa","P8-result"),("P7-results","Btn Res Amara","C5-upload"),
+ # ---- where an order goes, and who is allowed to see it
+ # C4 writes the order; C11 decides who runs it. Choosing a laboratory that is not on Medra
+ # is what starts the link flow, so the two chains meet on one screen rather than living in
+ # separate corners of the app.
+ ("C4-tests","Btn Open route C11","C11-route"),
+ ("C11-route","Btn Send order C11","C12-order"),("C11-route","Btn Open tests C4","C4-tests"),
+ ("C11-route","Btn Route external","C13-link"),("C11-route","Btn Route dept","C11-route"),
+ ("C11-route","Btn Route imaging","C11-route"),("C11-route","Btn Route partner","C11-route"),
+ ("C11-route","Btn Route paper","C11-route"),("C11-route","Btn Consult tab Note","C1-room"),
+ ("C11-route","Btn Consult tab Tests","C4-tests"),
+ ("C12-order","Btn Back","C4-tests"),("C12-order","Btn Open result P8","P8-result"),
+ ("C12-order","Btn Open route C11","C11-route"),("C12-order","Btn Open links C15","C15-links"),
+ ("C12-order","Btn Ord musa","P8-result"),("C12-order","Btn Ord emeka","C15-links"),
+ ("C12-order","Btn Ord message","P5-messages"),("C12-order","Btn Ord cancel","C4-tests"),
+ ("C13-link","Btn Ask consent C13","C14-consent"),("C13-link","Btn Back","C11-route"),
+ ("C14-consent","Btn Open links C15","C15-links"),("C14-consent","Btn Back","C13-link"),
+ ("C14-consent","Btn Withdraw consent C14","C11-route"),
+ ("C14-consent","Btn Cn partner","C11-route"),("C14-consent","Btn Cn print","C4-tests"),
+ ("C14-consent","Btn Cn ask","P5-messages"),("C14-consent","Btn Cn none","C1-room"),
+ ("C15-links","Btn Open room C1","C1-room"),("C15-links","Btn Open result P8","P8-result"),
+ ("C15-links","Btn Link zenith","C15-links"),("C15-links","Btn Link stmarys","C15-links"),
+ ("C15-links","Btn Link lifebridge","C15-links"),("C15-links","Btn Revoke C15","C15-links"),
+ # a doctor who is not on Medra is the same problem as a laboratory that is not
+ ("C6-refer","Btn Refer letter","C13-link"),
+ # ---- a result that came back as data
+ ("P8-result","Btn Back","P7-results"),("P8-result","Btn Release P8","P7-results"),
+ ("P8-result","Btn Hold P8","P7-results"),("P8-result","~Btn Prov pdf","P8-result"),
+ ("P8-result","Btn Del k","P2-record"),("P8-result","Btn Del egfr","P2-record"),
  # ---- practice
  ("S1-profile","Btn Open fees S2","S2-fees"),("S1-profile","Btn Open virtual S3","S3-virtual"),
  ("S1-profile","Btn Open contact S4","S4-contact"),("S1-profile","Btn Save profile S1","S1-profile"),

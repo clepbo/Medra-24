@@ -6,8 +6,8 @@ what is left. Kept current — it is updated in the same commit as the work it d
 
 | | |
 |---|---|
-| **Document version** | **v1.2** |
-| **Last updated** | 10 August 2026 (v2.0 retrofit applied · member bundles merged, member prototype complete) |
+| **Document version** | **v1.3** |
+| **Last updated** | 10 August 2026 (member bundles merged · the clinical chain now crosses all three modules) |
 | **Repo** | `clepbo/Medra-24` |
 | **Working branch** | `claude/new-project-prd-stories-ss2qlr` |
 | **Current PRD** | `docs/Medra_PRD_v2.0.md` (v1.0 kept, marked superseded) |
@@ -57,15 +57,15 @@ while capturing enough record to be clinically useful.
 
 ## 3. Where the design is now
 
-Five rendered bundles, **707 frames**, all validated clean and fully offline.
+Five rendered bundles, **742 frames**, all validated clean and fully offline.
 
 | Bundle | Frames | Pages | Status |
 |---|---:|---:|---|
 | `figma/medra-ds` — design system + journeys | 27 | 1 | Done |
 | `figma/medra-auth` — authentication, 4 roles | 70 | 4 | Done · **v2.0 retrofit applied** |
-| `figma/medra-member` — the whole member app | 154 | 8 | Done · **v2.0 retrofit applied** · **prototype complete** |
-| `figma/medra-doctor` — full doctor module | 239 | 8 | Done · **prototype complete** |
-| `figma/medra-org` — organisation + clinical chain + external | 217 | 8 | **New — not yet rendered into Figma** |
+| `figma/medra-member` — the whole member app | 158 | 8 | Done · **prototype complete** |
+| `figma/medra-doctor` — full doctor module | 270 | 8 | Done · **prototype complete** |
+| `figma/medra-org` — organisation + clinical chain + external | 217 | 8 | Done · **not yet rendered into Figma** |
 
 `medra-member` was two bundles until the merge (`medra-member` for find & book,
 `medra-member-2` for everything the bottom nav led to). The split existed because batch 1 was
@@ -286,10 +286,31 @@ The system-state screens moved to their own page (`7 System States`), so the pag
 changed — `6 Alerts`, `7 System States`, `8 Components`. **Delete the old member pages in Figma
 before re-rendering**; re-rendering appends rather than replaces.
 
-### B. Extend the doctor module — next
+### B. Extend the doctor module — **DONE (10 Aug)**
 
-Raise an order to a department (2) · generate a scoped external link + consent (3) · the doctor's
-view of a structured result (1) · member-side consent to an external share (2).
+Eight screens that close the loop between the three modules. Until this pass, an order stopped
+at the doctor's screen and a share stopped at the doctor's intention; neither reached the
+department that does the work or the member who has to agree.
+
+| Screen | What it is |
+|---|---|
+| **C11 Send the order** | Where an order actually goes: your own laboratory, your imaging room, a Medra partner, a single-use link, or paper. Each option carries the deciding information — how busy they are, how long they take, what they cannot do |
+| **C12 Order status** | Five steps, what the member sees while it runs, what to do if it stalls, and the doctor's other open orders sorted by what is closest to going wrong |
+| **C13 Send to someone not on Medra** | Recipient, a seven-item scope with two lines locked on, how long the link lives |
+| **C14 Waiting on consent** | Nothing exists until the member says yes. Four honest ways forward if she declines |
+| **C15 The link is ready** | The token, how to send it, what the recipient sees, the doctor's open links, the member's audit trail |
+| **P8 Structured result** | A result that arrived as data rather than as a photograph: the laboratory's values and ranges, the delta against the patient's own history, and full provenance — laboratory, scientist, analyser, verified when |
+| **R11 Approve a share** (member) | Item by item, in the same words the doctor ticked, plus that saying no does not affect care |
+| **R12 Shared outside Medra** (member) | Whether it has been opened, when it dies, revoke, narrow, and the append-only log |
+
+Two chains now run end to end across modules: **C4 → C11 → C12 → P8** (an order reaching a
+department and a result coming back), and **C13 → C14 → R11 → R12 → C15** (a share that does
+not exist until the member agrees to it).
+
+**A security defect was fixed in the same pass.** A single-use link's address was
+`medra.ng/<the member's Medra ID>` — enumerable, so anyone holding one link could reach others
+by counting. It is now `medra.ng/s/<random token>` in both the doctor and organisation modules.
+This one is worth carrying into build as a requirement, not a detail.
 
 ### C. Member mobile hub → section conversion
 
@@ -299,6 +320,11 @@ Evidence says it is not needed (see §3); the product owner asked for it anyway.
 ### D. Not started
 
 Platform admin portal · imaging department · insurance eligibility checks · in-app video.
+
+### E. Render the organisation module into Figma
+
+`figma/medra-org` is built, validated and audited but has never been rendered. It creates its
+own eight `Medra Organisation —` pages and touches nothing else.
 
 ---
 

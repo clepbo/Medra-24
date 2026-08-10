@@ -1,8 +1,8 @@
 # Medra — the Member app
 
-**154 frames · 8 Figma pages · Desktop 1440×900 + Mobile 390×844 · "Soft Clinical"**
+**158 frames · 8 Figma pages · Desktop 1440×900 + Mobile 390×844 · "Soft Clinical"**
 
-55 screens, drawn at both breakpoints, plus 44 interactive component states. This was two
+57 screens, drawn at both breakpoints, plus 44 interactive component states. This was two
 bundles — `medra-member` (Find & Book) and `medra-member-2` (everything the bottom nav leads
 to) — because batch 1 was already rendered and signed off when batch 2 started. That reason
 expired; the split cost real things (batch 2 read batch-1's frame names off disk to build its
@@ -13,15 +13,15 @@ now **one bundle, one builder, one prototype, one render script**.
 |---|---|---|
 | `Medra Member — 1 Find & Book` | H1, H2, S1–S3, P1, B1–B4, C1 (11) | 22 |
 | `Medra Member — 2 Visits & Virtual Care` | V1–V7, W0–W4 (12) | 24 |
-| `Medra Member — 3 Records` | R1–R10 (10) | 20 |
+| `Medra Member — 3 Records` | R1–R12 (12) | 24 |
 | `Medra Member — 4 Medicines` | M1–M5 (5) | 10 |
 | `Medra Member — 5 Profile & Settings` | P0, P2–P9, P3b, P9b (11) | 22 |
 | `Medra Member — 6 Alerts` | N0–N2 (3) | 6 |
 | `Medra Member — 7 System States` | X1–X3 (3) | 6 |
 | `Medra Member — 8 Components` | 14 component sets | 44 |
 
-Offline validation: **ALL 154 CLEAN, FULLY OFFLINE ✓** (`node validate.js`)
-Prototype audit: **PROTOTYPE COMPLETE ✓ — 110/110 screens reachable, 0 broken hotspots**
+Offline validation: **ALL 158 CLEAN, FULLY OFFLINE ✓** (`node validate.js`)
+Prototype audit: **PROTOTYPE COMPLETE ✓ — 114/114 screens reachable, 0 broken hotspots**
 (`python3 tools/figma/proto_check.py figma/medra-member link-member.js`)
 
 ## Build and render
@@ -126,6 +126,8 @@ W1, W2 and W4 are in-app video — badged **PHASE 2**. W0 is what ships.
 | R8 | **Record added** | What we read from the photo, every field editable, labelled "added by you" |
 | R9 | **No records** | Three ways the history fills up |
 | R10 | **One-page summary** | Blood group and allergies always on, everything else opt-in, live preview, QR code |
+| R11 | **Approve a share** | A doctor is asking to send some of your details somewhere that is not on Medra. Exactly what they would see, item by item, in the same words the doctor ticked; what you are agreeing to; and — stated plainly — that saying no does not affect your care |
+| R12 | **Shared outside Medra** | Your handle on it afterwards: whether it has been opened, when it dies, revoke it, take one item off it, and the append-only log that neither Medra nor your doctor can edit |
 
 ### Medicines
 | # | Screen | Notes |

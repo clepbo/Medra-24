@@ -607,8 +607,8 @@ Screen groups expand into individual screens plus states (empty, loading, error,
 |---|---|---|---|---|
 | Design system + user journeys | — | 27 | 1 | Done |
 | Authentication (all four roles) | 35 | 70 | 4 | Done |
-| Member app — the whole module | 55 | 154 | 8 | Done · prototype audited complete |
-| Doctor app — full module (rebuilt) | 46 | 239 | 8 | Done · prototype audited complete |
+| Member app — the whole module | 57 | 158 | 8 | Done · prototype audited complete |
+| Doctor app — full module (rebuilt) | 52 | 270 | 8 | Done · prototype audited complete |
 | Organisation console — admin, clinical chain, external parties | 55 | 217 | 8 | Done · not yet rendered into Figma |
 | Platform admin | — | — | — | Not started |
 
@@ -616,6 +616,36 @@ The member app was built and reviewed in two batches. They are now **one bundle*
 one prototype, one render script — which is what made the module auditable end to end for the
 first time. That audit found 21 unreachable screens and, more seriously, that **a member could
 not sign out on a phone**: the control existed on the desktop screens only. Both are fixed.
+
+### 15.1a The clinical chain now crosses module boundaries
+
+Until August the three modules stopped at their own edges: a doctor could write an order but not
+send it anywhere, and could intend to share a record but not actually ask the member. Eight
+screens close both loops.
+
+**An order leaving the building.** `C4 Order tests` → `C11 Send the order` picks who runs it —
+the doctor's own laboratory or imaging room, a Medra partner, a single-use link to somewhere
+that is not on Medra, or paper. `C12` tracks it through the five steps of its life. The result
+comes back either as a photograph (`C5`, which already existed) or **as data** (`P8`), and the
+difference is clinical, not cosmetic: structured values carry the laboratory's own reference
+ranges, can be trended against the patient's own history, and name the scientist and the
+analyser that produced them. A photographed report carries a doctor's transcription, and a
+transcription error becomes part of the record silently.
+
+**A share that does not exist until the member agrees.** `C13` picks the recipient and the
+scope; `C14` waits; `R11` on the member's phone shows her exactly what was ticked, in the same
+words, and states plainly that declining does not affect her care; `R12` gives her the handle on
+it afterwards — opened or not, when it dies, revoke, narrow, and an append-only log. Only then
+does `C15` produce a link.
+
+Two rules are now visible on the screens rather than assumed in a document:
+
+1. **Two lines always travel and cannot be switched off** — who the member is, and what they are
+   allergic to. A radiographer does not need a medicine list to photograph a spine, but nobody
+   should ever be handed a patient without their allergies.
+2. **A link's address is a random token, never the member's Medra ID.** The earlier draft used
+   `medra.ng/<Medra ID>`, which made every link guessable by counting. This was a defect and is
+   corrected in both the doctor and organisation modules. **It must survive into build.**
 
 Every screen is drawn at **1440 desktop and 390 mobile**, wired into a clickable prototype with a
 motion spec, and validated offline (tokens, icons, images, DSL rules) before rendering.
@@ -857,8 +887,8 @@ in the family fails the build.
 
 ### 15.7 What v2.0 does to the design already built
 
-490 frames are rendered across four bundles: design system 27 · authentication 70 · member 154 ·
-doctor 239, with the organisation console's 217 built and awaiting a render. The review reads as "alter the design from the beginning", and for the **product**
+525 frames are rendered across four bundles: design system 27 · authentication 70 · member 158 ·
+doctor 270, with the organisation console's 217 built and awaiting a render. The review reads as "alter the design from the beginning", and for the **product**
 that is fair — but it is not a rebuild of the file. Most of the work survives; three kinds of
 change land on it.
 

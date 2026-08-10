@@ -2,8 +2,8 @@
 
 Everything is wired by `link-member.js`. Nothing needs to be connected by hand in Figma.
 
-**502 explicit transitions · 770 navigation links · 746 controls that stay on their own
-screen · 110 of 110 screens reachable · 0 broken hotspots.**
+**526 explicit transitions · 798 navigation links · 777 controls that stay on their own
+screen · 114 of 114 screens reachable · 0 broken hotspots.**
 
 Verify it before rendering, and again after:
 
@@ -87,6 +87,16 @@ offers to widen the search or notify you when a slot opens.
 `R1 Timeline` → any record → `R2` / `R3` / `R4`. `R2` → **Share** → `R5 Share Records` →
 `R6 Who Has Access`, where a share can be revoked and the append-only view log lists who opened
 what. `R1` → **Add a record** → `R7` → `R8 Record Added`.
+
+### Somebody wants to send your details outside Medra
+`N1 Notifications` → the share request (the top row, unread) → `R11 Approve a Share` →
+**Yes, share these 4 things** → `R12 Shared Outside Medra` → **Revoke it now** → `R6`.
+**No, do not share anything** goes to `R6` as well, and nothing is created.
+
+This is the far end of the doctor module's `C13 → C14 → C15`. Until `R11` gets a yes there is
+no link and no token, and the recipient has not been told her name — which is why `C14` on the
+doctor's side is a waiting screen rather than a confirmation. `R6` also lists the live external
+share, so it is reachable without going through the notification.
 
 ### Medicines
 `M1` → a medicine → `M2` → **Where this came from** → `R2`. `M1` → **Request a refill** → `M3`.
