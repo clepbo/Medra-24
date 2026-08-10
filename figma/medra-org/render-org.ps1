@@ -1,0 +1,44 @@
+# Medra Organisation module — render + wire (Figma Desktop open + connected).
+# Organisation-module only: it creates and fills the seven 'Medra Org —' pages and nothing else.
+
+# 1. prime the offline icon cache (safe to re-run)
+New-Item -ItemType Directory -Force "$HOME\.figma-ds-cli\icon-cache" | Out-Null
+Copy-Item .\assets\icon-cache\*.svg "$HOME\.figma-ds-cli\icon-cache\" -Force
+
+# 2. tokens — the same 41 tokens as every other Medra bundle, so this is a no-op
+figma-cli tokens import-design-md .\DESIGN.md
+
+# ---- Medra Org — 1 Setup & Verification ----
+figma-cli eval "(async()=>{const t='Medra Org — 1 Setup & Verification';let p=figma.root.children.find(n=>n.name===t);if(!p){p=figma.createPage();p.name=t;}await figma.setCurrentPageAsync(p);return p.name;})()"
+foreach ($f in @('A1-setup-d.jsx', 'A1-setup-m.jsx', 'A1-setup-m-steps.jsx', 'A1-setup-m-why.jsx', 'A2-verify-d.jsx', 'A2-verify-m.jsx', 'A2-verify-m-steps.jsx', 'A2-verify-m-docs.jsx', 'A2-verify-m-meanwhile.jsx', 'A3-branches-d.jsx', 'A3-branches-m.jsx', 'A3-branches-m-add.jsx', 'A4-plan-d.jsx', 'A4-plan-m.jsx', 'A4-plan-m-plans.jsx', 'A4-plan-m-size.jsx', 'A4-plan-m-seats.jsx', 'A5-profile-d.jsx', 'A5-profile-m.jsx', 'A5-profile-m-edit.jsx', 'A5-profile-m-how.jsx')) { figma-cli render (Get-Content $f -Raw) }
+
+# ---- Medra Org — 2 Today & Bookings ----
+figma-cli eval "(async()=>{const t='Medra Org — 2 Today & Bookings';let p=figma.root.children.find(n=>n.name===t);if(!p){p=figma.createPage();p.name=t;}await figma.setCurrentPageAsync(p);return p.name;})()"
+foreach ($f in @('B1-today-d.jsx', 'B1-today-m.jsx', 'B1-today-m-depts.jsx', 'B1-today-m-branches.jsx', 'B1-today-m-now.jsx', 'B1-today-m-quick-sheet.jsx', 'B2-bookings-d.jsx', 'B2-bookings-m.jsx', 'B2-bookings-m-unassigned.jsx', 'B2-bookings-m-assigned.jsx', 'B2-bookings-m-free.jsx', 'B2-bookings-m-assign-sheet.jsx', 'B3-find-d.jsx', 'B3-find-m.jsx', 'B3-find-m-cant.jsx')) { figma-cli render (Get-Content $f -Raw) }
+
+# ---- Medra Org — 3 Departments & People ----
+figma-cli eval "(async()=>{const t='Medra Org — 3 Departments & People';let p=figma.root.children.find(n=>n.name===t);if(!p){p=figma.createPage();p.name=t;}await figma.setCurrentPageAsync(p);return p.name;})()"
+foreach ($f in @('C1-departments-d.jsx', 'C1-departments-m.jsx', 'C1-departments-m-why.jsx', 'C1-departments-m-seats.jsx', 'C2-department-d.jsx', 'C2-department-m.jsx', 'C2-department-m-people.jsx', 'C2-department-m-perms.jsx', 'C3-add-dept-d.jsx', 'C3-add-dept-m.jsx', 'C3-add-dept-m-perms.jsx', 'C4-people-d.jsx', 'C4-people-m.jsx', 'C4-people-m-needs.jsx', 'C5-invite-d.jsx', 'C5-invite-m.jsx', 'C5-invite-m-what.jsx', 'C5-invite-m-next.jsx', 'C6-person-d.jsx', 'C6-person-m.jsx', 'C6-person-m-activity.jsx', 'C6-person-m-scope.jsx', 'C6-person-m-manage.jsx', 'C7-roles-d.jsx', 'C7-roles-m.jsx', 'C7-roles-m-matrix.jsx', 'C7-roles-m-episode.jsx')) { figma-cli render (Get-Content $f -Raw) }
+
+# ---- Medra Org — 4 The Clinical Chain ----
+figma-cli eval "(async()=>{const t='Medra Org — 4 The Clinical Chain';let p=figma.root.children.find(n=>n.name===t);if(!p){p=figma.createPage();p.name=t;}await figma.setCurrentPageAsync(p);return p.name;})()"
+foreach ($f in @('D1-nursing-d.jsx', 'D1-nursing-m.jsx', 'D1-nursing-m-done.jsx', 'D1-nursing-m-standing.jsx', 'D2-vitals-d.jsx', 'D2-vitals-m.jsx', 'D2-vitals-m-history.jsx', 'D2-vitals-m-self.jsx', 'D3-administer-d.jsx', 'D3-administer-m.jsx', 'D3-administer-m-checks.jsx', 'D3-administer-m-after.jsx', 'D3-administer-m-course.jsx', 'D4-escalate-d.jsx', 'D4-escalate-m.jsx', 'D4-escalate-m-detail.jsx', 'D4-escalate-m-who.jsx', 'D5-lab-queue-d.jsx', 'D5-lab-queue-m.jsx', 'D5-lab-queue-m-progress.jsx', 'D5-lab-queue-m-today.jsx', 'D6-lab-order-d.jsx', 'D6-lab-order-m.jsx', 'D6-lab-order-m-prev.jsx', 'D6-lab-order-m-scope.jsx', 'D7-lab-result-d.jsx', 'D7-lab-result-m.jsx', 'D7-lab-result-m-why.jsx', 'D7-lab-result-m-next.jsx', 'D8-lab-problem-d.jsx', 'D8-lab-problem-m.jsx', 'D8-lab-problem-m-what.jsx', 'D8-lab-problem-m-rule.jsx', 'D9-pharmacy-d.jsx', 'D9-pharmacy-m.jsx', 'D9-pharmacy-m-stock.jsx', 'D10-dispense-d.jsx', 'D10-dispense-m.jsx', 'D10-dispense-m-counsel.jsx', 'D11-substitute-d.jsx', 'D11-substitute-m.jsx', 'D11-substitute-m-options.jsx', 'D11-substitute-m-msg.jsx', 'D12-desk-d.jsx', 'D12-desk-m.jsx', 'D12-desk-m-board.jsx', 'D12-desk-m-desk-sheet.jsx', 'D13-walkin-d.jsx', 'D13-walkin-m.jsx', 'D13-walkin-m-consent.jsx', 'D14-checkin-d.jsx', 'D14-checkin-m.jsx', 'D14-checkin-m-ins.jsx', 'D14-checkin-m-next.jsx')) { figma-cli render (Get-Content $f -Raw) }
+
+# ---- Medra Org — 5 Referrals & External Access ----
+figma-cli eval "(async()=>{const t='Medra Org — 5 Referrals & External Access';let p=figma.root.children.find(n=>n.name===t);if(!p){p=figma.createPage();p.name=t;}await figma.setCurrentPageAsync(p);return p.name;})()"
+foreach ($f in @('E1-outbound-d.jsx', 'E1-outbound-m.jsx', 'E1-outbound-m-stats.jsx', 'E2-create-d.jsx', 'E2-create-m.jsx', 'E2-create-m-who.jsx', 'E2-create-m-what.jsx', 'E2-create-m-share.jsx', 'E3-sent-d.jsx', 'E3-sent-m.jsx', 'E3-sent-m-track.jsx', 'E3-sent-m-link.jsx', 'E4-inbound-d.jsx', 'E4-inbound-m.jsx', 'E4-inbound-m-rules.jsx', 'E5-inbound-detail-d.jsx', 'E5-inbound-detail-m.jsx', 'E5-inbound-detail-m-answer.jsx', 'E5-inbound-detail-m-shared.jsx', 'E6-links-d.jsx', 'E6-links-m.jsx', 'E6-links-m-how.jsx', 'E6-links-m-rules.jsx', 'E7-ext-notice-d.jsx', 'E7-ext-notice-m.jsx', 'E8-ext-task-d.jsx', 'E8-ext-task-m.jsx', 'E9-ext-upload-d.jsx', 'E9-ext-upload-m.jsx', 'E10-ext-done-d.jsx', 'E10-ext-done-m.jsx', 'E11-ext-expired-d.jsx', 'E11-ext-expired-m.jsx')) { figma-cli render (Get-Content $f -Raw) }
+
+# ---- Medra Org — 6 Access, Money & Reports ----
+figma-cli eval "(async()=>{const t='Medra Org — 6 Access, Money & Reports';let p=figma.root.children.find(n=>n.name===t);if(!p){p=figma.createPage();p.name=t;}await figma.setCurrentPageAsync(p);return p.name;})()"
+foreach ($f in @('F1-access-d.jsx', 'F1-access-m.jsx', 'F1-access-m-asks.jsx', 'F1-access-m-rule.jsx', 'F2-audit-d.jsx', 'F2-audit-m.jsx', 'F2-audit-m-flags.jsx', 'F3-compliance-d.jsx', 'F3-compliance-m.jsx', 'F3-compliance-m-state.jsx', 'F3-compliance-m-shared.jsx', 'F4-reports-d.jsx', 'F4-reports-m.jsx', 'F4-reports-m-quality.jsx', 'F4-reports-m-load.jsx', 'F5-settings-d.jsx', 'F5-settings-m.jsx', 'F5-settings-m-hours.jsx', 'F5-settings-m-policy.jsx', 'F5-settings-m-contact.jsx', 'F5-settings-m-more.jsx', 'F6-billing-d.jsx', 'F6-billing-m.jsx', 'F6-billing-m-what.jsx', 'F6-billing-m-invoices.jsx')) { figma-cli render (Get-Content $f -Raw) }
+
+# ---- Medra Org — 7 States & Edge Cases ----
+figma-cli eval "(async()=>{const t='Medra Org — 7 States & Edge Cases';let p=figma.root.children.find(n=>n.name===t);if(!p){p=figma.createPage();p.name=t;}await figma.setCurrentPageAsync(p);return p.name;})()"
+foreach ($f in @('X1-seats-d.jsx', 'X1-seats-m.jsx', 'X1-seats-m-opts.jsx', 'X2-unverified-d.jsx', 'X2-unverified-m.jsx', 'X2-unverified-m-works.jsx', 'X3-locked-d.jsx', 'X3-locked-m.jsx', 'X3-locked-m-safe.jsx', 'X3-locked-m-stop.jsx', 'X4-empty-d.jsx', 'X4-empty-m.jsx', 'X4-empty-m-why.jsx', 'X5-offline-d.jsx', 'X5-offline-m.jsx', 'X5-offline-m-works.jsx', 'X5-offline-m-waits.jsx', 'X6-error-d.jsx', 'X6-error-m.jsx', 'X6-error-m-safe.jsx', 'X6-error-m-meanwhile.jsx', 'X7-loading-d.jsx', 'X7-loading-m.jsx')) { figma-cli render (Get-Content $f -Raw) }
+
+# ---- Medra Org — 8 Components ----
+figma-cli eval "(async()=>{const t='Medra Org — 8 Components';let p=figma.root.children.find(n=>n.name===t);if(!p){p=figma.createPage();p.name=t;}await figma.setCurrentPageAsync(p);return p.name;})()"
+foreach ($f in @('CMP-SeatRow-State-Active.jsx', 'CMP-SeatRow-State-Invited.jsx', 'CMP-SeatRow-State-Suspended.jsx', 'CMP-HealthFact-State-Unverified.jsx', 'CMP-HealthFact-State-Verified.jsx', 'CMP-DepartmentCard-Kind-Nursing.jsx', 'CMP-DepartmentCard-Kind-Laboratory.jsx', 'CMP-DepartmentCard-Kind-Pharmacy.jsx', 'CMP-DepartmentCard-Kind-Frontdesk.jsx', 'CMP-DepartmentCard-Kind-Consulting.jsx', 'CMP-AccessLink-State-Open.jsx', 'CMP-AccessLink-State-Used.jsx', 'CMP-AccessLink-State-Expired.jsx', 'CMP-AccessLink-State-Revoked.jsx', 'CMP-ResultLine-Flag-Normal.jsx', 'CMP-ResultLine-Flag-High.jsx', 'CMP-ResultLine-Flag-Low.jsx', 'CMP-PermissionRow-State-Allowed.jsx', 'CMP-PermissionRow-State-Denied.jsx')) { figma-cli render (Get-Content $f -Raw) }
+
+# 3. wire the prototype, close the navigation, arrange the canvas
+figma-cli run .\link-org.js
