@@ -15,7 +15,7 @@ import numpy as np
 from PIL import Image
 import cairosvg
 
-SRC = "/home/user/Medra-24/figma/medra-member-2/assets/img"
+SRC = "/home/user/Medra-24/figma/medra-member/assets/img"
 IMG = "/home/user/Medra-24/figma/medra-doctor/assets/img"
 os.makedirs(IMG, exist_ok=True)
 np.random.seed(23)

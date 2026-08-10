@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Medra Member app — shared chrome and cards.
 
-Extracted from build_member.py so batch 1 (Find & Book) and batch 2 (Visits · Records ·
-Medicines · Profile) render from one source of truth: same bottom nav, same dashboard
-sidebar, same doctor card, same slot grid. Import after medra_ui — `desk()` here
-deliberately shadows the auth `desk()`.
+The chrome and cards the member app shares across every page: the bottom nav, the dashboard
+sidebar, the doctor card, the slot grid. Kept out of build_member.py so the builder reads as
+screens rather than plumbing. Import after medra_ui — `desk()` here deliberately shadows the
+auth `desk()`.
 """
 import os, re, json, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -93,7 +93,7 @@ def doctor_card(avatar, name, spec, clinic, fee, rating, slot, tag="Today", nm=N
 
 def bottom_nav(active=0):
     # Five tabs, matching the desktop sidebar minus "Find care" (which lives in the search bar).
-    # Every tab is wired — see link-member2.js; nothing here is decorative.
+    # Every tab is wired — see link-member.js; nothing here is decorative.
     items=[("house","Home","Nav Home"),("calendar-days","Visits","Nav Visits"),
            ("clipboard-list","Records","Nav Records"),("pill","Medicines","Nav Meds"),
            ("circle-user","Profile","Nav Profile")]

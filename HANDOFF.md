@@ -6,8 +6,8 @@ what is left. Kept current — it is updated in the same commit as the work it d
 
 | | |
 |---|---|
-| **Document version** | **v1.1** |
-| **Last updated** | 10 August 2026 (v2.0 retrofit applied) |
+| **Document version** | **v1.2** |
+| **Last updated** | 10 August 2026 (v2.0 retrofit applied · member bundles merged, member prototype complete) |
 | **Repo** | `clepbo/Medra-24` |
 | **Working branch** | `claude/new-project-prd-stories-ss2qlr` |
 | **Current PRD** | `docs/Medra_PRD_v2.0.md` (v1.0 kept, marked superseded) |
@@ -57,16 +57,23 @@ while capturing enough record to be clinically useful.
 
 ## 3. Where the design is now
 
-Six rendered bundles, **707 frames**, all validated clean and fully offline.
+Five rendered bundles, **707 frames**, all validated clean and fully offline.
 
 | Bundle | Frames | Pages | Status |
 |---|---:|---:|---|
 | `figma/medra-ds` — design system + journeys | 27 | 1 | Done |
 | `figma/medra-auth` — authentication, 4 roles | 70 | 4 | Done · **v2.0 retrofit applied** |
-| `figma/medra-member` — batch 1, find & book | 46 | 2 | Done · **v2.0 retrofit applied** |
-| `figma/medra-member-2` — visits, records, medicines, profile | 108 | 6 | Done · **v2.0 retrofit applied** |
-| `figma/medra-doctor` — full doctor module | 239 | 8 | Done |
+| `figma/medra-member` — the whole member app | 154 | 8 | Done · **v2.0 retrofit applied** · **prototype complete** |
+| `figma/medra-doctor` — full doctor module | 239 | 8 | Done · **prototype complete** |
 | `figma/medra-org` — organisation + clinical chain + external | 217 | 8 | **New — not yet rendered into Figma** |
+
+`medra-member` was two bundles until the merge (`medra-member` for find & book,
+`medra-member-2` for everything the bottom nav led to). The split existed because batch 1 was
+already rendered and signed off when batch 2 started; it cost a real thing — batch 2 read
+batch-1's frame names off disk to build its own tab bar, and no single audit could see the whole
+app — so it is now one bundle, one builder (`tools/figma/build_member.py`), one prototype and
+one render script. **If you have the old two-page member render in Figma, delete those pages
+before re-rendering**: the page names changed and re-rendering appends rather than replaces.
 
 Each bundle is a folder of `.jsx` frames plus `render-*.ps1`, `link-*.js`, `validate.js`,
 `DESIGN.md`, `pages.json`, `assets/`, and a `.zip` beside it in `figma/`.
@@ -97,7 +104,11 @@ the frames, the rows that open them, the way back and the motion class.
 **The member module has NOT been converted to this pattern.** Measured against the exported
 `.fig`, its mobile screens already fit one viewport (median 845px, max 895px), so the restructure
 would add taps without removing scroll. The product owner asked for the full treatment anyway;
-the machinery is in place (`addx()` in both member builders) but no screen has been converted.
+the machinery is in place (`addx()` in `tools/figma/build_member.py`) but no screen has been
+converted. One caution for whoever does it: `preview_bundle.py` cannot measure this. Flex
+children shrink in the preview, so every mobile frame reads back as exactly 844px whatever it
+contains. The numbers above came from the exported `.fig`; use that, or a Figma render, as
+ground truth.
 
 ---
 
@@ -129,6 +140,7 @@ tools/figma/*.py  ──►  figma/<bundle>/*.jsx  ──►  figma-ds-cli  ─�
 |---|---|
 | `tools/figma/medra_ui.py` | Shared vocabulary: `T`, `I`, `card`, `field`, `cta`, `rows_of`, `statusbar` |
 | `tools/figma/member_kit.py`, `member2_kit.py` | Member chrome + hub/sheet primitives |
+| `tools/figma/build_member.py` | The **whole** member app — one builder for all 8 pages |
 | `tools/figma/doctor_kit.py` | Doctor chrome: navy sidebar, right rail, clinical components |
 | `tools/figma/org_kit.py` | Organisation console: icon rail, context bar, board, seats, `unverified()` |
 | `tools/figma/build_*.py` | One per bundle. Screens, transition table, linker, render script |
@@ -255,6 +267,25 @@ every module renders provenance identically. `org_kit.unverified` is an alias of
 Verified after: every bundle validates clean, zero horizontal overflow at 390 and 1440, and the
 doctor and organisation prototypes still audit complete.
 
+### A2. Merge the two member bundles — **DONE (10 Aug)**
+
+One bundle, one builder, one prototype, one render script. The merge also made the member module
+auditable end to end for the first time, and that first audit found real defects, all now fixed:
+
+| Found | Fix |
+|---|---|
+| 21 screens unreachable — every empty state, all three system states, half the video chain, and the delete confirmation | The prototype now **opens on H2 First Visit**, a member who signed up a minute ago; their tab bar leads to the empty Visits, Records and Medicines, because that is what they have. `S1 → Near me → S3 No Results`. A switcher strip on X1–X3 reaches each other and W4 |
+| **A member could not sign out on a phone.** `Sign out` was on desktop P0 only, `Sign out everywhere` on desktop P5 only | Both added to the mobile screens |
+| Mobile P9 had no way to reach the deletion confirmation | "Continue to delete" added |
+| Mobile W0 had no route into the phase-2 call preview | The phase-2 card added to the mobile screen |
+| 124 transitions named a hotspot that did not exist — mostly one breakpoint's control claimed on both | Marked `~` (breakpoint-optional) where the difference is real and intended, fixed where it was not |
+
+Result: **110/110 screens reachable, 0 broken hotspots, ALL 154 CLEAN**.
+
+The system-state screens moved to their own page (`7 System States`), so the page numbering
+changed — `6 Alerts`, `7 System States`, `8 Components`. **Delete the old member pages in Figma
+before re-rendering**; re-rendering appends rather than replaces.
+
 ### B. Extend the doctor module — next
 
 Raise an order to a department (2) · generate a scoped external link + consent (3) · the doctor's
@@ -262,8 +293,8 @@ view of a structured result (1) · member-side consent to an external share (2).
 
 ### C. Member mobile hub → section conversion
 
-Machinery is in place; 55 screens unconverted. Evidence says it is not needed (see §3); the
-product owner asked for it anyway.
+Machinery is in place (`addx()` in `tools/figma/build_member.py`); 55 screens unconverted.
+Evidence says it is not needed (see §3); the product owner asked for it anyway.
 
 ### D. Not started
 
@@ -322,6 +353,10 @@ cd figma/medra-org && node validate.js               # must say ALL N CLEAN
 cd ../.. && python3 tools/figma/proto_check.py figma/medra-org link-org.js   # must say COMPLETE
 python3 tools/figma/preview_bundle.py figma/medra-org figma/medra-org/preview.html
 ```
+
+`preview_bundle.py` is for *looking*, not for measuring. Its flex children shrink, so every
+mobile frame measures back as exactly 844px whatever it holds — use a Figma render or an
+exported `.fig` when you need a real height.
 
 Read `docs/Medra_PRD_v2.0.md` first, then this file, then the `SETUP.md` of whichever bundle you
 are touching. If a designer sends an exported `.fig`, `tools/figma/figkiwi.py` will read it.

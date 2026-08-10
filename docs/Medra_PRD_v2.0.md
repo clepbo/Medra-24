@@ -607,16 +607,20 @@ Screen groups expand into individual screens plus states (empty, loading, error,
 |---|---|---|---|---|
 | Design system + user journeys | — | 27 | 1 | Done |
 | Authentication (all four roles) | 35 | 70 | 4 | Done |
-| Member app, batch 1 — Find & Book | 11 | 46 | 2 | Done |
-| Member app, batch 2 — Visits · Records · Medicines · Profile | 44 | 108 | 6 | Done |
-| Doctor app — full module (rebuilt) | 46 | 239 | 8 | Done |
-| Institution admin portal | — | — | — | Not started |
+| Member app — the whole module | 55 | 154 | 8 | Done · prototype audited complete |
+| Doctor app — full module (rebuilt) | 46 | 239 | 8 | Done · prototype audited complete |
+| Organisation console — admin, clinical chain, external parties | 55 | 217 | 8 | Done · not yet rendered into Figma |
 | Platform admin | — | — | — | Not started |
+
+The member app was built and reviewed in two batches. They are now **one bundle** — one builder,
+one prototype, one render script — which is what made the module auditable end to end for the
+first time. That audit found 21 unreachable screens and, more seriously, that **a member could
+not sign out on a phone**: the control existed on the desktop screens only. Both are fixed.
 
 Every screen is drawn at **1440 desktop and 390 mobile**, wired into a clickable prototype with a
 motion spec, and validated offline (tokens, icons, images, DSL rules) before rendering.
 
-### 15.2 Product decisions settled by the Member batch-2 designs
+### 15.2 Product decisions settled by the Member designs
 
 These were open questions before the screens existed. They are now decided **on the screen**, and
 they need a build and a legal sign-off, not just a design review.
@@ -853,8 +857,8 @@ in the family fails the build.
 
 ### 15.7 What v2.0 does to the design already built
 
-490 frames are rendered across five bundles: design system 27 · authentication 70 · member 154 ·
-doctor 239. The review reads as "alter the design from the beginning", and for the **product**
+490 frames are rendered across four bundles: design system 27 · authentication 70 · member 154 ·
+doctor 239, with the organisation console's 217 built and awaiting a render. The review reads as "alter the design from the beginning", and for the **product**
 that is fair — but it is not a rebuild of the file. Most of the work survives; three kinds of
 change land on it.
 

@@ -14,7 +14,7 @@ import numpy as np
 from PIL import Image, ImageFilter
 
 SRC = "/home/user/Medra-24/figma/medra-member/assets/img"
-IMG = "/home/user/Medra-24/figma/medra-member-2/assets/img"
+IMG = "/home/user/Medra-24/figma/medra-member/assets/img"
 os.makedirs(IMG, exist_ok=True)
 np.random.seed(11)
 
