@@ -47,17 +47,31 @@ figma-cli run .\fix-layout.js
 It returns a report:
 
 ```json
-{ "pages": [...], "spacersCollapsed": 108, "textCentred": 635,
+{ "framesRepaired": 158, "framesExpected": 158,
+  "foundOnPages": { "Medra Member — Find & Book": 158 },
+  "spacersCollapsed": 108, "textCentred": 635,
   "nodesScanned": 41207, "failed": 0, "examples": [...] }
 ```
+
+A `framesRepaired` well below `framesExpected` means part of the module was never rendered, or
+was rendered under different frame names — worth checking before you read the counts as done.
 
 **To see what it would do without touching anything**, open `fix-layout.js` and set
 `const DRY = true;` on the first line of the body, run it, then set it back.
 
-Each bundle has its own copy, and each is **scoped to that module's own pages** — the member
-script names the eight `Medra Member —` pages and will not touch a doctor or organisation page
-even if they are in the same file. It is **idempotent**: running it twice reports 0 the second
-time, because it skips anything already correct.
+Each bundle has its own copy, and each is **scoped by frame name, not by page**. This matters
+here: the Starter plan caps the file at three pages, so several modules are rendered onto one
+shared page rather than onto the pages `render-*.ps1` names. Each script lists every frame its
+own module generated, scans whatever pages exist, and touches a frame only if the name is on
+that list — so no page-name patching is needed, and the member script will not touch an
+`Auth · Institution — …` frame sitting beside it on the same page.
+
+It is **idempotent**: running it twice reports 0 the second time, because it skips anything
+already correct. The report tells you whether it actually found your frames:
+
+- `framesRepaired` vs `framesExpected` — if the first is 0 you get an `error` naming the pages
+  it *did* find, not a silent success.
+- `foundOnPages` — which pages your frames turned out to be on.
 
 ## The prompt, if you would rather ask than type
 
@@ -69,10 +83,12 @@ time, because it skips anything already correct.
 >
 > It fixes two things in place on frames that are already rendered — empty spacer frames that
 > are holding rows open at Figma's default 100px, and text that is left-aligned inside a centred
-> container. It renders nothing and deletes nothing, and it only touches this module's own
-> pages. Report back the `spacersCollapsed` and `textCentred` counts and anything in `failed`
-> or `notes`. If `failed` is not 0, paste the `notes` array — do not re-run it or try to fix
-> the nodes by hand.
+> container. It renders nothing and deletes nothing, and it is scoped by frame name, so it only
+> touches this module's own frames wherever they sit — do not patch the page names. Report back the `spacersCollapsed` and `textCentred` counts and anything in `failed`
+> or `notes`. Also report `framesRepaired` against `framesExpected` — if they do not match, or
+> the call returns an `error`, stop and paste the whole result: it means the script did not find
+> this module's frames, and a 0 count is not the same as "already clean". If `failed` is not 0,
+> paste the `notes` array — do not re-run it or try to fix the nodes by hand.
 >
 > Do not re-render any page. Do not run `render-*.ps1`.
 

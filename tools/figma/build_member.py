@@ -2957,7 +2957,8 @@ open(os.path.join(OUT, "link-member.js"), "w").write(linker)
 # spacer frames and the centred text in place, so a page does not have to be deleted and
 # re-rendered to pick the fix up — and so anything changed by hand in Figma survives.
 open(os.path.join(OUT, "fix-layout.js"), "w").write(
-    fix_script([PAGE_FIGMA[p_] for p_ in ORDER], "Member"))
+    fix_script([re.search(r'name="([^"]+)"', _j).group(1) for _p, _f, _j in frames],
+               "Member"))
 
 ps = ["# Medra Member app — render + wire (Figma Desktop open + connected).",
       "# Member-module only: it creates and fills the eight 'Medra Member —' pages and nothing else.",

@@ -5,14 +5,17 @@ The generator no longer produces these two defects (see `normalise.py`), but a c
 rendered before that fix still carries them, and re-rendering a page means deleting it and
 losing anything the designer changed by hand. This script repairs in place instead.
 
-It is the same mechanism as `link-*.js`: `figma-cli run` executes it against the open file. It
-is scoped to one module's own pages, it is idempotent, and it reports exactly what it touched.
+It is scoped by **frame name, not by page**. The Figma Starter plan caps a file at three pages,
+so this project's frames do not necessarily sit on the pages the render script names — several
+modules share one page. Every frame this module generated is listed by name, the script scans
+whatever pages exist, and it touches a frame only if the name is on that list. Nothing else in
+the file is read or written, wherever it happens to live.
 """
 import json
 
 
-def fix_script(page_names, module):
-    pages = json.dumps([p.replace("&amp;", "&") for p in page_names])
+def fix_script(frame_names, module):
+    names = json.dumps(sorted({n.replace("&amp;", "&") for n in frame_names}))
     return ("(async () => {\n"
 f"  // Medra {module} — repair pass. Fixes two things in place; renders nothing, deletes nothing.\n"
 "  //\n"
@@ -25,13 +28,26 @@ f"  // Medra {module} — repair pass. Fixes two things in place; renders nothin
 "  //     it does not centre the text *inside* the node, so a label reads as left-aligned in a\n"
 "  //     visibly centred card. Any text in a centred container gets textAlignHorizontal CENTER.\n"
 "  //\n"
-"  // Set DRY to true to count without changing anything.\n"
+"  // Scoped by frame name, not by page — this file's frames are not all on the pages the render\n"
+"  // script names, because the plan caps the file at three. Set DRY to true to count only.\n"
 "  const DRY = false;\n"
 "  if (figma.loadAllPagesAsync) await figma.loadAllPagesAsync();\n"
-f"  const PAGES = {pages};\n"
 "  const norm = s => (s||'').replace(/&amp;/g,'&').replace(/\\s+/g,' ').trim();\n"
-"  const pages = figma.root.children.filter(n => n.type==='PAGE' && PAGES.some(p => norm(p)===norm(n.name)));\n"
-"  if (!pages.length) return { error: 'none of this module\\u2019s pages are in this file', lookedFor: PAGES };\n"
+f"  const OWN = new Set({names}.map(norm));\n"
+"\n"
+"  // every top-level frame in the file that belongs to this module, wherever it sits\n"
+"  const roots = [], onPages = {};\n"
+"  for (const pg of figma.root.children) {\n"
+"    if (pg.type !== 'PAGE') continue;\n"
+"    for (const f of pg.children) {\n"
+"      if (f.type === 'FRAME' && OWN.has(norm(f.name))) {\n"
+"        roots.push(f); onPages[pg.name] = (onPages[pg.name] || 0) + 1;\n"
+"      }\n"
+"    }\n"
+"  }\n"
+"  if (!roots.length) return { error: 'no frames from this module found in this file',\n"
+"                              expectedFrames: OWN.size,\n"
+"                              pagesInFile: figma.root.children.filter(n=>n.type==='PAGE').map(p=>p.name) };\n"
 "\n"
 "  // A spacer is empty AND invisible. A frame with a fill or a stroke is a drawn block, and\n"
 "  // resizing one of those would be a design change, not a repair.\n"
@@ -52,7 +68,7 @@ f"  const PAGES = {pages};\n"
 "    }\n"
 "    if ('children' in n) n.children.forEach(collect);\n"
 "  };\n"
-"  for (const pg of pages) pg.children.forEach(collect);\n"
+"  roots.forEach(collect);\n"
 "  for (const f of fonts) { try { await figma.loadFontAsync(f); } catch (e) {} }\n"
 "\n"
 "  let spacers = 0, texts = 0, scanned = 0, failed = 0;\n"
@@ -92,8 +108,9 @@ f"  const PAGES = {pages};\n"
 "    }\n"
 "    if ('children' in n) n.children.forEach(walk);\n"
 "  };\n"
-"  for (const pg of pages) pg.children.forEach(walk);\n"
+"  roots.forEach(walk);\n"
 "\n"
-"  return { dryRun: DRY, pages: pages.map(p => p.name), spacersCollapsed: spacers,\n"
-"           textCentred: texts, nodesScanned: scanned, failed, examples: samples, notes };\n"
+"  return { dryRun: DRY, framesRepaired: roots.length, framesExpected: OWN.size,\n"
+"           foundOnPages: onPages, spacersCollapsed: spacers, textCentred: texts,\n"
+"           nodesScanned: scanned, failed, examples: samples, notes };\n"
 "})();\n")

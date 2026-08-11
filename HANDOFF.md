@@ -62,7 +62,7 @@ Five rendered bundles, **742 frames**, all validated clean and fully offline.
 | Bundle | Frames | Pages | Status |
 |---|---:|---:|---|
 | `figma/medra-ds` — design system + journeys | 27 | 1 | Done |
-| `figma/medra-auth` — authentication, 4 roles | 70 | 4 | Done · **v2.0 retrofit applied** |
+| `figma/medra-auth` — authentication, 4 roles | 70 | 4 | Done · **v2.0 retrofit applied** · **prototype complete** |
 | `figma/medra-member` — the whole member app | 158 | 8 | Done · **prototype complete** |
 | `figma/medra-doctor` — full doctor module | 270 | 8 | Done · **prototype complete** |
 | `figma/medra-org` — organisation + clinical chain + external | 217 | 8 | Done · **not yet rendered into Figma** |
@@ -330,10 +330,34 @@ Evidence says it is not needed (see §3); the product owner asked for it anyway.
 
 Platform admin portal · imaging department · insurance eligibility checks · in-app video.
 
+### A3. The auth prototype — **DONE (11 Aug)**
+
+It had never been audited. 35 of its 70 screens — every mobile frame — were unreachable, because
+the page declared **one** flow starting point and it was the desktop frame. Fixed to the dual
+`· Desktop` / `· Mobile` convention the other three use. Also fixed in the same pass:
+
+- **Eight transitions named a hotspot that did not exist.** Three were breakpoint-asymmetric and
+  are now marked `~` (the phone's hero draws a bare `Btn Skip`, the desktop names its own;
+  correcting an MDCN number is a desktop job). One was stale — M3 lost its skip button when the
+  v2.0 review made the legal name mandatory, and the transition stayed. One was a name mismatch,
+  `Btn Login method Phone number` against an actual `Btn Login method Phone`.
+- **No dead-hotspot sweep.** 193 controls — language pickers, blood-group chips, consent boxes —
+  had no reaction at all and did nothing when clicked. Auth now sweeps like the other three.
+- **`render-auth.ps1` emitted curly quotes** (`const t=’…’`) inside a JavaScript string. That is
+  a syntax error, so every page-creation line in the auth render script silently failed.
+
+**70/70 reachable, 0 broken hotspots.**
+
 ### D2. Repair the canvas that is already in Figma — **script ready, not yet run**
 
-`figma/FIXUP.md` and a per-bundle `fix-layout.js`. Run it once per module; it is idempotent and
-touches only that module's own pages. See §4 rules 11 and 12 for what it fixes and why.
+`figma/FIXUP.md` and a per-bundle `fix-layout.js`. Run it once per module; it is idempotent.
+See §4 rules 11 and 12 for what it fixes and why.
+
+**It is scoped by frame name, not by page.** The Figma plan on this project caps the file at
+three pages, so modules share pages rather than sitting on the ones `render-*.ps1` names. Any
+script in this repo that filters by page name will find nothing here — scope by frame name
+instead, and report `framesRepaired` against `framesExpected` so an empty result cannot be
+mistaken for a clean one.
 
 ### E. Render the organisation module into Figma
 

@@ -975,9 +975,9 @@ open(os.path.join(OUT,"pages.json"),"w").write(json.dumps(manifest,indent=2))
 PAGE_FIGMA={"Entry":"Medra Auth — Entry","Member":"Medra Auth — Member",
             "Doctor":"Medra Auth — Doctor","Institution":"Medra Auth — Institution"}
 TRN=[
- ("E1-onb1","Btn Next E1-onb1","E2-onb2"),("E1-onb1","Btn Skip E1-onb1","E4-welcome"),("E1-onb1","Btn Skip","E4-welcome"),
- ("E2-onb2","Btn Next E2-onb2","E3-onb3"),("E2-onb2","Btn Skip E2-onb2","E4-welcome"),("E2-onb2","Btn Skip","E4-welcome"),
- ("E3-onb3","Btn Next E3-onb3","E4-welcome"),("E3-onb3","Btn Skip E3-onb3","E4-welcome"),("E3-onb3","Btn Skip","E4-welcome"),
+ ("E1-onb1","Btn Next E1-onb1","E2-onb2"),("E1-onb1","Btn Skip E1-onb1","E4-welcome"),("E1-onb1","~Btn Skip","E4-welcome"),
+ ("E2-onb2","Btn Next E2-onb2","E3-onb3"),("E2-onb2","Btn Skip E2-onb2","E4-welcome"),("E2-onb2","~Btn Skip","E4-welcome"),
+ ("E3-onb3","Btn Next E3-onb3","E4-welcome"),("E3-onb3","Btn Skip E3-onb3","E4-welcome"),("E3-onb3","~Btn Skip","E4-welcome"),
  ("E4-welcome","Btn Create account","E5-role"),("E4-welcome","Btn Login entry","M6-login"),
  ("E5-role","Btn Role Member","M1-create"),("E5-role","Btn Role Doctor","D1-create"),
  ("E5-role","Btn Role Institution","I1-register"),("E5-role","Btn Continue role","M1-create"),
@@ -987,13 +987,13 @@ TRN=[
  ("M1-create","Btn Method Email","M1-create"),("M1-create","Btn Method Phone number","M1-create"),
  ("M2-otp","Btn Verify M2","M3-name"),("M2-otp","Btn Change number M2","M1-create"),
  ("M2-otp","Btn Help code M2","M8-help"),("M2-otp","Btn Resend M2","M2-otp"),("M2-otp","Btn Back","M1-create"),("M2-otp","Btn Help","M8-help"),
- ("M3-name","Btn Continue M3","M4-about"),("M3-name","Btn Skip M3","M4-about"),("M3-name","Btn Back","M2-otp"),("M3-name","Btn Help","M8-help"),
+ ("M3-name","Btn Continue M3","M4-about"),("M3-name","Btn Back","M2-otp"),("M3-name","Btn Help","M8-help"),
  ("M4-about","Btn Continue M4","M5-health"),("M4-about","Btn Skip M4","M5-health"),("M4-about","Btn Back","M3-name"),("M4-about","Btn Help","M8-help"),
  ("M5-health","Btn Finish M5","M9-success"),("M5-health","Btn Skip M5","M9-success"),("M5-health","Btn Back","M4-about"),("M5-health","Btn Help","M8-help"),
  ("M6-login","Btn Send code M6","M2-otp"),("M6-login","Btn Create M6","M1-create"),
  ("M6-login","Btn Google login","M7-unlock"),("M6-login","Btn Apple login","M7-unlock"),
  ("M6-login","Btn Help M6","M8-help"),("M6-login","Btn Back","E4-welcome"),("M6-login","Btn Help","M8-help"),
- ("M6-login","Btn Login method Email","M6-login"),("M6-login","Btn Login method Phone number","M6-login"),
+ ("M6-login","Btn Login method Email","M6-login"),("M6-login","Btn Login method Phone","M6-login"),
  ("M7-unlock","Btn Unlock M7","M9-success"),("M7-unlock","Btn Biometric unlock","M9-success"),
  ("M7-unlock","Btn Use code M7","M2-otp"),("M7-unlock","Btn Switch M7","M6-login"),("M7-unlock","Btn Help","M8-help"),
  ("M8-help","Btn Back to OTP","M2-otp"),("M8-help","Btn Resend help","M2-otp"),("M8-help","Btn Call help","M2-otp"),
@@ -1003,7 +1003,7 @@ TRN=[
  ("D2-otp","Btn Verify D2","D3-password"),("D2-otp","Btn Change number D2","D1-create"),
  ("D2-otp","Btn Resend D2","D2-otp"),("D2-otp","Btn Back","D1-create"),("D2-otp","Btn Help","M8-help"),
  ("D3-password","Btn Continue D3","D4-pending"),("D3-password","Btn Back","D2-otp"),("D3-password","Btn Help","M8-help"),
- ("D4-pending","Btn Explore D4","D5-profile"),("D4-pending","Btn Update MDCN D4","D1-create"),("D4-pending","Btn Support D4","M8-help"),("D4-pending","Btn Help","M8-help"),
+ ("D4-pending","Btn Explore D4","D5-profile"),("D4-pending","~Btn Update MDCN D4","D1-create"),("D4-pending","Btn Support D4","M8-help"),("D4-pending","Btn Help","M8-help"),
  ("D5-profile","Btn Finish D5","D10-success"),("D5-profile","Btn Later D5","D10-success"),("D5-profile","Btn Back","D4-pending"),("D5-profile","Btn Help","M8-help"),
  ("D6-login","Btn Login submit D6","D7-2fa"),("D6-login","Btn Forgot D6","D8-forgot"),
  ("D6-login","Btn Register D6","D1-create"),("D6-login","Btn Back","E4-welcome"),("D6-login","Btn Help","M8-help"),
@@ -1033,12 +1033,25 @@ TRN=[
  ("I10-reset","Btn Save password I10","I8-admin-login"),("I10-reset","Btn Back","I9-forgot"),("I10-reset","Btn Help","M8-help"),
  ("I11-success","Btn Go portal I11","I8-admin-login"),("I11-success","Btn Invite I11","I8-admin-login"),
 ]
+# Which Btn names each frame actually contains. A transition describes a *screen*, and the two
+# breakpoints legitimately differ — the desktop onboarding names its own Skip button where the
+# phone draws a bare one, and correcting an MDCN number is a desktop job. A `~` prefix says the
+# difference is intended; without it, a hotspot that exists on neither side fails the audit.
+BTNS={}
+for _pg,_fn,_jsx in frames:
+    BTNS[re.search(r'name="([^"]+)"',_jsx).group(1)]=set(re.findall(r'name="(Btn [^"]+)"',_jsx))
+
 resolved=[]
 for a,hot,b in TRN:
-    if a in NAMES and b in NAMES:
-        resolved.append([NAMES[a][0],hot,NAMES[b][0]]); resolved.append([NAMES[a][1],hot,NAMES[b][1]])
+    if a not in NAMES or b not in NAMES: continue
+    soft=hot.startswith("~"); hot=hot[1:] if soft else hot
+    for side in (0,1):
+        if soft and hot not in BTNS.get(NAMES[a][side],()): continue
+        resolved.append([NAMES[a][side],hot,NAMES[b][side]])
 order_js={PAGE_FIGMA[p]:[[NAMES[f][0],NAMES[f][1]] for f in fids] for p,fids in ORDER.items()}
-starts_js={PAGE_FIGMA[p]:NAMES[fids[0]][0] for p,fids in ORDER.items()}
+# Two flow starting points per page, desktop and mobile. With one, the mobile row is not a
+# prototype at all — you have to hand-pick a frame every time you present it.
+starts_js={PAGE_FIGMA[p]:[NAMES[fids[0]][0],NAMES[fids[0]][1]] for p,fids in ORDER.items()}
 
 linker=("(async () => {\n"
  "  if (figma.loadAllPagesAsync) await figma.loadAllPagesAsync();\n"
@@ -1048,20 +1061,36 @@ linker=("(async () => {\n"
  "  const F = n => byName[norm(n)];\n"
  "  const findAll = (root,t) => { const out=[]; const target=norm(t); const w=n=>{ if(n.name&&norm(n.name)===target) out.push(n); if('children'in n) n.children.forEach(w); }; w(root); return out; };\n"
  "  const transition = { type:'SMART_ANIMATE', easing:{type:'EASE_OUT'}, duration:0.25 };\n"
+ "  const instant = { type:'SMART_ANIMATE', easing:{type:'LINEAR'}, duration:0.01 };\n"
+ "  const allBtns = root => { const out=[]; const w=n=>{ if(n.name&&/^Btn /.test(norm(n.name))) out.push(n); if('children'in n) n.children.forEach(w); }; w(root); return out; };\n"
  f"  const TRN = {json.dumps(resolved)};\n"
  f"  const ORDER = {json.dumps(order_js)};\n"
  f"  const STARTS = {json.dumps(starts_js)};\n"
+ f"  const OWN = {json.dumps([n for pair in NAMES.values() for n in pair])};\n"
  "  const jobs=[], missing=[];\n"
  "  for (const [fromN,hot,toN] of TRN){ const fr=F(fromN), to=F(toN); if(!fr||!to) continue;\n"
  "    const nodes=findAll(fr,hot); if(!nodes.length){ missing.push(fromN+' -> '+hot); continue; }\n"
  "    for (const nd of nodes) jobs.push([nd,to]); }\n"
- "  let linked=0; for (const [nd,to] of jobs){ await nd.setReactionsAsync([{ trigger:{type:'ON_CLICK'}, actions:[{ type:'NODE', destinationId:to.id, navigation:'NAVIGATE', transition }] }]); linked++; }\n"
+ "  const wired = new Set();\n"
+ "  let linked=0; for (const [nd,to] of jobs){ await nd.setReactionsAsync([{ trigger:{type:'ON_CLICK'}, actions:[{ type:'NODE', destinationId:to.id, navigation:'NAVIGATE', transition }] }]); wired.add(nd.id); linked++; }\n"
+ "  // Anything still named 'Btn …' is a control whose real behaviour is state, not navigation —\n"
+ "  // a language picker, a blood-group chip, a consent box. In a click-through it must respond\n"
+ "  // rather than feel broken, so it navigates to its own screen in 10 ms.\n"
+ "  let stay = 0;\n"
+ "  for (const fn of OWN){ const fr=F(fn); if(!fr) continue;\n"
+ "    for (const nd of allBtns(fr)){ if (wired.has(nd.id)) continue;\n"
+ "      if (nd.reactions && nd.reactions.length) { wired.add(nd.id); continue; }\n"
+ "      await nd.setReactionsAsync([{ trigger:{type:'ON_CLICK'}, actions:[{ type:'NODE', destinationId:fr.id, navigation:'NAVIGATE', transition: instant }] }]);\n"
+ "      stay++; } }\n"
  "  const GX=170, GY=150;\n"
  "  for (const pg of pages){ const ord=ORDER[pg.name]; if(!ord) continue; let x=0, rowH=0;\n"
  "    for (const [dn,mn] of ord){ const df=F(dn); if(df){ df.x=x; df.y=0; x+=df.width+GX; rowH=Math.max(rowH,df.height);} }\n"
  "    let mx=0; for (const [dn,mn] of ord){ const mf=F(mn); if(mf){ mf.x=mx; mf.y=rowH+GY; mx+=mf.width+GX; } } }\n"
- "  for (const pg of pages){ const s=STARTS[pg.name]; if(s&&F(s)) pg.flowStartingPoints=[{ nodeId:F(s).id, name:'Start' }]; }\n"
- "  return { linked, framesFound: Object.keys(byName).length, missing };\n"
+ "  for (const pg of pages){ const s=STARTS[pg.name]; if(!s) continue;\n"
+ "    const pts=[]; if(F(s[0])) pts.push({ nodeId:F(s[0]).id, name:pg.name+' · Desktop' });\n"
+ "    if(F(s[1])) pts.push({ nodeId:F(s[1]).id, name:pg.name+' · Mobile' });\n"
+ "    if(pts.length) pg.flowStartingPoints=pts; }\n"
+ "  return { linked, stayOnScreen: stay, framesFound: Object.keys(byName).length, missing };\n"
  "})();\n")
 open(os.path.join(OUT,"link-auth.js"),"w").write(linker)
 
@@ -1069,7 +1098,8 @@ open(os.path.join(OUT,"link-auth.js"),"w").write(linker)
 # spacer frames and the centred text in place, so a page does not have to be deleted and
 # re-rendered to pick the fix up — and so anything changed by hand in Figma survives.
 open(os.path.join(OUT, "fix-layout.js"), "w").write(
-    fix_script([PAGE_FIGMA[p_] for p_ in ORDER], "Auth"))
+    fix_script([re.search(r'name="([^"]+)"', _j).group(1) for _p, _f, _j in frames],
+               "Auth"))
 
 ps=["# Medra Auth — render each persona onto its own Figma page (Figma Desktop open + connected).",
     'New-Item -ItemType Directory -Force "$HOME\\.figma-ds-cli\\icon-cache" | Out-Null',
@@ -1077,7 +1107,8 @@ ps=["# Medra Auth — render each persona onto its own Figma page (Figma Desktop
     "figma-cli tokens import-design-md .\\DESIGN.md",""]
 for p,fids in ORDER.items():
     ps.append(f'# ---- {PAGE_FIGMA[p]} ----')
-    ps.append(f'figma-cli eval "(async()=>{{const t=’{PAGE_FIGMA[p]}’;let p=figma.root.children.find(n=>n.name===t);if(!p){{p=figma.createPage();p.name=t;}}await figma.setCurrentPageAsync(p);return p.name;}})()"')
+    # straight quotes: ’ is not a JavaScript string delimiter, and this line silently failed
+    ps.append(f'figma-cli eval "(async()=>{{const t=\'{PAGE_FIGMA[p]}\';let p=figma.root.children.find(n=>n.name===t);if(!p){{p=figma.createPage();p.name=t;}}await figma.setCurrentPageAsync(p);return p.name;}})()"')
     lst=", ".join("'"+f+"'" for fid in fids for f in (fid+"-d.jsx",fid+"-m.jsx"))
     ps.append(f'foreach ($f in @({lst})) {{ figma-cli render (Get-Content $f -Raw) }}')
     ps.append("")
