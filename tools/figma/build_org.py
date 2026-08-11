@@ -13,6 +13,8 @@ front desk on a phone gets one screenful at a time rather than a console shrunk 
 import os, re, json, sys, shutil
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from medra_ui import *
+from normalise import normalise
+from fixups import fix_script
 from org_kit import *
 
 OUT = "/home/user/Medra-24/figma/medra-org"
@@ -68,6 +70,7 @@ PAGE_FIGMA = {
   "Referral": "Medra Org — 5 Referrals &amp; External Access",
   "Govern":   "Medra Org — 6 Access, Money &amp; Reports",
   "States":   "Medra Org — 7 States &amp; Edge Cases",
+  "Components": "Medra Org — 8 Components",
 }
 NAV = {"Today": 0, "Bookings": 1, "People": 2, "Departments": 3,
        "Referrals": 4, "Access": 5, "Reports": 6, "Settings": 7}
@@ -2490,7 +2493,7 @@ for nm, jsx in CMP:
 def sanitize(s): return re.sub(r'&(?!amp;|lt;|gt;|quot;|#\d+;|#x[0-9A-Fa-f]+;)', '&amp;', s)
 manifest = {}
 for page, fn, jsx in frames:
-    open(os.path.join(OUT, fn), "w").write(sanitize(jsx))
+    open(os.path.join(OUT, fn), "w").write(sanitize(normalise(jsx)))
     manifest.setdefault(page, []).append(fn)
 open(os.path.join(OUT, "pages.json"), "w").write(json.dumps(manifest, indent=2))
 
@@ -2765,6 +2768,12 @@ linker = ("(async () => {\n"
  "  return { linked, navLinked, stayOnScreen: stay, framesFound: Object.keys(byName).length, missing };\n"
  "})();\n")
 open(os.path.join(OUT, "link-org.js"), "w").write(linker)
+
+# A repair pass for a canvas that was rendered before normalise.py existed. It fixes the
+# spacer frames and the centred text in place, so a page does not have to be deleted and
+# re-rendered to pick the fix up — and so anything changed by hand in Figma survives.
+open(os.path.join(OUT, "fix-layout.js"), "w").write(
+    fix_script([PAGE_FIGMA[p_] for p_ in ORDER], "Organisation"))
 
 ps = ["# Medra Organisation module — render + wire (Figma Desktop open + connected).",
       "# Organisation-module only: it creates and fills the seven 'Medra Org —' pages and nothing else.",

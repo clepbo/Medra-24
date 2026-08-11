@@ -271,6 +271,8 @@ frames=[]; NAMES={}; ORDER={}
 import sys as _sys, os as _os
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from medra_ui import health_fact, verify_tag, unverified_note
+from normalise import normalise
+from fixups import fix_script
 
 def add(page,fid,d,m):
     frames.append((page,f"{fid}-d.jsx",d)); frames.append((page,f"{fid}-m.jsx",m))
@@ -966,7 +968,7 @@ add("Institution","I11-success",
 def sanitize(s): return re.sub(r'&(?!amp;|lt;|gt;|quot;|#\d+;|#x[0-9A-Fa-f]+;)','&amp;',s)
 manifest={}
 for page,fn,jsx in frames:
-    open(os.path.join(OUT,fn),"w").write(sanitize(jsx))
+    open(os.path.join(OUT,fn),"w").write(sanitize(normalise(jsx)))
     manifest.setdefault(page,[]).append(fn)
 open(os.path.join(OUT,"pages.json"),"w").write(json.dumps(manifest,indent=2))
 
@@ -1062,6 +1064,12 @@ linker=("(async () => {\n"
  "  return { linked, framesFound: Object.keys(byName).length, missing };\n"
  "})();\n")
 open(os.path.join(OUT,"link-auth.js"),"w").write(linker)
+
+# A repair pass for a canvas that was rendered before normalise.py existed. It fixes the
+# spacer frames and the centred text in place, so a page does not have to be deleted and
+# re-rendered to pick the fix up — and so anything changed by hand in Figma survives.
+open(os.path.join(OUT, "fix-layout.js"), "w").write(
+    fix_script([PAGE_FIGMA[p_] for p_ in ORDER], "Auth"))
 
 ps=["# Medra Auth — render each persona onto its own Figma page (Figma Desktop open + connected).",
     'New-Item -ItemType Directory -Force "$HOME\\.figma-ds-cli\\icon-cache" | Out-Null',

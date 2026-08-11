@@ -1,1 +1,1 @@
-<Frame name="cmp/Time Slot/State=Taken" w={140} flex="col" p={16} bg="var:bg/base"><Frame w={98} flex="row" justify="center" py={13} rounded={16} bg="var:neutral/100"><Text font="Inter" size={14} weight="semibold" color="var:text/faint">10:30</Text></Frame></Frame>
+<Frame name="cmp/Time Slot/State=Taken" w={140} flex="col" p={16} bg="var:bg/base"><Frame w={98} flex="row" justify="center" py={13} rounded={16} bg="var:neutral/100"><Text font="Inter" size={14} weight="semibold" color="var:text/faint" align="center">10:30</Text></Frame></Frame>

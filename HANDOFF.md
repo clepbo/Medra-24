@@ -6,8 +6,8 @@ what is left. Kept current — it is updated in the same commit as the work it d
 
 | | |
 |---|---|
-| **Document version** | **v1.3** |
-| **Last updated** | 10 August 2026 (member bundles merged · the clinical chain now crosses all three modules) |
+| **Document version** | **v1.4** |
+| **Last updated** | 11 August 2026 (spacer and text-alignment defects fixed at source · in-place repair pass added) |
 | **Repo** | `clepbo/Medra-24` |
 | **Working branch** | `claude/new-project-prd-stories-ss2qlr` |
 | **Current PRD** | `docs/Medra_PRD_v2.0.md` (v1.0 kept, marked superseded) |
@@ -144,6 +144,8 @@ tools/figma/*.py  ──►  figma/<bundle>/*.jsx  ──►  figma-ds-cli  ─�
 | `tools/figma/doctor_kit.py` | Doctor chrome: navy sidebar, right rail, clinical components |
 | `tools/figma/org_kit.py` | Organisation console: icon rail, context bar, board, seats, `unverified()` |
 | `tools/figma/build_*.py` | One per bundle. Screens, transition table, linker, render script |
+| `tools/figma/normalise.py` | Fixes the two structural defects above in every frame at build time |
+| `tools/figma/fixups.py` | Emits `fix-layout.js` — the same two fixes, applied **in place** to a canvas already rendered |
 | `tools/figma/preview_bundle.py` | JSX → HTML approximate renderer |
 | `tools/figma/proto_check.py` | Offline prototype audit |
 | `tools/figma/figkiwi.py` | **Reads an exported `.fig`** so a designer's corrections can be read out rather than guessed |
@@ -167,6 +169,13 @@ Elements: `<Frame> <Text> <Icon> <Rect> <Ellipse> <Image>`. One `.jsx` = one Fig
    `https://cdn.jsdelivr.net/npm/lucide-static@1.26.0/icons/<name>.svg`.
 10. **Python f-strings:** no backslashes in expressions, `{{n}}` for literal braces. Hoist long
     strings to module level rather than nesting f-strings.
+11. **An empty frame keeps Figma's 100×100 default on whatever axis you did not set.**
+    `<Frame grow={1} />` is a spacer with no height, so it renders 100px tall and holds a 34px
+    row open — 530 of them were in the file. `tools/figma/normalise.py` now fills the cross axis
+    of every empty frame at build time. Do not write a spacer without a cross-axis size.
+12. **`items="center"` centres the text node, not the text inside it.** A label ends up
+    left-aligned in a visibly centred card. `normalise.py` adds `align="center"` to any text in
+    a centred container; 4,115 nodes needed it.
 
 ### How the prototype is wired
 
@@ -320,6 +329,11 @@ Evidence says it is not needed (see §3); the product owner asked for it anyway.
 ### D. Not started
 
 Platform admin portal · imaging department · insurance eligibility checks · in-app video.
+
+### D2. Repair the canvas that is already in Figma — **script ready, not yet run**
+
+`figma/FIXUP.md` and a per-bundle `fix-layout.js`. Run it once per module; it is idempotent and
+touches only that module's own pages. See §4 rules 11 and 12 for what it fixes and why.
 
 ### E. Render the organisation module into Figma
 
