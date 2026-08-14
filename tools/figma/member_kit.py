@@ -9,6 +9,7 @@ auth `desk()`.
 import os, re, json, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from medra_ui import *
+from shell import app_desk, title_from, NAV_MEMBER
 
 # ---------------------------------------------------------------- member-specific parts
 def appbar(title=None, back=True, right=None, dark=False):
@@ -188,39 +189,7 @@ def mob(name, children, nav=None):
             f'{statusbar()}{children}{navrow}</Frame>')
 
 def desk(name, children, sidebar_active=0, topbar=True):
-    items=[("house","Home","Nav Home"),("search","Find care","Nav Find"),("calendar-days","My visits","Nav Visits"),
-           ("clipboard-list","Records","Nav Records"),("pill","Medicines","Nav Meds"),("circle-user","Profile","Nav Profile")]
-    navs=""
-    for i,(ic,label,nm) in enumerate(items):
-        on=i==sidebar_active
-        if on:
-            navs+=(f'<Frame name="Btn {nm}" w="fill" flex="row" gap={{12}} items="center" px={{14}} py={{13}} rounded={{16}} bg="var:bg/base">'
-                   f'{I(ic,19,A_IC)}{T(14,"semibold","var:text/strong",label,w="fill")}'
-                   f'<Rect w={{5}} h={{5}} rounded={{999}} bg="var:brand/teal" /></Frame>')
-        else:
-            navs+=(f'<Frame name="Btn {nm}" w="fill" flex="row" gap={{12}} items="center" px={{14}} py={{13}} rounded={{16}}>'
-                   f'{I(ic,19,"#8FB3CA")}{T(14,"regular","var:text/on-dark-muted",label,w="fill")}</Frame>')
-    side=(f'<Frame w={{262}} h="fill" flex="col" gap={{24}} p={{20}} image="assets/img/sidebar.jpg" overflow="hidden">'
-          f'<Frame w="fill" flex="row" gap={{11}} items="center" pt={{6}} pb={{2}}>'
-          f'<Image image="assets/logo/logo-white.png" w={{86}} h={{64}} /></Frame>'
-          f'<Frame w="fill" flex="col" gap={{5}}>'
-          f'{T(11,"semibold","#6E93AE","MENU")}{navs}</Frame>'
-          f'<Frame grow={{1}} />'
-          f'<Frame w="fill" flex="col" gap={{11}} p={{17}} rounded={{22}} bg="var:bg/band-2">'
-          f'<Frame w={{38}} h={{38}} rounded={{12}} image="assets/img/btn-teal.jpg" overflow="hidden" flex="col" justify="center" items="center">{I("helping-hand",18,W_IC)}</Frame>'
-          f'{T(14,"semibold","var:text/on-dark","Need help?")}'
-          f'{T(12,"regular","var:text/on-dark-muted","Our team replies in minutes, every day.",w="fill")}'
-          f'<Frame name="Btn Support" w="fill" flex="row" justify="center" px={{14}} py={{10}} rounded={{999}} bg="var:bg/base">'
-          f'{T(13,"semibold","var:text/strong","Message us")}</Frame></Frame>'
-          f'<Frame name="Btn Nav Profile" w="fill" flex="row" gap={{11}} items="center" p={{11}} rounded={{18}} bg="var:bg/band-2">'
-          f'<Image image="assets/img/me.jpg" w={{38}} h={{38}} rounded={{999}} />'
-          f'<Frame grow={{1}} flex="col" gap={{1}}>{T(13,"semibold","var:text/on-dark","Amara Okeke")}'
-          f'{T(11,"regular","var:text/on-dark-muted","Member")}</Frame>{I("chevron-right",16,"#8FB3CA")}</Frame></Frame>')
-    top=(f'<Frame w="fill" flex="row" gap={{16}} items="center">'
-         f'<Frame grow={{1}} flex="col">{searchbar()}</Frame>'
-         f'{circle_btn("bell","Notifications")}'
-         f'<Frame name="Btn Nav Profile" flex="row" gap={{10}} items="center" px={{7}} py={{7}} pr={{15}} rounded={{999}} bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>'
-         f'<Image image="assets/img/me.jpg" w={{34}} h={{34}} rounded={{999}} />'
-         f'{T(13,"semibold","var:text/strong","Amara")}{I("chevron-down",15,M_IC)}</Frame></Frame>') if topbar else ''
-    return (f'<Frame name="{name}" w={{1440}} minH={{900}} flex="row" image="assets/img/surface-desktop.jpg" overflow="hidden">'
-            f'{side}<Frame grow={{1}} h="fill" flex="col" gap={{20}} px={{36}} py={{28}}>{top}{children}</Frame></Frame>')
+    """Delegates to the one shell. The signature is unchanged, so not one screen had to move."""
+    return app_desk(name, "member", title_from(name),
+                    f'<Frame w="fill" flex="col" gap={{16}}>{children}</Frame>',
+                    NAV_MEMBER, sidebar_active)

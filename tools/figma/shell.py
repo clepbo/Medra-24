@@ -63,6 +63,26 @@ def persona_pill(key, size=12):
             f'{T(size,"semibold","var:text/accent",label)}</Frame>')
 
 
+def workplace(current, other=None, name="Btn Switch workplace"):
+    """One account, two workplaces.
+
+    A doctor is a person, not a seat: the MDCN number is theirs, not the hospital's. When an
+    organisation invites them it adds a workplace to an account that already exists, so the
+    same clinician is one record whether they are at Garki on Tuesday or in their own rooms on
+    Saturday. This is the control that says which one you are working in — and the reason the
+    money, the roster and the governance on screen differ without the consultation differing.
+    Without a second workplace it renders as a plain label, not a control."""
+    if not other:
+        return (f'<Frame flex="row" gap={{8}} items="center" px={{12}} py={{7}} rounded={{999}} '
+                f'bg="var:neutral/50">{I("briefcase-medical",14,"#7E8F9D")}'
+                f'{T(12,"medium","var:text/muted",current)}</Frame>')
+    return (f'<Frame name="{name}" flex="row" gap={{8}} items="center" px={{12}} py={{7}} rounded={{999}} '
+            f'bg="var:neutral/50" stroke="var:border/default" strokeWidth={{1}}>'
+            f'{I("briefcase-medical",14,"#2F8BAC")}'
+            f'{T(12,"semibold","var:text/strong",current)}'
+            f'{I("chevrons-up-down",14,"#7E8F9D")}</Frame>')
+
+
 def rail_item(ic, name, label=None, on=False, badge=None, wide=False):
     """Collapsed: a 44px icon square. Expanded: the same square with its label beside it, so
     the active state and the hit area are identical in both — only the label appears."""
@@ -120,13 +140,14 @@ def rail(items, active=0, badges=(), expanded=False, who=("Amara Okeke", "Member
             f'<Frame grow={{1}} w="fill" />{foot}</Frame>')
 
 
-def topbar(title, persona, sub=None, right=None, search=True):
+def topbar(title, persona, sub=None, right=None, search="Btn Search", place=None, extra=""):
     subline = T(12, "regular", "var:text/muted", sub) if sub else ""
     tools = right if right is not None else (
-        (f'<Frame name="Btn Search" w={{300}} flex="row" gap={{10}} items="center" px={{15}} py={{11}} '
+        (f'<Frame name="{search}" w={{300}} flex="row" gap={{10}} items="center" px={{15}} py={{11}} '
          f'rounded={{999}} bg="var:neutral/50" stroke="var:border/subtle" strokeWidth={{1}}>'
          f'{I("search",17,"#7E8F9D")}{T(13,"regular","var:text/faint","Search",w="fill")}</Frame>'
          if search else '')
+        + extra
         + f'<Frame name="Btn Notifications" w={{40}} h={{40}} rounded={{999}} bg="var:neutral/50" '
           f'stroke="var:border/subtle" strokeWidth={{1}} flex="row" justify="center" items="center">'
           f'{I("bell",18,"#1B3A5B")}</Frame>')
@@ -138,8 +159,15 @@ def topbar(title, persona, sub=None, right=None, search=True):
             f'<Frame flex="row" gap={{10}} items="center">{tools}</Frame></Frame>')
 
 
+def tool_btn(ic, name):
+    return (f'<Frame name="Btn {name}" w={{40}} h={{40}} rounded={{999}} bg="var:neutral/50" '
+            f'stroke="var:border/subtle" strokeWidth={{1}} flex="row" justify="center" '
+            f'items="center">{I(ic,18,"#1B3A5B")}</Frame>')
+
+
 def app_desk(name, persona, title, children, items, active=0, sub=None,
-             side=None, badges=(), right=None, expanded=False, who=None):
+             side=None, badges=(), right=None, expanded=False, who=None, place=None,
+             search="Btn Search", extra=""):
     """One shell, every persona. `side` is the optional 340px context rail.
 
     `expanded` swaps the icon rail for the labelled one. Both states carry the same hotspot
@@ -153,7 +181,7 @@ def app_desk(name, persona, title, children, items, active=0, sub=None,
             f'stroke="var:border/subtle" strokeWidth={{1}}>'
             f'{rail(items, active, badges, expanded, who or DEFAULT_WHO.get(persona, ("Amara Okeke","Member")))}'
             f'<Frame grow={{1}} h="fill" flex="col" gap={{20}} px={{30}} py={{24}}>'
-            f'{topbar(title, persona, sub, right)}{children}</Frame>'
+            f'{topbar(title, persona, sub, right, search, place, extra)}{children}</Frame>'
             f'{rail_block}</Frame></Frame>')
 
 
@@ -200,3 +228,25 @@ def row(ic, label, sub=None, value=None, name=None, tone=None, chevron=True):
             f'items="center">{I(ic,16,col)}</Frame>'
             f'<Frame grow={{1}} flex="col" gap={{2}}>{T(13,"semibold","var:text/strong",label)}{s}</Frame>'
             f'{v}{ch}</Frame>')
+
+
+# =====================================================================================
+# ADAPTERS
+# Every screen in the three modules already calls its own module's shell. Rather than
+# rewrite ~150 call sites — the risky, churn-heavy way to do this — each old shell now
+# delegates here. The call sites are untouched, the look changes everywhere at once, and
+# the three old bodies are gone rather than left to rot beside the new one.
+# =====================================================================================
+def title_from(name):
+    """'Member · Records — R6 Who Has Access' -> 'Who Has Access'. The screen code belongs in
+    the layer name, where a linker and an audit can find it, not in the heading a user reads."""
+    tail = name.split("—")[-1].strip() if "—" in name else name.split("·")[-1].strip()
+    parts = tail.split(" ", 1)
+    if parts and len(parts) == 2 and any(c.isdigit() for c in parts[0]) and len(parts[0]) <= 4:
+        return parts[1]
+    return tail
+
+
+NAV_MEMBER = [("house", "Nav Home", "Home"), ("search", "Nav Find", "Find care"),
+              ("calendar-days", "Nav Visits", "My visits"), ("clipboard-list", "Nav Records", "Records"),
+              ("pill", "Nav Meds", "Medicines"), ("circle-user", "Nav Profile", "Profile")]

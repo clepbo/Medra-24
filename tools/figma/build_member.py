@@ -2638,7 +2638,7 @@ NAV = {
 
 TRN = [
     # ---- find & book
-    ("H1-home","Btn Search","S1-results"),("H1-home","Btn Filters","S2-filters"),
+    ("H1-home","Btn Search","S1-results"),("H1-home","~Btn Filters","S2-filters"),
     ("H1-home","Btn See doctors","S1-results"),("H1-home","Btn See specialties","S1-results"),
     ("H1-home","Btn Upcoming visit","P1-profile"),("H1-home","Btn Join visit","C1-confirmed"),
     ("H1-home","Btn Reschedule","B1-slot"),("H1-home","Btn Nav Visits","C1-confirmed"),

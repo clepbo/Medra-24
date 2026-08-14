@@ -30,6 +30,7 @@ from member2_kit import (hr, tabs, status_pill, prep_step, radio_row, consent_ro
                          empty_state, skel, skel_card, note_section, provenance, lab_line,
                          kv, kv_pair, timeline, tl_item, PILL)
 from member_kit import date_strip
+from shell import app_desk, title_from, tool_btn
 
 RAIL_DIM = "#7FA3BE"; RAIL_ON = "#FFFFFF"; INK = "#09141F"
 
@@ -226,15 +227,21 @@ def panel(title, body, foot=None):
             f'{T(11,"semibold","var:text/accent",title.upper())}{body}{ft}</Frame>')
 
 def dr_desk(name, crumbs, children, active=0, panel_block=None, urgent=2, cmd_right=None, badges=None):
-    p = panel_block if panel_block is not None else ''
-    return (f'<Frame name="{name}" w={{1440}} minH={{900}} flex="col" p={{24}} '
-            f'image="assets/img/canvas.jpg" overflow="hidden">'
-            f'<Frame w="fill" grow={{1}} flex="row" rounded={{28}} bg="var:bg/base" overflow="hidden" '
-            f'stroke="#E1EAF4" strokeWidth={{1}}>'
-            f'{sidebar(active,badges)}'
-            f'<Frame grow={{1}} h="fill" flex="col" gap={{18}} px={{28}} py={{24}}>'
-            f'{topbar(crumbs,cmd_right,urgent)}{children}</Frame>'
-            f'{p}</Frame></Frame>')
+    """Delegates to the one shell. `crumbs` still supplies the title; `panel_block` still
+    supplies the right rail; `badges` still marks a rail item. Nothing at a call site moved.
+
+    The workplace control appears because a doctor is a person, not a seat: this account also
+    exists at Garki Medical Centre, and which one you are in decides the roster, the money and
+    who you answer to — not what a consultation looks like."""
+    nav = [(ic, nm, label) for ic, label, nm in RAIL]
+    bad = {("Nav " + k) for k in (badges or {}) if (badges or {}).get(k)}
+    title = crumbs[-1] if crumbs else title_from(name)
+    sub = " · ".join(crumbs[:-1]) if crumbs and len(crumbs) > 1 else None
+    return app_desk(name, "doctor", title,
+                    f'<Frame w="fill" flex="col" gap={{16}}>{children}</Frame>',
+                    nav, active, sub=sub, side=panel_block, badges=bad,
+                    search="Btn Search patient", extra=tool_btn("layout-grid", "Nav More"),
+                    place=("Private practice", "Garki Medical Centre"))
 
 # ---------------------------------------------------------------- mobile
 # The sidebar carries eight destinations; a phone tab bar cannot. The fifth tab is a real

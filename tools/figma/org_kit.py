@@ -21,6 +21,7 @@ props keep their braces, every Text needs a font.
 import os, re, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from medra_ui import *
+from shell import app_desk, title_from
 from member2_kit import (hr, tabs, status_pill, prep_step, radio_row, consent_row, audit_row,
                          notif_row, empty_state, skel, skel_card, note_section, lab_line, kv, PILL)
 from doctor_kit import (dcard, dgroup, drow, dtoggle, dbtn, dcta, eyerow, dhead, stat_tile,
@@ -101,19 +102,35 @@ def ctx_bar(branch="Garki Medical Centre", dept="All departments", crumbs=("Toda
             f'{right or ""}</Frame></Frame>')
 
 
-def o_desk(name, crumbs, children, active=0, branch="Garki Medical Centre", dept="All departments",
-           urgent=0, aside=None, who=("Mrs. Adaeze Nwosu", "Organisation admin"), badges=None):
-    a = (f'<Frame w={{312}} h="fill" flex="col" gap={{13}} px={{18}} pt={{20}} pb={{18}} '
-         f'bg="var:bg/subtle" stroke="var:border/subtle" strokeWidth={{1}}>{aside}</Frame>') if aside else ''
-    return (f'<Frame name="{name}" w={{1440}} minH={{900}} flex="row" '
-            f'image="assets/img/canvas-org.jpg" overflow="hidden">'
-            f'{icon_rail(active,badges)}'
-            f'<Frame grow={{1}} h="fill" flex="col">'
-            f'{ctx_bar(branch,dept,crumbs,urgent,who=who)}'
-            f'<Frame w="fill" grow={{1}} flex="row">'
-            f'<Frame grow={{1}} h="fill" flex="col" gap={{16}} px={{24}} py={{20}}>{children}</Frame>'
-            f'{a}</Frame></Frame></Frame>')
+# The pill has to name the person actually looking at the screen. An org frame says which
+# department it belongs to in its own name — "Org · Pharmacy — D9 …" — so read it from there
+# rather than making every call site remember to pass it.
+SECTION_PERSONA = {
+    "front desk": "desk", "nursing": "nurse", "laboratory": "lab", "lab": "lab",
+    "pharmacy": "pharm", "imaging": "imaging", "radiology": "imaging", "billing": "billing",
+    "doctor": "orgdoc",
+}
 
+
+def persona_of(name):
+    head = name.split("—")[0]
+    section = head.split("·")[-1].strip().lower() if "·" in head else ""
+    return SECTION_PERSONA.get(section, "admin")
+
+
+def o_desk(name, crumbs, children, active=0, branch="Garki Medical Centre", dept="All departments",
+           urgent=0, aside=None, who=("Mrs. Adaeze Nwosu", "Organisation admin"), badges=None,
+           persona=None):
+    """Delegates to the one shell. The branch x department context that used to need its own
+    bar is now the subtitle — it is context, not navigation, and it was taking a whole band of
+    the screen to say so."""
+    nav = [(ic, nm, label) for ic, label, nm in RAIL]
+    bad = {("Nav " + k) for k in (badges or {}) if (badges or {}).get(k)}
+    title = crumbs[-1] if crumbs else title_from(name)
+    return app_desk(name, persona or persona_of(name), title,
+                    f'<Frame w="fill" flex="col" gap={{16}}>{children}</Frame>',
+                    nav, active, sub=f"{branch} · {dept}", side=aside, badges=bad, who=who,
+                    search="Btn Search member")
 
 def o_tabs(items, active=0):
     cells = ""
