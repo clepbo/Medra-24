@@ -250,3 +250,74 @@ def title_from(name):
 NAV_MEMBER = [("house", "Nav Home", "Home"), ("search", "Nav Find", "Find care"),
               ("calendar-days", "Nav Visits", "My visits"), ("clipboard-list", "Nav Records", "Records"),
               ("pill", "Nav Meds", "Medicines"), ("circle-user", "Nav Profile", "Profile")]
+
+
+# =====================================================================================
+# ONE PAGE
+# The Figma plan on this project caps the file at three pages, and there are four modules
+# wanting eight each. So every frame in every module renders onto one page, and the layout
+# pass stacks each logical group in its own band rather than starting all of them at x=0
+# and piling them on top of each other. Change this in one place if the page is renamed.
+# =====================================================================================
+ONE_PAGE = "Medra"
+
+# Four modules share the page, and each linker runs on its own, so each needs to know where
+# its own territory starts. Without this they all lay out from y=0 and land on top of one
+# another — which is exactly what happened the first time the page cap forced this.
+BAND_Y0 = {"member": 0, "doctor": 60000, "org": 120000, "auth": 180000}
+
+
+def one_page_ps1(module, files_in_order, link_script, components=None):
+    """The render script: prime icons, import tokens, select the single page, render every
+    frame in flow order, then wire. It never creates a second page."""
+    esc = ONE_PAGE.replace("'", "\\'")
+    ps = [f"# Medra {module} — render + wire (Figma Desktop open + connected).",
+          f"# Everything goes on ONE page: '{ONE_PAGE}'. Rename it here and in link-*.js if you",
+          "# use a different one. Re-rendering APPENDS — delete this module's old frames first.",
+          "",
+          "# 1. prime the offline icon cache (safe to re-run)",
+          'New-Item -ItemType Directory -Force "$HOME\\.figma-ds-cli\\icon-cache" | Out-Null',
+          'Copy-Item .\\assets\\icon-cache\\*.svg "$HOME\\.figma-ds-cli\\icon-cache\\" -Force',
+          "",
+          "# 2. tokens — the same 41 tokens as every other Medra bundle, so this is a no-op",
+          "figma-cli tokens import-design-md .\\DESIGN.md",
+          "",
+          f"# 3. select the one page (creates it only if it is genuinely absent)",
+          f'figma-cli eval "(async()=>{{const t=\'{esc}\';let p=figma.root.children.find(n=>n.name===t);'
+          f'if(!p){{p=figma.createPage();p.name=t;}}await figma.setCurrentPageAsync(p);return p.name;}})()"',
+          "",
+          f"# 4. render every frame — {len(files_in_order)} of them, in flow order"]
+    for i in range(0, len(files_in_order), 24):
+        chunk = ", ".join("'" + f + "'" for f in files_in_order[i:i + 24])
+        ps.append(f"foreach ($f in @({chunk})) {{ figma-cli render (Get-Content $f -Raw) }}")
+    ps.append("")
+    if components:
+        ps += [f"# 5. turn the cmp/* frames into real interactive component sets",
+               f"figma-cli run .\\{components}", ""]
+    ps += ["# 6. wire the prototype and lay the canvas out in bands, one per section",
+           f"figma-cli run .\\{link_script}"]
+    return "\n".join(ps)
+
+
+LAYOUT_JS = (
+ "  // One page, so each section gets its own horizontal band and the next one starts below it.\n"
+ "  // Laying every section out from y=0 would stack four modules on top of each other.\n"
+ "  const GX=170, GY=140, BAND=300;\n"
+ "  const page = figma.root.children.find(n => n.type==='PAGE' && norm(n.name)===norm(ONE_PAGE))\n"
+ "             || figma.currentPage;\n"
+ "  let y = Y0;\n"
+ "  for (const key of Object.keys(ORDER)){ const ord=ORDER[key]; if(!ord) continue;\n"
+ "    let x=0, rowH=0;\n"
+ "    for (const dn of (ord.d||[])){ const df=F(dn); if(df){ df.x=x; df.y=y; x+=df.width+GX;\n"
+ "      rowH=Math.max(rowH,df.height); } }\n"
+ "    let mx=0, mH=0;\n"
+ "    for (const mn of (ord.m||[])){ const mf=F(mn); if(mf){ mf.x=mx; mf.y=y+rowH+GY;\n"
+ "      mx+=mf.width+GX; mH=Math.max(mH,mf.height); } }\n"
+ "    y += rowH + GY + mH + BAND; }\n"
+ "  // Every section's two starting points live on the one page.\n"
+ "  const pts=[];\n"
+ "  for (const [key,s] of Object.entries(STARTS)){\n"
+ "    if(!s) continue;\n"
+ "    if(F(s[0])) pts.push({ nodeId:F(s[0]).id, name:key+' \\u00b7 Desktop' });\n"
+ "    if(F(s[1])) pts.push({ nodeId:F(s[1]).id, name:key+' \\u00b7 Mobile' }); }\n"
+ "  if(pts.length) page.flowStartingPoints=pts;\n")

@@ -16,6 +16,7 @@ from medra_ui import *
 from normalise import normalise
 from fixups import fix_script
 from org_kit import *
+from shell import ONE_PAGE, BAND_Y0, one_page_ps1, LAYOUT_JS
 
 OUT = "/home/user/Medra-24/figma/medra-org"
 os.makedirs(OUT, exist_ok=True)
@@ -2875,14 +2876,9 @@ linker = ("(async () => {\n"
  "    for (const nd of allBtns(fr)){ if (wired.has(nd.id)) continue;\n"
  "      if (nd.reactions && nd.reactions.length) { wired.add(nd.id); continue; }\n"
  "      await go(nd,fr,M.instant); stay++; } }\n"
- "  const GX=170, GY=150;\n"
- "  for (const pg of pages){ const ord=ORDER[pg.name]; if(!ord) continue; let x=0, rowH=0;\n"
- "    for (const dn of ord.d){ const df=F(dn); if(df){ df.x=x; df.y=0; x+=df.width+GX; rowH=Math.max(rowH,df.height);} }\n"
- "    let mx=0; for (const mn of ord.m){ const mf=F(mn); if(mf){ mf.x=mx; mf.y=rowH+GY; mx+=mf.width+GX; } } }\n"
- "  for (const pg of pages){ const s=STARTS[pg.name]; if(!s) continue;\n"
- "    const pts=[]; if(F(s[0])) pts.push({ nodeId:F(s[0]).id, name:pg.name+' · Desktop' });\n"
- "    if(F(s[1])) pts.push({ nodeId:F(s[1]).id, name:pg.name+' · Mobile' });\n"
- "    if(pts.length) pg.flowStartingPoints=pts; }\n"
+ f"  const ONE_PAGE = {json.dumps(ONE_PAGE)};\n"
+ f"  const Y0 = {BAND_Y0['org']};\n"
+ + LAYOUT_JS +
  "  return { linked, navLinked, stayOnScreen: stay, framesFound: Object.keys(byName).length, missing };\n"
  "})();\n")
 open(os.path.join(OUT, "link-org.js"), "w").write(linker)
@@ -2894,26 +2890,9 @@ open(os.path.join(OUT, "fix-layout.js"), "w").write(
     fix_script([re.search(r'name="([^"]+)"', _j).group(1) for _p, _f, _j in frames],
                "Organisation"))
 
-ps = ["# Medra Organisation module — render + wire (Figma Desktop open + connected).",
-      "# Organisation-module only: it creates and fills the seven 'Medra Org —' pages and nothing else.",
-      "",
-      "# 1. prime the offline icon cache (safe to re-run)",
-      'New-Item -ItemType Directory -Force "$HOME\\.figma-ds-cli\\icon-cache" | Out-Null',
-      'Copy-Item .\\assets\\icon-cache\\*.svg "$HOME\\.figma-ds-cli\\icon-cache\\" -Force',
-      "",
-      "# 2. tokens — the same 41 tokens as every other Medra bundle, so this is a no-op",
-      "figma-cli tokens import-design-md .\\DESIGN.md",
-      ""]
-for p_, fids in ORDER.items():
-    pg = PAGE_FIGMA.get(p_, "Medra Org — 8 Components").replace("&amp;", "&")
-    ps.append(f'# ---- {pg} ----')
-    ps.append(f'figma-cli eval "(async()=>{{const t=\'{pg}\';let p=figma.root.children.find(n=>n.name===t);if(!p){{p=figma.createPage();p.name=t;}}await figma.setCurrentPageAsync(p);return p.name;}})()"')
-    lst = ", ".join("'" + f + "'" for f in manifest[p_])
-    ps.append(f'foreach ($f in @({lst})) {{ figma-cli render (Get-Content $f -Raw) }}')
-    ps.append("")
-ps.append("# 3. wire the prototype, close the navigation, arrange the canvas")
-ps.append("figma-cli run .\\link-org.js")
-open(os.path.join(OUT, "render-org.ps1"), "w").write("\n".join(ps))
+_files = [fn for _p in ORDER for fn in manifest[_p]]
+open(os.path.join(OUT, "render-org.ps1"), "w").write(
+    one_page_ps1("Organisation", _files, "link-org.js"))
 
 print(f"{len(frames)} frames · {len(manifest)} pages · {len(resolved)} screen links "
       f"· {len(nav_jobs)} nav links · {len(CMP)} component states")

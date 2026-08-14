@@ -39,13 +39,28 @@
     for (const nd of allBtns(fr)){ if (wired.has(nd.id)) continue;
       if (nd.reactions && nd.reactions.length) { wired.add(nd.id); continue; }
       await go(nd,fr,M.instant); stay++; } }
-  const GX=170, GY=150;
-  for (const pg of pages){ const ord=ORDER[pg.name]; if(!ord) continue; let x=0, rowH=0;
-    for (const dn of ord.d){ const df=F(dn); if(df){ df.x=x; df.y=0; x+=df.width+GX; rowH=Math.max(rowH,df.height);} }
-    let mx=0; for (const mn of ord.m){ const mf=F(mn); if(mf){ mf.x=mx; mf.y=rowH+GY; mx+=mf.width+GX; } } }
-  for (const pg of pages){ const s=STARTS[pg.name]; if(!s) continue;
-    const pts=[]; if(F(s[0])) pts.push({ nodeId:F(s[0]).id, name:pg.name+' · Desktop' });
-    if(F(s[1])) pts.push({ nodeId:F(s[1]).id, name:pg.name+' · Mobile' });
-    if(pts.length) pg.flowStartingPoints=pts; }
+  const ONE_PAGE = "Medra";
+  const Y0 = 120000;
+  // One page, so each section gets its own horizontal band and the next one starts below it.
+  // Laying every section out from y=0 would stack four modules on top of each other.
+  const GX=170, GY=140, BAND=300;
+  const page = figma.root.children.find(n => n.type==='PAGE' && norm(n.name)===norm(ONE_PAGE))
+             || figma.currentPage;
+  let y = Y0;
+  for (const key of Object.keys(ORDER)){ const ord=ORDER[key]; if(!ord) continue;
+    let x=0, rowH=0;
+    for (const dn of (ord.d||[])){ const df=F(dn); if(df){ df.x=x; df.y=y; x+=df.width+GX;
+      rowH=Math.max(rowH,df.height); } }
+    let mx=0, mH=0;
+    for (const mn of (ord.m||[])){ const mf=F(mn); if(mf){ mf.x=mx; mf.y=y+rowH+GY;
+      mx+=mf.width+GX; mH=Math.max(mH,mf.height); } }
+    y += rowH + GY + mH + BAND; }
+  // Every section's two starting points live on the one page.
+  const pts=[];
+  for (const [key,s] of Object.entries(STARTS)){
+    if(!s) continue;
+    if(F(s[0])) pts.push({ nodeId:F(s[0]).id, name:key+' \u00b7 Desktop' });
+    if(F(s[1])) pts.push({ nodeId:F(s[1]).id, name:key+' \u00b7 Mobile' }); }
+  if(pts.length) page.flowStartingPoints=pts;
   return { linked, navLinked, stayOnScreen: stay, framesFound: Object.keys(byName).length, missing };
 })();

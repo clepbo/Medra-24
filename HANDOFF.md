@@ -367,6 +367,18 @@ the page declared **one** flow starting point and it was the desktop frame. Fixe
 
 **70/70 reachable, 0 broken hotspots.**
 
+### D0. Render it — **the blocker, now cleared (11 Aug)**
+
+Nothing built since the shell conversion has ever been through figma-ds-cli, and it could not
+be: the render scripts created eight pages per module and the plan on this file allows three.
+
+Every module now renders onto **one page**, `ONE_PAGE` in `tools/figma/shell.py`, with a per
+module y-offset (`BAND_Y0`) so four linkers running independently do not lay their frames on
+top of each other. `figma/RENDER.md` has the order and the delete-first warning.
+
+**The canvas in Figma is stale.** Every desktop screen changed when the three shells became one.
+Re-rendering appends, so the old frames have to go first or there will be two of everything.
+
 ### D2. Repair the canvas that is already in Figma — **script ready, not yet run**
 
 `figma/FIXUP.md` and a per-bundle `fix-layout.js`. Run it once per module; it is idempotent.

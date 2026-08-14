@@ -273,6 +273,7 @@ _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from medra_ui import health_fact, verify_tag, unverified_note
 from normalise import normalise
 from fixups import fix_script
+from shell import ONE_PAGE, BAND_Y0, one_page_ps1, LAYOUT_JS
 
 def add(page,fid,d,m):
     frames.append((page,f"{fid}-d.jsx",d)); frames.append((page,f"{fid}-m.jsx",m))
@@ -1048,7 +1049,8 @@ for a,hot,b in TRN:
     for side in (0,1):
         if soft and hot not in BTNS.get(NAMES[a][side],()): continue
         resolved.append([NAMES[a][side],hot,NAMES[b][side]])
-order_js={PAGE_FIGMA[p]:[[NAMES[f][0],NAMES[f][1]] for f in fids] for p,fids in ORDER.items()}
+order_js={PAGE_FIGMA[p]:{"d":[NAMES[f][0] for f in fids],"m":[NAMES[f][1] for f in fids]}
+          for p,fids in ORDER.items()}
 # Two flow starting points per page, desktop and mobile. With one, the mobile row is not a
 # prototype at all — you have to hand-pick a frame every time you present it.
 starts_js={PAGE_FIGMA[p]:[NAMES[fids[0]][0],NAMES[fids[0]][1]] for p,fids in ORDER.items()}
@@ -1082,14 +1084,9 @@ linker=("(async () => {\n"
  "      if (nd.reactions && nd.reactions.length) { wired.add(nd.id); continue; }\n"
  "      await nd.setReactionsAsync([{ trigger:{type:'ON_CLICK'}, actions:[{ type:'NODE', destinationId:fr.id, navigation:'NAVIGATE', transition: instant }] }]);\n"
  "      stay++; } }\n"
- "  const GX=170, GY=150;\n"
- "  for (const pg of pages){ const ord=ORDER[pg.name]; if(!ord) continue; let x=0, rowH=0;\n"
- "    for (const [dn,mn] of ord){ const df=F(dn); if(df){ df.x=x; df.y=0; x+=df.width+GX; rowH=Math.max(rowH,df.height);} }\n"
- "    let mx=0; for (const [dn,mn] of ord){ const mf=F(mn); if(mf){ mf.x=mx; mf.y=rowH+GY; mx+=mf.width+GX; } } }\n"
- "  for (const pg of pages){ const s=STARTS[pg.name]; if(!s) continue;\n"
- "    const pts=[]; if(F(s[0])) pts.push({ nodeId:F(s[0]).id, name:pg.name+' · Desktop' });\n"
- "    if(F(s[1])) pts.push({ nodeId:F(s[1]).id, name:pg.name+' · Mobile' });\n"
- "    if(pts.length) pg.flowStartingPoints=pts; }\n"
+ f"  const ONE_PAGE = {json.dumps(ONE_PAGE)};\n"
+ f"  const Y0 = {BAND_Y0['auth']};\n"
+ + LAYOUT_JS +
  "  return { linked, stayOnScreen: stay, framesFound: Object.keys(byName).length, missing };\n"
  "})();\n")
 open(os.path.join(OUT,"link-auth.js"),"w").write(linker)
@@ -1101,20 +1098,9 @@ open(os.path.join(OUT, "fix-layout.js"), "w").write(
     fix_script([re.search(r'name="([^"]+)"', _j).group(1) for _p, _f, _j in frames],
                "Auth"))
 
-ps=["# Medra Auth — render each persona onto its own Figma page (Figma Desktop open + connected).",
-    'New-Item -ItemType Directory -Force "$HOME\\.figma-ds-cli\\icon-cache" | Out-Null',
-    'Copy-Item .\\assets\\icon-cache\\*.svg "$HOME\\.figma-ds-cli\\icon-cache\\" -Force',
-    "figma-cli tokens import-design-md .\\DESIGN.md",""]
-for p,fids in ORDER.items():
-    ps.append(f'# ---- {PAGE_FIGMA[p]} ----')
-    # straight quotes: ’ is not a JavaScript string delimiter, and this line silently failed
-    ps.append(f'figma-cli eval "(async()=>{{const t=\'{PAGE_FIGMA[p]}\';let p=figma.root.children.find(n=>n.name===t);if(!p){{p=figma.createPage();p.name=t;}}await figma.setCurrentPageAsync(p);return p.name;}})()"')
-    lst=", ".join("'"+f+"'" for fid in fids for f in (fid+"-d.jsx",fid+"-m.jsx"))
-    ps.append(f'foreach ($f in @({lst})) {{ figma-cli render (Get-Content $f -Raw) }}')
-    ps.append("")
-ps.append("# Wire the clickable prototype + arrange every page")
-ps.append("figma-cli run .\\link-auth.js")
-open(os.path.join(OUT,"render-auth.ps1"),"w").write("\n".join(ps))
+_files = [fn for _p in ORDER for fn in manifest[_p]]
+open(os.path.join(OUT,"render-auth.ps1"),"w").write(
+    one_page_ps1("Auth", _files, "link-auth.js"))
 
 print(f"{len(frames)} frames · {len(manifest)} pages · {len(resolved)} links")
 for p,fs in manifest.items(): print(f"  {p}: {len(fs)}")
