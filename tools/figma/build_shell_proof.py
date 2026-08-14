@@ -18,16 +18,19 @@ if not os.path.exists(os.path.join(OUT, "assets")):
 frames = []
 def add(fid, jsx): frames.append((fid, jsx))
 
-NAV_MEMBER = [("house","Nav Home"),("search","Nav Find"),("calendar-days","Nav Visits"),
-              ("clipboard-list","Nav Records"),("pill","Nav Meds"),("circle-user","Nav Profile")]
-NAV_DOCTOR = [("layout-dashboard","Nav Today"),("inbox","Nav Requests"),("calendar-days","Nav Schedule"),
-              ("users","Nav Patients"),("stethoscope","Nav Consults"),("banknote","Nav Money"),
-              ("trending-up","Nav Growth")]
-NAV_ADMIN  = [("layout-dashboard","Nav Today"),("calendar-check","Nav Bookings"),("building-2","Nav Departments"),
-              ("users","Nav People"),("share-2","Nav Referrals"),("shield-check","Nav Access"),
-              ("chart-column","Nav Reports")]
-NAV_NURSE  = [("list-checks","Nav Queue"),("heart-pulse","Nav Vitals"),("users","Nav Members"),
-              ("message-square-text","Nav Messages")]
+NAV_MEMBER = [("house","Nav Home","Home"),("search","Nav Find","Find care"),
+              ("calendar-days","Nav Visits","My visits"),("clipboard-list","Nav Records","Records"),
+              ("pill","Nav Meds","Medicines"),("circle-user","Nav Profile","Profile")]
+NAV_DOCTOR = [("layout-dashboard","Nav Today","Today"),("inbox","Nav Requests","Requests"),
+              ("calendar-days","Nav Schedule","Schedule"),("users","Nav Patients","Patients"),
+              ("stethoscope","Nav Consults","Consults"),("banknote","Nav Money","Money"),
+              ("trending-up","Nav Growth","Growth")]
+NAV_ADMIN  = [("layout-dashboard","Nav Today","Today"),("calendar-check","Nav Bookings","Bookings"),
+              ("building-2","Nav Departments","Departments"),("users","Nav People","People"),
+              ("share-2","Nav Referrals","Referrals"),("shield-check","Nav Access","Access"),
+              ("chart-column","Nav Reports","Reports")]
+NAV_NURSE  = [("list-checks","Nav Queue","My queue"),("heart-pulse","Nav Vitals","Vitals"),
+              ("users","Nav Members","Members"),("message-square-text","Nav Messages","Messages")]
 
 # ---------------------------------------------------------------- 1. member
 add("proof-member", app_desk(
@@ -65,7 +68,7 @@ add("proof-doctor", app_desk(
     f'{panel("Next up", row("user","Amara Okeke","10:30 – 11:00 · virtual",name="Q Amara") + cta("Start the consultation","Start consult","stethoscope"))}'
     f'{panel("Running late?", T(12,"regular","var:text/muted","Everyone waiting is told once, with a new time. Nobody has to ring the clinic.",w="fill") + ghost("Tell them I am 15 minutes late","Open late K3","timer"))}'
     f'</Frame></Frame>',
-    NAV_DOCTOR, 0, sub="Garki Medical Centre", badges={"Nav Requests"}))
+    NAV_DOCTOR, 0, sub="Garki Medical Centre", badges={"Nav Requests"}, expanded=True))
 
 # ---------------------------------------------------------------- 3. org admin
 add("proof-admin", app_desk(

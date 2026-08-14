@@ -20,7 +20,8 @@ import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from medra_ui import *
 
-RAIL_W = 76
+RAIL_W  = 76          # collapsed — icons only
+RAIL_WX = 248         # expanded — icons with their labels
 GROUND = "var:bg/subtle"
 
 # The pill is the only place a persona is named. Everything else is identical across modules,
@@ -39,6 +40,21 @@ PERSONAS = {
 }
 
 
+# Who is signed in, per persona — so the rail footer never says "Member" on a doctor's screen.
+DEFAULT_WHO = {
+    "member": ("Amara Okeke", "Member"),
+    "doctor": ("Dr. Ngozi Okafor", "Cardiologist"),
+    "orgdoc": ("Dr. Chuka Eze", "General practice · Garki"),
+    "admin":  ("Mrs. Adaeze Nwosu", "Organisation admin"),
+    "desk":   ("Blessing Ade", "Front desk"),
+    "nurse":  ("Ifeoma Nwachukwu", "Nurse · Outpatient"),
+    "lab":    ("Samuel Adeoye", "Lab scientist"),
+    "pharm":  ("Kemi Balogun", "Pharmacist"),
+    "imaging":("Tunde Alabi", "Radiographer"),
+    "billing":("Grace Umeh", "Cashier"),
+}
+
+
 def persona_pill(key, size=12):
     ic, label = PERSONAS[key]
     return (f'<Frame name="Btn Persona" flex="row" gap={{7}} items="center" px={{12}} py={{7}} '
@@ -47,28 +63,61 @@ def persona_pill(key, size=12):
             f'{T(size,"semibold","var:text/accent",label)}</Frame>')
 
 
-def rail_item(ic, name, on=False, badge=None):
-    """Icon only. A label under every icon is 8 more words of chrome on a screen that already
-    has enough — the active state and the tooltip carry it."""
+def rail_item(ic, name, label=None, on=False, badge=None, wide=False):
+    """Collapsed: a 44px icon square. Expanded: the same square with its label beside it, so
+    the active state and the hit area are identical in both — only the label appears."""
     box = ('bg="var:state/info-bg"' if on else '')
-    dot = (f'<Frame w={{7}} h={{7}} rounded={{999}} bg="var:state/error" />') if badge else ''
-    return (f'<Frame name="Btn {name}" w={{44}} h={{44}} rounded={{14}} {box} '
-            f'flex="row" justify="center" items="center">'
-            f'{I(ic, 20, "#2F8BAC" if on else "#7E8F9D")}{dot}</Frame>')
+    col = "#2F8BAC" if on else "#7E8F9D"
+    dot = ('<Frame w={7} h={7} rounded={999} bg="var:state/error" />') if badge else ''
+    if not wide:
+        return (f'<Frame name="Btn {name}" w={{44}} h={{44}} rounded={{14}} {box} '
+                f'flex="row" justify="center" items="center">{I(ic, 20, col)}{dot}</Frame>')
+    return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{12}} items="center" px={{12}} py={{11}} '
+            f'rounded={{14}} {box}>{I(ic, 20, col)}'
+            f'{T(14,"semibold" if on else "regular","var:text/strong" if on else "var:text/muted",label or name,w="fill")}'
+            f'{dot}</Frame>')
 
 
-def rail(items, active=0, badges=()):
-    """items: (icon, hotspot-name) in order. Bottom two are pinned: help, then you."""
-    cells = "".join(rail_item(ic, nm, i == active, nm in badges)
-                    for i, (ic, nm) in enumerate(items))
-    return (f'<Frame w={{{RAIL_W}}} h="fill" flex="col" gap={{22}} items="center" px={{16}} py={{22}} '
-            f'stroke="var:border/subtle" strokeWidth={{1}}>'
-            f'<Image image="assets/logo/appicon.png" w={{40}} h={{40}} rounded={{13}} />'
-            f'<Frame w="fill" flex="col" gap={{6}} items="center">{cells}</Frame>'
-            f'<Frame grow={{1}} w="fill" />'
-            f'{rail_item("circle-help","Open help")}'
-            f'<Image image="assets/img/me.jpg" w={{38}} h={{38}} rounded={{999}} />'
-            f'<Frame name="Btn Sign out" flex="row">{I("log-out",18,"#A7B6C2")}</Frame></Frame>')
+def rail(items, active=0, badges=(), expanded=False, who=("Amara Okeke", "Member")):
+    """items: (icon, hotspot-name, label). Collapsed by default; expanded shows the labels.
+
+    The two states are the same list, the same order and the same hotspot names, so every
+    transition in the prototype works in either — the rail is a view of one thing, not two
+    navigations that have to be kept in step."""
+    cells = "".join(rail_item(ic, nm, lb, i == active, nm in badges, expanded)
+                    for i, (ic, nm, lb) in enumerate(items))
+    w = RAIL_WX if expanded else RAIL_W
+    toggle_ic = "panel-left-close" if expanded else "panel-left-open"
+    if expanded:
+        head = (f'<Frame w="fill" flex="row" justify="between" items="center">'
+                f'<Frame flex="row" gap={{10}} items="center">'
+                f'<Image image="assets/logo/appicon.png" w={{36}} h={{36}} rounded={{12}} />'
+                f'{T(16,"bold","var:text/strong","Medra")}</Frame>'
+                f'<Frame name="Btn Collapse rail" flex="row">{I(toggle_ic,18,"#A7B6C2")}</Frame></Frame>')
+        foot = (f'<Frame w="fill" flex="col" gap={{4}}>'
+                f'{rail_item("circle-help","Open help","Help",wide=True)}'
+                f'<Frame name="Btn Nav Profile" w="fill" flex="row" gap={{11}} items="center" p={{10}} '
+                f'rounded={{14}} bg="var:neutral/50">'
+                f'<Image image="assets/img/me.jpg" w={{34}} h={{34}} rounded={{999}} />'
+                f'<Frame grow={{1}} flex="col" gap={{1}}>'
+                f'{T(13,"semibold","var:text/strong",who[0])}'
+                f'{T(11,"regular","var:text/muted",who[1])}</Frame>'
+                f'<Frame name="Btn Sign out" flex="row">{I("log-out",16,"#A7B6C2")}</Frame></Frame></Frame>')
+        pad = 'px={16} py={20}'
+        align = ''
+    else:
+        head = (f'<Frame w="fill" flex="col" gap={{14}} items="center">'
+                f'<Image image="assets/logo/appicon.png" w={{40}} h={{40}} rounded={{13}} />'
+                f'<Frame name="Btn Expand rail" flex="row">{I(toggle_ic,18,"#A7B6C2")}</Frame></Frame>')
+        foot = (f'{rail_item("circle-help","Open help")}'
+                f'<Image image="assets/img/me.jpg" w={{38}} h={{38}} rounded={{999}} />'
+                f'<Frame name="Btn Sign out" flex="row">{I("log-out",18,"#A7B6C2")}</Frame>')
+        pad = 'px={16} py={22}'
+        align = ' items="center"'
+    return (f'<Frame w={{{w}}} h="fill" flex="col" gap={{18}}{align} {pad} '
+            f'stroke="var:border/subtle" strokeWidth={{1}}>{head}'
+            f'<Frame w="fill" flex="col" gap={{6}}{align}>{cells}</Frame>'
+            f'<Frame grow={{1}} w="fill" />{foot}</Frame>')
 
 
 def topbar(title, persona, sub=None, right=None, search=True):
@@ -90,8 +139,11 @@ def topbar(title, persona, sub=None, right=None, search=True):
 
 
 def app_desk(name, persona, title, children, items, active=0, sub=None,
-             side=None, badges=(), right=None):
-    """One shell, every persona. `side` is the optional 340px context rail."""
+             side=None, badges=(), right=None, expanded=False, who=None):
+    """One shell, every persona. `side` is the optional 340px context rail.
+
+    `expanded` swaps the icon rail for the labelled one. Both states carry the same hotspot
+    names, so a screen drawn in either is wired by the same transition table."""
     rail_block = (f'<Frame w={{340}} h="fill" flex="col" gap={{14}} px={{20}} py={{22}} '
                   f'bg="var:neutral/50" stroke="var:border/subtle" strokeWidth={{1}}>'
                   f'{side}</Frame>') if side else ''
@@ -99,7 +151,7 @@ def app_desk(name, persona, title, children, items, active=0, sub=None,
             f'overflow="hidden">'
             f'<Frame w="fill" grow={{1}} flex="row" rounded={{28}} bg="var:bg/base" overflow="hidden" '
             f'stroke="var:border/subtle" strokeWidth={{1}}>'
-            f'{rail(items, active, badges)}'
+            f'{rail(items, active, badges, expanded, who or DEFAULT_WHO.get(persona, ("Amara Okeke","Member")))}'
             f'<Frame grow={{1}} h="fill" flex="col" gap={{20}} px={{30}} py={{24}}>'
             f'{topbar(title, persona, sub, right)}{children}</Frame>'
             f'{rail_block}</Frame></Frame>')
