@@ -253,7 +253,8 @@ Decisions that are expensive to reverse, with the reasoning, so nobody re-litiga
 | 10 Jul 2026 | Design brief | Original scope |
 | 1 Aug 2026 | Godwin, Abraham, Israel | Payment before booking; MDCN login; Medra ID search; doctor picks what the member sees; drug search not free text; doctor sets the meeting link; transcription is Phase 2 |
 | **9 Aug 2026** | **Godwin, Israel** | **The clinical chain; the organisation module; departments as the unit; RC + licence; unverified health data; single-use external links; structured results; NIN and mandatory DOB; NHIS and private insurance; data-privacy undertaking; "members" not "patients"** — recorded in PRD v2.0 §23 |
-| Friday (planned) | Godwin, Israel | Review continues from the member dashboard onward |
+| **14 Aug 2026** | **Godwin, Abraham Peter, Israel** | **Doctor module only.** Consultation length set by the practice not the patient · block dates on a month calendar · a structured examination template · lab results renamed to include instrumental diagnostics · earnings against the previous period · the clinic-progress donut belongs to the admin, not the doctor · **and a reversal: Godwin wants the member to see the consultation note, private notes included, except in psychiatry and psychology** — recorded in `docs/Review_14Aug2026.md` |
+| Next (planned) | Godwin, Abraham, Israel | **The organisation dashboards** — asked for directly |
 
 ---
 
@@ -399,7 +400,7 @@ own eight `Medra Organisation —` pages and touches nothing else.
 
 ## 9. Open questions
 
-These block design or build. Numbers 1–7 are from PRD v2.0 §23.2.
+These block design or build. Numbers 1–7 are from PRD v2.0 §23.2; 8 and 9 are from the 14 August review.
 
 1. **Is a nurse a distinct role or a practitioner variant?** Assumed **distinct, with its own
    task-scoped app** — a nurse's screen is a work queue, a doctor's is a decision surface.
@@ -417,7 +418,13 @@ These block design or build. Numbers 1–7 are from PRD v2.0 §23.2.
    members pay providers directly; the 1 Aug review added payment before booking, which means
    Medra collects and pays out. Both are designed. **"Both" means two charges on one relationship
    and doctors will ask why.**
-8. **Emergency "break-glass" access.** Assumed **yes, with loud audit** — a clinician can open a
+8. **Do private notes stay private?** The design says never patient-visible; the 14 Aug review
+   asked for the opposite — the member sees everything except in psychiatry and psychology. This
+   is clinical governance, not a design preference, and it needs a doctor. **Do not apply it from
+   the transcript.** See `docs/Review_14Aug2026.md` §1.1.
+9. **Is there a place for advice that is not a drug?** Diet, exercise, salt, when to come back,
+   what to watch for — most of what a hypertension review produces. Nothing in the file holds it.
+10. **Emergency "break-glass" access.** Assumed **yes, with loud audit** — a clinician can open a
    record without consent, must give a reason, and the member and admin are both told afterwards.
    Without it, staff share logins, which makes the audit log meaningless. `B3 Find a member` and
    `F2 Audit log` both show it; it has not been confirmed.
