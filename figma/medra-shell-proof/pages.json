@@ -1,0 +1,8 @@
+{
+  "Proof": [
+    "proof-member.jsx",
+    "proof-doctor.jsx",
+    "proof-admin.jsx",
+    "proof-nurse.jsx"
+  ]
+}

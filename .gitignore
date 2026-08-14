@@ -1,2 +1,8 @@
 __pycache__/
 *.pyc
+
+# The shell proof is a throwaway for one look-and-feel decision. Its four .jsx are worth
+# keeping; its assets are a byte-for-byte copy of figma/medra-member/assets and its preview
+# is generated — both come back with `python3 tools/figma/build_shell_proof.py`.
+figma/medra-shell-proof/assets/
+figma/medra-shell-proof/preview.html
