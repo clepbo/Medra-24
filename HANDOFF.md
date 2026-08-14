@@ -6,8 +6,8 @@ what is left. Kept current — it is updated in the same commit as the work it d
 
 | | |
 |---|---|
-| **Document version** | **v1.4** |
-| **Last updated** | 11 August 2026 (spacer and text-alignment defects fixed at source · in-place repair pass added) |
+| **Document version** | **v1.5** |
+| **Last updated** | 11 August 2026 (one desktop shell · one doctor account, two workplaces · critical-value alerting) |
 | **Repo** | `clepbo/Medra-24` |
 | **Working branch** | `claude/new-project-prd-stories-ss2qlr` |
 | **Current PRD** | `docs/Medra_PRD_v2.0.md` (v1.0 kept, marked superseded) |
@@ -57,15 +57,15 @@ while capturing enough record to be clinically useful.
 
 ## 3. Where the design is now
 
-Five rendered bundles, **742 frames**, all validated clean and fully offline.
+Five rendered bundles, **729 frames**, all validated clean and fully offline.
 
 | Bundle | Frames | Pages | Status |
 |---|---:|---:|---|
 | `figma/medra-ds` — design system + journeys | 27 | 1 | Done |
 | `figma/medra-auth` — authentication, 4 roles | 70 | 4 | Done · **v2.0 retrofit applied** · **prototype complete** |
 | `figma/medra-member` — the whole member app | 158 | 8 | Done · **prototype complete** |
-| `figma/medra-doctor` — full doctor module | 270 | 8 | Done · **prototype complete** |
-| `figma/medra-org` — organisation + clinical chain + external | 217 | 8 | Done · **not yet rendered into Figma** |
+| `figma/medra-doctor` — full doctor module | 275 | 8 | Done · **prototype complete** |
+| `figma/medra-org` — organisation + clinical chain + external | 226 | 8 | Done · **not yet rendered into Figma** |
 
 `medra-member` was two bundles until the merge (`medra-member` for find & book,
 `medra-member-2` for everything the bottom nav led to). The split existed because batch 1 was
@@ -294,6 +294,25 @@ Result: **110/110 screens reachable, 0 broken hotspots, ALL 154 CLEAN**.
 The system-state screens moved to their own page (`7 System States`), so the page numbering
 changed — `6 Alerts`, `7 System States`, `8 Components`. **Delete the old member pages in Figma
 before re-rendering**; re-rendering appends rather than replaces.
+
+### A4. Critical-value alerting — **DONE (11 Aug)**
+
+The one item in the content audit that was a safety defect rather than a gap. A potassium of 7.2
+kills people while a result sits in an inbox; every laboratory runs a critical list for exactly
+this reason, and Medra had no path for it.
+
+| Screen | What it does |
+|---|---|
+| **D15 Critical Value** (lab) | The value cannot be "sent". It has to reach a named human by voice, with a read-back recorded — who you spoke to, what they read back, at what time |
+| **K10 Critical Result** (doctor) | Interrupts. Acknowledge with your name and the time, then say what you are doing — and both go on the record. "Handed to the on-call" is a real answer; ignoring it is not one the screen offers |
+| **F7 Critical Results** (governance) | The escalation ladder — requester, on-call at 15 minutes, medical director at 30 — and a board of what is unacknowledged. It never times out |
+
+**Result acknowledgement came with it.** Before this, "released" and "somebody read it" were the
+same fact. K10's acknowledgement is what separates them, and F7 shows the difference between
+acknowledged and acted on — a result that was heard and then forgotten is the failure that
+reaches a coroner.
+
+Entry points are on `K1` (the only thing allowed above a doctor's welcome), `P7`, `D5` and `D7`.
 
 ### B. Extend the doctor module — **DONE (10 Aug)**
 

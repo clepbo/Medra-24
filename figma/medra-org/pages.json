@@ -102,6 +102,11 @@
     "D8-lab-problem-m.jsx",
     "D8-lab-problem-m-what.jsx",
     "D8-lab-problem-m-rule.jsx",
+    "D15-critical-d.jsx",
+    "D15-critical-m.jsx",
+    "D15-critical-m-who.jsx",
+    "D15-critical-m-readback.jsx",
+    "D15-critical-m-not.jsx",
     "D9-pharmacy-d.jsx",
     "D9-pharmacy-m.jsx",
     "D9-pharmacy-m-stock.jsx",
@@ -184,7 +189,11 @@
     "F6-billing-d.jsx",
     "F6-billing-m.jsx",
     "F6-billing-m-what.jsx",
-    "F6-billing-m-invoices.jsx"
+    "F6-billing-m-invoices.jsx",
+    "F7-critical-d.jsx",
+    "F7-critical-m.jsx",
+    "F7-critical-m-ladder.jsx",
+    "F7-critical-m-rate.jsx"
   ],
   "States": [
     "X1-seats-d.jsx",

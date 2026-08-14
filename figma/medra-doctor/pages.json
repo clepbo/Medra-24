@@ -63,7 +63,12 @@
     "K9-more-m.jsx",
     "K9-more-m-clinical.jsx",
     "K9-more-m-business.jsx",
-    "K9-more-m-account.jsx"
+    "K9-more-m-account.jsx",
+    "K10-critical-d.jsx",
+    "K10-critical-m.jsx",
+    "K10-critical-m-ack.jsx",
+    "K10-critical-m-do.jsx",
+    "K10-critical-m-ctx.jsx"
   ],
   "Consult": [
     "C1-room-d.jsx",

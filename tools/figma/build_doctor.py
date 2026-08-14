@@ -441,6 +441,11 @@ K1_ALSO_SHORT = dgroup("Also waiting on you", [
     drow("notebook-pen", "Unsigned notes", value="2", sub="Your fee is held until you sign", name="Open drafts C9", tone="err"),
 ], footer=None) + see_all("six things waiting", "Open requests K2")
 
+# The one thing allowed to sit above everything else on a doctor's day.
+K1_CRIT = alert_strip("siren", "Critical result — Musa Ibrahim, potassium 7.2",
+    "Ketu Medical Laboratory called you at 09:44. It is unacknowledged and climbing the escalation ladder.",
+    "err", dbtn("Open it", "Crit banner", "arrow-right", "danger", grow=False, size="sm"))
+
 K1_WELCOME = welcome("Good morning,", "Dr. Okafor",
     "Eight patients today, three already seen. You are running four minutes early.",
     actions=dbtn("Start next consultation", "Start consult", "stethoscope", "navy", grow=False)
@@ -485,6 +490,7 @@ addx("Today", "K1-today",
     # version stacked underneath — media, the rest of the day, what has been seen — is either
     # in the right rail or one row away on the screen that owns it.
     dr_desk("Doctor · Today — K1 Queue", ["Today", "Thursday 14 August"],
+        f'{K1_CRIT}'
         f'{K1_WELCOME}'
         f'<Frame w="fill" flex="row" gap={{16}} items="start">'
         f'<Frame grow={{1}} flex="col" gap={{14}}>{NOW}'
@@ -499,7 +505,7 @@ addx("Today", "K1-today",
     dr_head("Good morning", "Dr. Okafor · 8 today, 3 seen", back=False, illo=True,
             stats=[("3/8", "Seen"), ("6 min", "Wait"), ("₦96k", "Today")]),
     # Pinned: the patient you are about to see, and how far through the day you are. Nothing else.
-    pinned=f'{NOW_M}{donut_card(38,"Clinic progress",[("Seen","teal"),("Still to see","navy")],"Three of eight done. At this rate you finish at 16:40.",size=150)}',
+    pinned=f'{K1_CRIT}' + f'{NOW_M}{donut_card(38,"Clinic progress",[("Seen","teal"),("Still to see","navy")],"Three of eight done. At this rate you finish at 16:40.",size=150)}',
     sections=[
       ("waiting", "users", "Waiting", "Chidi, Musa, Grace and Tunde", "5", None,
        f'{QUEUE_M}{K1_PROGRESS}', [("5", "Waiting"), ("6 min", "Median"), ("16:40", "Finish")]),
@@ -985,6 +991,66 @@ addx("Today", "K9-more",
     foot=dbtn("Sign out", "Sign out", "log-out", "ghost", full=True),
     sec_title="Everything in Medra",
     tab=MTAB["More"])
+
+# ---------------- K10 a result that interrupts
+# Every other screen in this module waits its turn. This one does not: the laboratory has a
+# value on the critical list, somebody has already rung, and the only two things that matter
+# are that a named doctor confirms they heard it and that they say what they are doing.
+# "Released" and "somebody read it" were the same fact before this screen existed. They are not.
+K10_ALERT = dcard(
+    f'<Frame w="fill" flex="row" gap={{13}} items="center" p={{16}} rounded={{15}} bg="var:state/error-bg">'
+    f'{I("siren",24,ERR_IC)}'
+    f'<Frame grow={{1}} flex="col" gap={{3}}>'
+    f'{T(18,"bold","var:state/error","Potassium 7.2 — Musa Ibrahim")}'
+    f'{T(12,"regular","var:text/default","Ketu Medical Laboratory · verified 09:41 · they called you at 09:44",w="fill")}</Frame>'
+    f'{status_pill("live","Critical")}</Frame>'
+    + lab_line("Potassium", "7.2 mmol/L", "3.5 – 5.1", "High")
+    + lab_line("Creatinine", "212 µmol/L", "62 – 106", "High")
+    + lab_line("eGFR", "24 mL/min", "> 90", "Low")
+    + T(11, "regular", "var:text/muted",
+        "Repeated on a second aliquot at 09:38 — 7.1. Not haemolysed. He is 51, seen for chest pain at 09:10, and is in the building.", w="fill"))
+
+K10_ACK = dcard(
+    f'<Frame flex="row" gap={{9}} items="center">{I("badge-check",17,A_IC)}'
+    f'{T(15,"semibold","var:text/strong","Confirm you have this")}</Frame>'
+    + T(12, "regular", "var:text/default",
+        "Your name and the time go on the record. Until somebody presses this the laboratory's call is unanswered and it climbs the escalation ladder on its own.", w="fill")
+    + dcta("I have seen it and I am acting now", "Ack critical K10", "badge-check")
+    + dbtn("I cannot act — hand it to the on-call", "Hand critical K10", "user-round-check", "ghost", full=True)
+    + T(11, "regular", "var:text/muted",
+        "Handing it over is a real answer and is recorded as one. Ignoring it is not an option the screen offers.", w="fill"),
+    bg="var:state/error-bg", stroke=None)
+
+K10_DO = dgroup("What you do next goes on the record too", [
+    drow("footprints", "See him now — he is in the building", sub="Front desk is told to hold him and where to send him", name="Crit see", tone="err"),
+    drow("ambulance", "Send him to emergency", sub="With the value, the trend and your name on the referral", name="Crit emergency", tone="err"),
+    drow("flask-conical", "Repeat it urgently before acting", sub="If you think it is spurious. The laboratory has already repeated it once", name="Crit repeat", tone="warn"),
+    drow("phone-call", "Call him", sub="+234 803 555 0102 · he is not answering the app", name="Crit phone"),
+], footer="Whatever you choose is timestamped against your name. A critical value with an acknowledgement and no action is the failure that reaches a coroner.")
+
+K10_CTX = dgroup("What you knew before this", [
+    drow("trending-up", "Potassium", value="4.8 → 5.4 → 7.2", sub="April, June, today — it has been climbing all year", name="Crit trend", tone="err", chevron=False),
+    drow("trending-down", "Kidney function", value="91 → 78 → 24", sub="This is not a laboratory error looking for an explanation", name="Crit egfr", tone="err", chevron=False),
+    drow("pill", "On a potassium-sparing diuretic", sub="Spironolactone 25 mg, started by Dr. Eze in June", name="Crit drug", tone="warn"),
+    drow("clipboard-list", "Open his record", sub="Everything, in one place", name="Open record P2"),
+], footer="Three facts he already had in Medra, which is the whole argument for a record that follows the member rather than the clinic.")
+
+addx("Today", "K10-critical",
+    dr_desk("Doctor · Today — K10 Critical Result", ["Requests", "Critical"],
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{K10_ALERT}{K10_DO}</Frame>'
+        f'<Frame w={{380}} flex="col" gap={{14}}>{K10_ACK}{K10_CTX}</Frame></Frame>',
+        NAV["Requests"], PANEL_REQ, urgent=1, badges=BADGES),
+    dr_head("Critical result", "Musa Ibrahim · potassium 7.2", back=False,
+            stats=[("7.2", "Potassium"), ("24", "eGFR"), ("6 min", "Since the call")]),
+    pinned=K10_ALERT,
+    sections=[
+      ("ack", "badge-check", "Confirm you have this", "Until somebody does, it keeps climbing", None, "err", K10_ACK, None),
+      ("do", "list-checks", "What you do next", "Four answers, all of them recorded", "4", "err", K10_DO, None),
+      ("ctx", "history", "What you knew before this", "It has been climbing all year", "4", "warn", K10_CTX, None),
+    ],
+    foot=dcta("I have seen it and I am acting now", "Ack critical K10", "badge-check"),
+    tab=MTAB["Requests"])
 
 # =====================================================================================
 # 3. CONSULTATION — the spine
@@ -2226,7 +2292,11 @@ def result_actions(name):
             dbtn("Hold it", "Hold " + name, "eye-off", "warn", size="sm"),
             dbtn("Book a follow-up", "Book " + name, "calendar-plus", "ghost", size="sm")]
 
-P7_LIST = dgroup("Results waiting on you · 3", [
+P7_LIST = dgroup("Results waiting on you · 4", [
+    request_row("siren", "Musa Ibrahim · potassium 7.2",
+                "CRITICAL · Ketu Medical Laboratory called you at 09:44 · unacknowledged",
+                "6 min", "Crit open", "err",
+                [dbtn("Open it now", "Crit open", "arrow-right", "danger", size="sm")]),
     request_row("flask-conical", "Grace Okeke · HbA1c 8.4%",
                 "High · Garki laboratory · arrived yesterday 16:10 · diabetes, on metformin",
                 "18 hours", "Res Grace", "err", result_actions("Grace")),
@@ -3473,7 +3543,13 @@ TRN = [
  ("P7-results","Btn Release Grace","C5-upload"),("P7-results","Btn Hold Grace","P7-results"),
  ("P7-results","Btn Book Grace","P4-followups"),("P7-results","Btn Release Musa","C5-upload"),
  ("P7-results","Btn Release Amara","C5-upload"),("P7-results","Btn Res Grace","C5-upload"),
- ("P7-results","Btn Res Musa","P8-result"),("P7-results","Btn Res Amara","C5-upload"),
+ ("P7-results","Btn Res Musa","P8-result"),
+ # ---- a value that cannot wait in a queue
+ ("K1-today","Btn Crit banner","K10-critical"),("P7-results","Btn Crit open","K10-critical"),
+ ("K10-critical","Btn Ack critical K10","P8-result"),("K10-critical","Btn Hand critical K10","P5-messages"),
+ ("K10-critical","Btn Crit see","K4-file"),("K10-critical","Btn Crit emergency","C6-refer"),
+ ("K10-critical","Btn Crit repeat","C4-tests"),("K10-critical","Btn Crit phone","P5-messages"),
+ ("K10-critical","Btn Open record P2","P2-record"),("P7-results","Btn Res Amara","C5-upload"),
  # ---- where an order goes, and who is allowed to see it
  # C4 writes the order; C11 decides who runs it. Choosing a laboratory that is not on Medra
  # is what starts the link flow, so the two chains meet on one screen rather than living in

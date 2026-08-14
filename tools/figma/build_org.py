@@ -1071,6 +1071,10 @@ addx("Chain", "D4-escalate",
     tab_items=TAB_STAFF, tab=0)
 
 # ---------------- D5–D8 LABORATORY
+D5_CRIT = alert_strip("siren", "1 critical value waiting on a phone call",
+    "Musa Ibrahim · potassium 7.2 · verified 09:41. Nobody has confirmed they heard it.",
+    "err", dbtn("Open it", "Crit waiting", "arrow-right", "danger", grow=False, size="sm"))
+
 D5_QUEUE = dgroup("Orders waiting · 4", [
     task_row_big("09:12", "Amara Okeke · MDR-8842-19", "Ordered by Dr. Okafor · Garki",
                  "Fasting blood sugar · HbA1c — fasting sample please", "Order amara", action="Accept",
@@ -1101,11 +1105,11 @@ addx("Chain", "D5-lab-queue",
     o_desk("Org · Laboratory — D5 Order Queue", ("Laboratory", "Thursday 14 August"),
         f'{dhead([("Four orders",False),("waiting",True)],26)}'
         f'{rows_of([stat_tile("inbox","4","Waiting","Oldest 41 minutes","warn","Stat lwaiting"),stat_tile("beaker","3","In progress","Two analysers","info","Stat lprog"),stat_tile("send","11","Entered today","All released by a doctor","ok","Stat ldone"),stat_tile("timer","2h 40m","Median turnaround","Target is 4 hours","teal","Stat lturn")],4,14)}'
-        f'{D5_QUEUE}{D5_PROGRESS}',
+        f'{D5_CRIT}{D5_QUEUE}{D5_PROGRESS}',
         NAV["Departments"], dept="Laboratory", urgent=1, aside=D5_ASIDE, who=LAB, badges=BADGES),
     o_head("Order queue", "4 waiting · 1 urgent", back=False, ctx="Laboratory · Garki",
            stats=[("4", "Waiting"), ("3", "Running"), ("11", "Done")]),
-    pinned=D5_QUEUE,
+    pinned=f'{D5_CRIT}{D5_QUEUE}',
     sections=[
       ("progress", "beaker", "In progress", "Three samples running", "3", None, D5_PROGRESS, None),
       ("today", "chart-column", "Today", "14 accepted · 2h 40m median", None, None,
@@ -1179,6 +1183,12 @@ def result_line(analyte, unit, ref, value="", flag=None):
             f'{T(12,"regular","var:text/muted",unit,w=76)}'
             f'{T(11,"regular","var:text/faint",ref,w="fill")}{tag}</Frame>')
 
+# The laboratory's own flag. A technician decides a value is on the critical list, and the
+# screen then refuses to let it be "sent" like an ordinary result.
+D7_CRIT = alert_strip("siren", "Potassium 7.2 is on the critical list",
+    "This cannot go to a queue. It has to reach Dr. Okafor by voice, with a read-back.",
+    "err", dbtn("Open the critical path", "Crit flag", "arrow-right", "danger", grow=False, size="sm"))
+
 D7_TEMPLATE = dcard(
     eyerow("Fasting blood sugar", f'<Frame name="Btn Change template" flex="row">{T(11,"semibold","var:text/accent","Change template")}</Frame>')
     + result_line("Fasting plasma glucose", "mmol/L", "3.9 – 5.5", "6.4", "high")
@@ -1209,12 +1219,12 @@ addx("Chain", "D7-lab-result",
         f'{T(13,"semibold","var:text/default","Order")}</Frame>'
         f'{dhead([("Enter the",False),("result",True)],26)}'
         f'<Frame w="fill" flex="row" gap={{16}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{14}}>{D7_TEMPLATE}</Frame>'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{D7_CRIT}{D7_TEMPLATE}</Frame>'
         f'<Frame w={{344}} flex="col" gap={{14}}>{D7_WHY}{D7_NEXT}'
         f'{dcta("Send to the doctor","Save result D7","send")}</Frame></Frame>',
         NAV["Departments"], dept="Laboratory", who=LAB, badges=BADGES),
     o_head("Enter result", "Amara Okeke · 2 tests", stats=[("2", "Tests"), ("2", "Out of range"), ("Dr. Okafor", "Goes to")]),
-    pinned=D7_TEMPLATE,
+    pinned=f'{D7_CRIT}{D7_TEMPLATE}',
     sections=[
       ("why", "info", "Why a form and not a paragraph", "So it can be trended and compared", None, None, D7_WHY, None),
       ("next", "list-checks", "What happens when you finish", "It goes to the doctor, not the member", "3", None, D7_NEXT, None),
@@ -1264,6 +1274,70 @@ addx("Chain", "D8-lab-problem",
     ],
     foot=f'{dcta("Reject and tell them","Save problem D8","send")}'
          f'{dbtn("Never mind","Open lab D5","x","ghost",full=True)}',
+    tab_items=TAB_STAFF, tab=0)
+
+# ---------------- D15 a value that cannot wait in a queue
+# A potassium of 7.2 kills people while a result sits in an inbox. Every laboratory in the world
+# runs a critical list: values that must reach a named human by voice, be read back, and be
+# recorded — not released into a queue and hoped for. Medra had no path for this at all, which
+# made it the one genuine safety defect in the file rather than a missing feature.
+D15_VALUE = dcard(
+    f'<Frame w="fill" flex="row" gap={{12}} items="center" p={{15}} rounded={{14}} bg="var:state/error-bg">'
+    f'{I("siren",22,ERR_IC)}'
+    f'<Frame grow={{1}} flex="col" gap={{2}}>{T(16,"bold","var:state/error","Critical value")}'
+    f'{T(12,"regular","var:text/default","This is on the critical list. It does not go in a queue.",w="fill")}</Frame>'
+    f'{T(13,"semibold","var:state/error","09:41")}</Frame>'
+    + lab_line("Potassium", "7.2 mmol/L", "3.5 – 5.1", "High")
+    + lab_line("Sodium", "138 mmol/L", "135 – 145")
+    + lab_line("Creatinine", "212 µmol/L", "62 – 106", "High")
+    + T(11, "regular", "var:text/muted",
+        "Critical limit for potassium is 6.5. Repeated on a second aliquot at 09:38 — 7.1. Not haemolysed.", w="fill"))
+
+D15_WHO = dgroup("Who has to be told, by voice", [
+    request_row("stethoscope", "Dr. Ngozi Okafor", "Ordered it · on duty until 17:00 · +234 801 234 5678",
+                "now", "Crit call okafor", "err",
+                [dbtn("Call now", "Crit call", "phone-call", "danger", size="sm"),
+                 dbtn("She is not answering", "Crit noanswer", "phone-off", "ghost", size="sm")]),
+    request_row("user-round-check", "Dr. Chuka Eze", "Medical officer on call · if the requester cannot be reached",
+                "backup", "Crit call eze", "warn",
+                [dbtn("Call instead", "Crit call", "phone-call", "ghost", size="sm")]),
+    drow("shield-alert", "Then it escalates on its own", sub="Unacknowledged after 15 minutes it goes to the medical director and onto the governance board", name="Crit escalate", tone="err", chevron=False),
+], footer="You cannot mark this done by sending it. A critical value is closed by a person confirming they heard it.")
+
+D15_READBACK = dgroup("Record the call", [
+    field("Who did you speak to?", "user", "Dr. Ngozi Okafor", ph=False,
+          helper="A name, not a department. This is the line an audit reads."),
+    field("They read the value back as", "repeat", "Potassium seven point two", ph=False,
+          helper="Read-back is what catches a number heard wrong down a bad line."),
+    field("Time of the call", "clock", "09:44", ph=False),
+    checkbox("They confirmed they will act on it now", "Crit confirmed"),
+], footer="Everything here goes into the member's record and the organisation's audit log, and neither can be edited afterwards.")
+
+D15_NOT = dcard(
+    f'<Frame flex="row" gap={{9}} items="center">{I("eye-off",16,A_IC)}'
+    f'{T(14,"semibold","var:text/strong","The member is not told yet")}</Frame>'
+    + T(12, "regular", "var:text/default",
+        "She sees that a result has arrived, never the number. A potassium of 7.2 read on a phone with nobody to explain it sends a frightened person to the wrong place.", w="fill"),
+    bg="var:state/info-bg", stroke=None)
+
+addx("Chain", "D15-critical",
+    o_desk("Org · Laboratory — D15 Critical Value", ("Laboratory", "Musa Ibrahim", "Critical"),
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",17,N_IC)}'
+        f'{T(13,"semibold","var:text/default","Result")}</Frame>'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{D15_VALUE}{D15_WHO}</Frame>'
+        f'<Frame w={{344}} flex="col" gap={{14}}>{D15_READBACK}{D15_NOT}'
+        f'{dcta("Record the call and close it","Close critical D15","check")}</Frame></Frame>',
+        NAV["Departments"], dept="Laboratory", who=LAB, badges=BADGES, urgent=1),
+    o_head("Critical value", "Musa Ibrahim · potassium 7.2",
+           stats=[("7.2", "Potassium"), ("6.5", "Critical at"), ("3 min", "Since verified")]),
+    pinned=D15_VALUE,
+    sections=[
+      ("who", "phone-call", "Who has to be told, by voice", "Dr. Okafor, then the on-call, then it escalates", "2", "err", D15_WHO, None),
+      ("readback", "repeat", "Record the call", "Name, read-back, time — this is the audit line", None, None, D15_READBACK, None),
+      ("not", "eye-off", "The member is not told yet", "She sees a result arrived, never the number", None, None, D15_NOT, None),
+    ],
+    foot=dcta("Record the call and close it", "Close critical D15", "check"),
     tab_items=TAB_STAFF, tab=0)
 
 # ---------------- D9–D11 PHARMACY
@@ -2241,6 +2315,47 @@ addx("Govern", "F6-billing",
     ],
     tab_items=TAB_ADMIN, tab=4)
 
+
+# ---------------- F7 the ones nobody has answered
+F7_OPEN = dgroup("Unacknowledged critical results · 2", [
+    request_row("siren", "Musa Ibrahim · potassium 7.2", "Laboratory called Dr. Okafor 09:44 · she has not opened it",
+                "6 min", "Crit musa", "err",
+                [dbtn("Call the medical director", "Crit director", "phone-call", "danger", size="sm"),
+                 dbtn("Reassign to the on-call", "Crit reassign", "user-round-check", "ghost", size="sm")]),
+    request_row("siren", "Ngozi Bala · haemoglobin 4.1", "Acknowledged by Dr. Eze 08:12 · no action recorded since",
+                "1h 20m", "Crit ngozi", "warn",
+                [dbtn("Ask him what he did", "Crit ask", "message-square-text", "ghost", size="sm")]),
+], footer="Acknowledged is not the same as acted on, and this board shows both. A result that was heard and then forgotten is the failure that reaches a coroner.")
+
+F7_LADDER = dgroup("How an unanswered critical escalates", [
+    prep_step(1, "The laboratory calls the requesting doctor", "By voice, with a read-back, recorded on D15"),
+    prep_step(2, "15 minutes: the medical officer on call", "Automatically, whether or not anyone remembers"),
+    prep_step(3, "30 minutes: the medical director", "And it appears on this board in red"),
+    prep_step(4, "It never times out", "There is no state in which a critical value quietly stops being anyone's problem"),
+], footer="The ladder is the organisation's, not Medra's. You set the two intervals and who sits on each rung in Settings.")
+
+F7_RATE = dgroup("This month", [
+    kpi_line("Critical results", "14"),
+    kpi_line("Reached a doctor inside 10 minutes", "12"),
+    kpi_line("Escalated past the requester", "2"),
+    kpi_line("Median time to acknowledgement", "6 min"),
+], footer="Two escalations in a month is normal. Two in a week is a rota problem, not a laboratory problem.")
+
+addx("Govern", "F7-critical",
+    o_desk("Org · Governance — F7 Critical Results", ("Access", "Critical results"),
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{F7_OPEN}{F7_LADDER}</Frame>'
+        f'<Frame w={{344}} flex="col" gap={{14}}>{F7_RATE}'
+        f'{dbtn("Open the audit log","Open audit F2","history","ghost",full=True)}</Frame></Frame>',
+        NAV["Access"], badges=BADGES, urgent=2),
+    o_head("Critical results", "2 open · 1 past the requester", back=False,
+           stats=[("2", "Open"), ("6 min", "Median"), ("14", "This month")]),
+    pinned=F7_OPEN,
+    sections=[
+      ("ladder", "list-checks", "How an unanswered critical escalates", "Four rungs, and it never times out", "4", "err", F7_LADDER, None),
+      ("rate", "chart-column", "This month", "14 criticals, 2 escalated", None, None, F7_RATE, None),
+    ],
+    tab_items=TAB_ADMIN, tab=0)
 # =====================================================================================
 # 7. STATES & EDGE CASES
 # =====================================================================================
@@ -2583,6 +2698,9 @@ TRN = [
  ("D5-lab-queue","Btn Prog emeka","D7-lab-result"),
  ("D6-lab-order","Btn Back","D5-lab-queue"),("D6-lab-order","Btn Open result D7","D7-lab-result"),
  ("D6-lab-order","Btn Open lab D8","D8-lab-problem"),
+ ("D7-lab-result","Btn Crit flag","D15-critical"),("D5-lab-queue","Btn Crit waiting","D15-critical"),
+ ("D15-critical","Btn Close critical D15","D5-lab-queue"),("D15-critical","Btn Back","D7-lab-result"),
+ ("D15-critical","Btn Crit escalate","F7-critical"),
  ("D7-lab-result","Btn Back","D6-lab-order"),("D7-lab-result","Btn Save result D7","D5-lab-queue"),
  ("D7-lab-result","Btn Change template","D7-lab-result"),
  ("D8-lab-problem","Btn Back","D5-lab-queue"),("D8-lab-problem","Btn Save problem D8","D5-lab-queue"),
