@@ -9,10 +9,16 @@ os.makedirs(OUT, exist_ok=True)
 W_IC="#FFFFFF"; N_IC="#1B3A5B"; T_IC="#39B0CF"; M_IC="#7E8F9D"; A_IC="#2F8BAC"
 OK_IC="#2FA36B"; WARN_IC="#E0A32E"; ERR_IC="#D14343"
 
+_ENT=re.compile(r'&(?![a-zA-Z#][a-zA-Z0-9]*;)')
+def esc(txt):
+    """A "<" in prose is not a tag — see HANDOFF §4 rule 13. This module has its own copy of
+    T(), so it needs its own copy of the escape."""
+    return _ENT.sub('&amp;',str(txt)).replace('<','&lt;').replace('>','&gt;')
+
 def T(size,weight,color,txt,w=None,align=None):
     a=f' align="{align}"' if align else ''
     ww=f' w={{{w}}}' if isinstance(w,int) else (' w="fill"' if w=="fill" else '')
-    return f'<Text font="Inter" size={{{size}}} weight="{weight}" color="{color}"{ww}{a}>{txt}</Text>'
+    return f'<Text font="Inter" size={{{size}}} weight="{weight}" color="{color}"{ww}{a}>{esc(txt)}</Text>'
 def I(n,s=18,c=M_IC): return f'<Icon name="lucide:{n}" size={{{s}}} color="{c}" />'
 def SP(h): return f'<Frame h={{{h}}} />'
 
@@ -965,6 +971,294 @@ add("Institution","I11-success",
         [ghost("Invite my doctors","Invite I11","user-plus")],skip=False,
         proofs=[proof("circle-check","Approved")]))
 
+# ============================================================ STAFF (invited into an organisation)
+# Abraham, on the third review: "Even with new features you have KYC for that feature… before
+# you know it, it gets too complicated." Godwin, immediately after: "All they need to do now is
+# set up an account, put and verify information. That is enough."
+#
+# So this is seven steps and two dead ends, and nothing else. It is deliberately shorter than
+# the doctor's own registration, because the organisation has already been verified and is
+# vouching for the person — what Medra still has to establish is that the human holding the
+# link is the human the admin invited, and that a clinical seat is held by somebody on a
+# register.
+#
+# The branch that matters is S9. A doctor is a person, not a seat: their MDCN number is theirs,
+# so an invitation to somebody who already uses Medra adds a *workplace* to the account they
+# already have. It never makes a second clinician, and it never re-verifies a licence Medra
+# checked the first time.
+SP_ = lambda **kw: desk_panel("d-panel-institution.jpg", **kw)
+
+def kvline(ic, label, value):
+    return (f'<Frame w="fill" flex="row" gap={{9}} items="center">{I(ic,15,A_IC)}'
+            f'{T(13,"regular","var:text/muted",label,w="fill")}'
+            f'{T(13,"semibold","var:text/strong",value)}</Frame>')
+
+
+def stepline(n, title, sub, done=False, now=False):
+    if done:
+        badge = (f'<Frame w={{30}} h={{30}} rounded={{999}} bg="var:state/success-bg" flex="col" '
+                 f'justify="center" items="center">{I("check",16,OK_IC)}</Frame>')
+    elif now:
+        badge = (f'<Frame w={{30}} h={{30}} rounded={{999}} bg="var:state/warning-bg" flex="col" '
+                 f'justify="center" items="center">{I("loader",16,WARN_IC)}</Frame>')
+    else:
+        badge = (f'<Frame w={{30}} h={{30}} rounded={{999}} bg="var:bg/muted" flex="col" '
+                 f'justify="center" items="center">{T(13,"bold","var:text/muted",str(n))}</Frame>')
+    return (f'<Frame w="fill" flex="row" gap={{13}} items="start">{badge}'
+            f'<Frame grow={{1}} flex="col" gap={{2}} pt={{3}}>'
+            f'{T(14,"semibold","var:text/strong",title)}'
+            f'{T(12,"regular","var:text/muted",sub,w="fill")}</Frame></Frame>')
+
+
+def inv_card(dark=False):
+    """The invitation itself. Everything on it was typed by the admin on C5, which is exactly
+    why the screen has to show it back — a wrong department here is a wrong department for
+    the next two years."""
+    return (f'<Frame w="fill" flex="col" gap={{13}} p={{18}} rounded={{20}} bg="var:state/info-bg">'
+            f'<Frame w="fill" flex="row" gap={{12}} items="center">'
+            f'<Frame w={{46}} h={{46}} rounded={{15}} bg="var:bg/base" flex="col" justify="center" '
+            f'items="center">{I("building-2",22,A_IC)}</Frame>'
+            f'<Frame grow={{1}} flex="col" gap={{2}}>'
+            f'{T(16,"semibold","var:text/strong","Garki Medical Centre")}'
+            f'{T(12,"regular","var:text/muted","Invited by Mrs. Adaeze Nwosu, organisation admin",w="fill")}</Frame></Frame>'
+            f'<Frame w="fill" flex="col" gap={{8}}>'
+            f'{kvline("badge-check","Your role","Laboratory technician")}'
+            f'{kvline("layers","Department","Laboratory")}'
+            f'{kvline("map-pin","Branch","Garki, Abuja")}'
+            f'{kvline("clock","Invitation expires","In 6 days, on 23 August")}</Frame></Frame>')
+
+def allowline(txt, allowed=True, why=None):
+    ic, c = ("circle-check", OK_IC) if allowed else ("lock", M_IC)
+    tail = T(12, "regular", "var:text/faint", why) if why else ""
+    return (f'<Frame w="fill" flex="row" gap={{10}} items="center" py={{6}}>{I(ic,16,c)}'
+            f'{T(13,"regular","var:text/strong" if allowed else "var:text/muted",txt,w="fill")}{tail}</Frame>')
+
+# ---------------- S1 the invitation
+S1_BODY = (f'<Frame w="fill" flex="col" gap={{16}}>{inv_card()}'
+           f'<Frame w="fill" flex="col" gap={{2}}>'
+           f'{T(13,"medium","var:text/default","What this seat lets you do")}'
+           f'{allowline("See test orders addressed to the laboratory")}'
+           f'{allowline("Enter results against the test template")}'
+           f'{allowline("Release a result to a member", False, "A doctor does that")}'
+           f'{allowline("Open a member’s consultation notes", False)}</Frame>'
+           f'{note("info","You inherit the laboratory’s permissions and nothing else. Nobody can widen them for you individually — that is how organisations end up with access nobody remembers granting.")}</Frame>')
+
+add("Staff","S1-invite",
+    desk_form("Auth · Staff — S1 The Invitation",
+        SP_(eyebrow_t="You have been invited", head_parts=[("A hospital",False),("wants you",True)],
+            sub="Garki Medical Centre has kept a seat in its laboratory for you. Accepting takes about four minutes.",
+            proofs=[proof("shield-check","Organisation verified"), proof("clock","Expires in 6 days")]),
+        "An invitation", [("Join",False),("Garki",True)],
+        "Read what the seat gives you before you accept it. If any of it looks wrong, say so now rather than after you start.",
+        S1_BODY, cta("Accept and set up my account","Accept S1"),
+        [link("Already use Medra?","Add this workplace instead","Have account S1"),
+         link("","This is not me — report it","Not me S1")], back=False),
+    mob_form("Auth · Staff — S1 The Invitation · Mobile","An invitation",
+        [("Join",False),("Garki",True)],
+        "Read what the seat gives you before you accept it.",
+        S1_BODY, cta("Accept and set up","Accept S1"),
+        [link("Already use Medra?","Add this workplace","Have account S1"),
+         link("","This is not me","Not me S1")], back=False))
+
+# ---------------- S2 prove it is you
+S2_BODY = (f'<Frame w="fill" flex="col" gap={{16}}>{otp("4821")}'
+           f'{note("triangle-alert","The code went to the address your admin typed when she invited you. If that address is not yours, stop here and tell her — an invitation is a key, and it should never be finished by somebody it was not sent to.","warn")}</Frame>')
+
+add("Staff","S2-verify",
+    desk_form("Auth · Staff — S2 Prove It Is You",
+        SP_(eyebrow_t="Step 1 of 5", head_parts=[("One code,",False),("once",True)],
+            sub="It proves the person holding the invitation is the person it was sent to. Everything after this is about your registration, not your identity.",
+            proofs=[proof("smartphone","Sent to chidera@garki.ng")]),
+        "Step 1 of 5", [("Enter the",False),("6-digit code",True)],
+        "We sent it to chidera@garki.ng and by SMS to the number on your invitation.",
+        S2_BODY, cta("Verify and continue","Verify S2"),
+        [link("Didn't arrive?","Send it again","Resend S2"),
+         link("Wrong address?","Ask your admin to change it","Wrong address S2")], step=(0,5)),
+    mob_form("Auth · Staff — S2 Prove It Is You · Mobile","Step 1 of 5",
+        [("Enter the",False),("6-digit code",True)],"Sent to chidera@garki.ng and by SMS.",
+        S2_BODY, cta("Verify and continue","Verify S2"),
+        [link("Didn't arrive?","Send it again","Resend S2")], step=(0,5)))
+
+# ---------------- S3 your details
+S3_BODY = (f'<Frame w="fill" flex="col" gap={{16}}>'
+           f'{field("Your full legal name","user","Chidera Nwankwo",ph=False,helper="As it appears on your registration certificate, not the short name people use.")}'
+           f'{field("National Identification Number","id-card","1234 5678 901",ph=False,helper="Checked against NIMC. Medra stores that it matched, never the number itself.")}'
+           f'{field("Date of birth","calendar","14 March 1994",ph=False)}'
+           f'{field("Your own phone number","phone","803 555 0142",prefix="+234",helper="Yours, not the department’s. It is how you get back in if you lose your password.")}'
+           f'{note("info","Your admin typed your name and email when she invited you. Correct anything she got wrong — from here this is your account, not hers, and she cannot edit it again.")}</Frame>')
+
+add("Staff","S3-details",
+    desk_form("Auth · Staff — S3 Your Details",
+        SP_(eyebrow_t="Step 2 of 5", head_parts=[("Your account,",False),("not theirs",True)],
+            sub="You keep this account if you change jobs. The hospital holds a seat in it; it has never held the account.",
+            proofs=[proof("lock","NIMC checked, not stored")]),
+        "Step 2 of 5", [("Tell us who",False),("you are",True)],
+        "Four things, and the last one matters most — it is how you get back in when you no longer work here.",
+        S3_BODY, cta("Continue","Continue S3"), step=(1,5)),
+    mob_form("Auth · Staff — S3 Your Details · Mobile","Step 2 of 5",
+        [("Tell us who",False),("you are",True)],"Four things. The phone number should be yours, not the department's.",
+        S3_BODY, cta("Continue","Continue S3"), step=(1,5)))
+
+# ---------------- S4 your registration
+S4_BODY = (f'<Frame w="fill" flex="col" gap={{16}}>'
+           f'{field_chips("Which register are you on?",["MDCN","NMCN","MLSCN","PCN","None"],2,"Reg body")}'
+           f'{field("Registration number","badge-check","MLSCN 9931",ph=False,helper="Your admin entered MLSCN 9931 on the invitation. If that is not your number, change it — it is checked against the register, and it is yours.")}'
+           f'{upload("Upload licence S4",label="Your current practising licence")}'
+           f'{note("triangle-alert","A clinical seat is never active on trust alone. Until the register confirms this number you can log in and see the building, and nothing clinical at all.","warn")}</Frame>')
+
+add("Staff","S4-registration",
+    desk_form("Auth · Staff — S4 Your Registration",
+        SP_(eyebrow_t="Step 3 of 5", head_parts=[("The licence",False),("is yours",True)],
+            sub="Medra checks it against the register, and it stays with you if you leave. Your next employer will not make you prove it again.",
+            proofs=[proof("badge-check","MLSCN checked"), proof("briefcase-medical","Follows you")]),
+        "Step 3 of 5", [("Your",False),("registration",True)],
+        "Front desk and billing roles are not on a register — choose None and this step is one tap.",
+        S4_BODY, cta("Continue","Continue S4"),
+        [link("Not on any register?","My role does not need one","No register S4")], step=(2,5)),
+    mob_form("Auth · Staff — S4 Your Registration · Mobile","Step 3 of 5",
+        [("Your",False),("registration",True)],"Not on a register? Choose None.",
+        S4_BODY, cta("Continue","Continue S4"),
+        [link("","My role does not need one","No register S4")], step=(2,5)))
+
+# ---------------- S5 the undertaking
+S5_BODY = (f'<Frame w="fill" flex="col" gap={{16}}>'
+           f'<Frame w="fill" flex="col" gap={{2}}>'
+           f'{allowline("Every record you open is logged with your name and the time")}'
+           f'{allowline("You may open a record only while that person is in your care")}'
+           f'{allowline("Opening one outside your care is possible, and reported the same day")}'
+           f'{allowline("Looking up a colleague, a neighbour or yourself", False, "Never")}'
+           f'{allowline("Taking anything out of Medra by photograph or copy", False, "Never")}</Frame>'
+           f'{checkbox("I have read the undertaking. I understand that Medra records what I open, that my supervisor is told when I open something outside my care, and that misusing a record is a matter for the MLSCN as well as for Garki Medical Centre.","Undertaking S5")}'
+           f'{field("Sign with your full name","pen-line","Chidera Nwankwo",ph=False)}</Frame>')
+
+add("Staff","S5-undertaking",
+    desk_form("Auth · Staff — S5 The Undertaking",
+        SP_(eyebrow_t="Step 4 of 5", head_parts=[("A record is",False),("somebody’s life",True)],
+            sub="Nigerian data-protection law and your own register both bind you here. Medra's job is to make sure you were told, in words you can act on.",
+            proofs=[proof("shield-check","NDPA 2023"), proof("history","Everything logged")]),
+        "Step 4 of 5", [("What you are",False),("agreeing to",True)],
+        "Five lines, no schedule of definitions. If you would not be comfortable explaining an access to the person whose record it is, do not make it.",
+        S5_BODY, cta("Accept and continue","Accept S5"),
+        [link("","Read the full undertaking","Full undertaking S5")], step=(3,5)),
+    mob_form("Auth · Staff — S5 The Undertaking · Mobile","Step 4 of 5",
+        [("What you are",False),("agreeing to",True)],
+        "Five lines, no schedule of definitions.",
+        S5_BODY, cta("Accept and continue","Accept S5"),
+        [link("","Read the full undertaking","Full undertaking S5")], step=(3,5)))
+
+# ---------------- S6 password
+S6_BODY = (f'<Frame w="fill" flex="col" gap={{16}}>'
+           f'{field("Create a password","lock","••••••••••",ph=False,trailing=("eye","Show password S6"),helper="At least 10 characters. A phrase you can remember beats a short one you cannot.")}'
+           f'{field("Type it again","lock","••••••••••",ph=False,trailing=("eye","Show confirm S6"))}'
+           f'{note("info","You will be asked for a code the first time you log in on a new device, and not again on that device. A laboratory computer that eight people share counts as one device — which is why you never leave yours logged in on it.")}</Frame>')
+
+add("Staff","S6-password",
+    desk_form("Auth · Staff — S6 Set A Password",
+        SP_(eyebrow_t="Step 5 of 5", head_parts=[("Only you",False),("hold this",True)],
+            sub="Your admin never sees it, cannot reset it to something she knows, and cannot log in as you. If she could, the audit log would be worth nothing.",
+            proofs=[proof("lock","Never shared"), proof("smartphone","Code on a new device")]),
+        "Step 5 of 5", [("Set your",False),("password",True)],
+        "One password, and a code the first time you use a device Medra has not seen.",
+        S6_BODY, cta("Finish","Finish S6"), step=(4,5)),
+    mob_form("Auth · Staff — S6 Set A Password · Mobile","Step 5 of 5",
+        [("Set your",False),("password",True)],"And a code the first time you use a new device.",
+        S6_BODY, cta("Finish","Finish S6"), step=(4,5)))
+
+# ---------------- S7 waiting for the seat
+S7_BODY = (f'<Frame w="fill" flex="col" gap={{16}}>'
+           f'<Frame w="fill" flex="col" gap={{11}}>'
+           f'{stepline(1,"Your identity matched NIMC","Done, about a minute ago",True)}'
+           f'{stepline(2,"MLSCN 9931 is being checked","Usually within a working day. A person does this, not a machine.",False,now=True)}'
+           f'{stepline(3,"Mrs. Nwosu activates your seat","She is told the moment the register confirms you",False)}</Frame>'
+           f'{note("triangle-alert","There is nothing useful you can do here until step 3, and we would rather say so than invent a task. You will get a message on your own phone — you do not have to keep this open.","warn")}</Frame>')
+
+add("Staff","S7-pending",
+    desk_form("Auth · Staff — S7 Waiting For Your Seat",
+        SP_(eyebrow_t="Almost there", head_parts=[("A person is",False),("checking",True)],
+            sub="Every clinical registration on Medra is confirmed by a human being against the register. It is the slowest thing we do, on purpose.",
+            proofs=[proof("badge-check","Checked by a person")]),
+        "Waiting", [("Your seat is",False),("nearly ready",True)],
+        "Three steps, one of them still running.",
+        S7_BODY, cta("Tell me when it is ready","Notify S7","bell","btn-navy.jpg"),
+        [link("Wrong registration number?","Change it","Update reg S7"),
+         link("Taking too long?","Contact your admin","Contact admin S7")], back=False),
+    mob_form("Auth · Staff — S7 Waiting For Your Seat · Mobile","Waiting",
+        [("Your seat is",False),("nearly ready",True)],"Three steps, one still running.",
+        S7_BODY, cta("Tell me when it is ready","Notify S7","bell","btn-navy.jpg"),
+        [link("Wrong number?","Change it","Update reg S7")], back=False))
+
+# ---------------- S8 in
+S8_BODY = (f'<Frame w="fill" flex="col" gap={{16}} items="center">{big_icon("badge-check","ok",92)}'
+           f'<Frame w="fill" flex="col" gap={{7}} items="center">'
+           f'{T(15,"regular","var:text/muted","MLSCN 9931 confirmed. Your seat in the Garki laboratory is active and there are seven samples waiting.",w="fill",align="center")}</Frame>'
+           f'<Frame w="fill" flex="col" gap={{2}}>'
+           f'{allowline("Test orders addressed to the laboratory")}'
+           f'{allowline("Entering results against the template")}'
+           f'{allowline("Flagging a sample problem back to the doctor")}</Frame>'
+           f'{note("circle-check","Your registration is now on your Medra account rather than on Garki’s. If you take a second job, or leave this one, it goes with you and nobody makes you prove it twice.","ok")}</Frame>')
+
+add("Staff","S8-ready",
+    desk("Auth · Staff — S8 You Are In",
+        SP_(eyebrow_t="Approved", head_parts=[("Welcome to",False),("the laboratory",True)],
+            sub="Seven samples are waiting, and the oldest has been there forty-one minutes.",
+            proofs=[proof("circle-check","Seat active"), proof("flask-conical","7 waiting")]),
+        f'{eyebrow("Approved")}{head_chip([("You’re in,",False),("Chidera",True)],32)}{S8_BODY}'
+        f'{cta("Go to the laboratory queue","Go queue S8","layout-dashboard","btn-navy.jpg")}'
+        f'{ghost("See what my department can do","Open perms S8","shield-check")}'),
+    mob_hero("Auth · Staff — S8 You Are In · Mobile","m-hero-institution.jpg","Approved",
+        [("You’re in,",False),("Chidera",True)],"Your seat in the Garki laboratory is active.",
+        cta("Go to the laboratory queue","Go queue S8","layout-dashboard","btn-navy.jpg"),
+        [ghost("What my department can do","Open perms S8","shield-check")],skip=False,
+        proofs=[proof("circle-check","Seat active"), proof("flask-conical","7 waiting")]))
+
+# ---------------- S9 already on Medra: one account, two workplaces
+S9_BODY = (f'<Frame w="fill" flex="col" gap={{16}}>{inv_card()}'
+           f'<Frame w="fill" flex="col" gap={{2}}>'
+           f'{T(13,"medium","var:text/default","What changes, and what does not")}'
+           f'{allowline("Your MDCN number stays yours — Medra does not check it again")}'
+           f'{allowline("Your own practice, fees and patients are untouched")}'
+           f'{allowline("At Garki the hospital books your day and sets your slot length")}'
+           f'{allowline("At Garki you see no fees, no payouts and no subscription")}'
+           f'{allowline("Garki reading your private practice", False, "Never")}</Frame>'
+           f'{note("info","One account, two workplaces. You switch between them in the top bar, and the record of what you have signed is one record either way — because it is one clinician either way.")}</Frame>')
+
+add("Staff","S9-workplace",
+    desk_form("Auth · Staff — S9 Add This Workplace",
+        SP_(eyebrow_t="You already use Medra", head_parts=[("One account,",False),("two workplaces",True)],
+            sub="You are a person, not a seat. A hospital inviting you adds a place you work to the account you already have.",
+            proofs=[proof("briefcase-medical","MDCN 71482 verified"), proof("repeat","Switch any time")]),
+        "Add a workplace", [("Add a",False),("workplace",True)],
+        "Log in as yourself and confirm. There is nothing to verify — Medra checked your licence when you registered, and it has not changed.",
+        S9_BODY, cta("Log in and add this workplace","Add workplace S9"),
+        [link("","Decline this invitation","Decline S9")], back=True),
+    mob_form("Auth · Staff — S9 Add This Workplace · Mobile","Add a workplace",
+        [("Add a",False),("workplace",True)],
+        "Log in as yourself and confirm. Nothing to verify again.",
+        S9_BODY, cta("Log in and add this","Add workplace S9"),
+        [link("","Decline this invitation","Decline S9")]))
+
+# ---------------- S10 the link is dead
+S10_BODY = (f'<Frame w="fill" flex="col" gap={{16}} items="center">{big_icon("link-2-off","warn",92)}'
+            f'{T(15,"regular","var:text/muted","This invitation was sent on 9 August and invitations last seven days. It may also have been withdrawn, or already used.",w="fill",align="center")}'
+            f'<Frame w="fill" flex="col" gap={{2}}>'
+            f'{allowline("Ask Mrs. Nwosu to send a new one", True)}'
+            f'{allowline("Already finished setting up? Just log in", True)}'
+            f'{allowline("Seeing this after you left the job", True, "Expected")}</Frame>'
+            f'{note("triangle-alert","An invitation is a key, so it dies rather than waiting. Nothing about your account or the hospital has been changed by opening this.","warn")}</Frame>')
+
+add("Staff","S10-expired",
+    desk("Auth · Staff — S10 Invitation Expired",
+        SP_(eyebrow_t="Expired", head_parts=[("This link",False),("has closed",True)],
+            sub="Seven days, then it stops working. It is the same rule as the single-use links Medra sends to laboratories.",
+            proofs=[proof("clock","7-day limit")]),
+        f'{eyebrow("Expired")}{head_chip([("This link",False),("has expired",True)],32)}{S10_BODY}'
+        f'{cta("Ask for a new invitation","New invite S10","send","btn-navy.jpg")}'
+        f'{ghost("I already have an account — log in","Login S10","log-in")}'),
+    mob_hero("Auth · Staff — S10 Invitation Expired · Mobile","m-hero-institution.jpg","Expired",
+        [("This link",False),("has expired",True)],"Seven days, then it stops working.",
+        cta("Ask for a new invitation","New invite S10","send","btn-navy.jpg"),
+        [ghost("Log in instead","Login S10","log-in")],skip=False,proofs=[proof("clock","7-day limit")]))
+
 # ---------------- write ----------------
 def sanitize(s): return re.sub(r'&(?!amp;|lt;|gt;|quot;|#\d+;|#x[0-9A-Fa-f]+;)','&amp;',s)
 manifest={}
@@ -984,7 +1278,8 @@ for _stale in sorted(set(os.listdir(OUT)) - _written):
 
 
 PAGE_FIGMA={"Entry":"Medra Auth — Entry","Member":"Medra Auth — Member",
-            "Doctor":"Medra Auth — Doctor","Institution":"Medra Auth — Institution"}
+            "Doctor":"Medra Auth — Doctor","Institution":"Medra Auth — Institution",
+            "Staff":"Medra Auth — Staff"}
 TRN=[
  ("E1-onb1","Btn Next E1-onb1","E2-onb2"),("E1-onb1","Btn Skip E1-onb1","E4-welcome"),("E1-onb1","~Btn Skip","E4-welcome"),
  ("E2-onb2","Btn Next E2-onb2","E3-onb3"),("E2-onb2","Btn Skip E2-onb2","E4-welcome"),("E2-onb2","~Btn Skip","E4-welcome"),
@@ -1043,6 +1338,29 @@ TRN=[
  ("I9-forgot","Btn Send reset I9","I10-reset"),("I9-forgot","Btn Back login I9","I8-admin-login"),("I9-forgot","Btn Back","I8-admin-login"),("I9-forgot","Btn Help","M8-help"),
  ("I10-reset","Btn Save password I10","I8-admin-login"),("I10-reset","Btn Back","I9-forgot"),("I10-reset","Btn Help","M8-help"),
  ("I11-success","Btn Go portal I11","I8-admin-login"),("I11-success","Btn Invite I11","I8-admin-login"),
+ # ---- staff joining an organisation. Two entrances (S1 for somebody new, S9 for somebody who
+ # already has an account) and two dead ends (S10 when the link has died, S7 while a person
+ # checks the register).
+ ("S1-invite","Btn Accept S1","S2-verify"),("S1-invite","Btn Have account S1","S9-workplace"),
+ ("S1-invite","Btn Not me S1","S10-expired"),("S1-invite","Btn Help","M8-help"),
+ ("S2-verify","Btn Verify S2","S3-details"),("S2-verify","Btn Resend S2","S2-verify"),
+ ("S2-verify","~Btn Wrong address S2","S10-expired"),("S2-verify","Btn Back","S1-invite"),("S2-verify","Btn Help","M8-help"),
+ ("S3-details","Btn Continue S3","S4-registration"),("S3-details","Btn Back","S2-verify"),("S3-details","Btn Help","M8-help"),
+ ("S4-registration","Btn Continue S4","S5-undertaking"),("S4-registration","Btn No register S4","S5-undertaking"),
+ ("S4-registration","Btn Upload licence S4","S4-registration"),("S4-registration","Btn Back","S3-details"),("S4-registration","Btn Help","M8-help"),
+ ("S4-registration","Btn Reg body MDCN","S4-registration"),("S4-registration","Btn Reg body NMCN","S4-registration"),
+ ("S4-registration","Btn Reg body MLSCN","S4-registration"),("S4-registration","Btn Reg body PCN","S4-registration"),
+ ("S4-registration","Btn Reg body None","S4-registration"),
+ ("S5-undertaking","Btn Accept S5","S6-password"),("S5-undertaking","Btn Undertaking S5","S5-undertaking"),
+ ("S5-undertaking","Btn Full undertaking S5","S5-undertaking"),("S5-undertaking","Btn Back","S4-registration"),("S5-undertaking","Btn Help","M8-help"),
+ ("S6-password","Btn Finish S6","S7-pending"),("S6-password","Btn Show password S6","S6-password"),
+ ("S6-password","~Btn Show confirm S6","S6-password"),("S6-password","Btn Back","S5-undertaking"),("S6-password","Btn Help","M8-help"),
+ ("S7-pending","Btn Notify S7","S8-ready"),("S7-pending","~Btn Update reg S7","S4-registration"),
+ ("S7-pending","~Btn Contact admin S7","M8-help"),("S7-pending","Btn Help","M8-help"),
+ ("S8-ready","Btn Go queue S8","S8-ready"),("S8-ready","Btn Open perms S8","S1-invite"),("S8-ready","~Btn Help","M8-help"),
+ ("S9-workplace","Btn Add workplace S9","S8-ready"),("S9-workplace","Btn Decline S9","S10-expired"),
+ ("S9-workplace","Btn Back","S1-invite"),("S9-workplace","Btn Help","M8-help"),
+ ("S10-expired","Btn New invite S10","S1-invite"),("S10-expired","Btn Login S10","D6-login"),("S10-expired","~Btn Help","M8-help"),
 ]
 # Which Btn names each frame actually contains. A transition describes a *screen*, and the two
 # breakpoints legitimately differ — the desktop onboarding names its own Skip button where the

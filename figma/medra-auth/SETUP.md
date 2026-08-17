@@ -1,9 +1,10 @@
 # Medra — Authentication Module (figma-ds-cli)
 
-**70 frames (35 screens × desktop + mobile) · 4 Figma pages · "Soft Clinical" direction**
+**90 frames (45 screens × desktop + mobile) · 5 Figma pages · "Soft Clinical" direction**
 
 Each persona renders onto **its own Figma page**:
-`Medra Auth — Entry` · `Medra Auth — Member` · `Medra Auth — Doctor` · `Medra Auth — Institution`
+`Medra Auth — Entry` · `Medra Auth — Member` · `Medra Auth — Doctor` · `Medra Auth — Institution` ·
+`Medra Auth — Staff`
 
 Covers every requirement, no dead ends:
 - **Onboarding story** — 3 photographic intro slides → welcome → role selection
@@ -13,8 +14,14 @@ Covers every requirement, no dead ends:
 - Doctor registration (**name + work email + phone + MDCN**), OTP, set password, **MDCN verification pending**, profile; **log in with email, phone _or_ MDCN**; 2-factor only on a **new** device; forgot/reset
 - Institution registration, **document/licence upload**, **organisation sizing** (practitioners · branches · seats · volume) → **recommended plan with real pricing, editable inline**, verify + password, **application pending**, **Facility Admin login**, forgot/reset
 - Role selection routes new users; role-based redirect shown on each success screen
+- **Staff joining an organisation (S1–S10)** — the person an admin invited on the console's `C5`.
+  Invitation → prove it is you → your details → your registration (MDCN / NMCN / MLSCN / PCN, or
+  None for front desk and billing) → the undertaking → password → waiting for the seat → in.
+  Two entrances: `S1` for somebody new to Medra, **`S9` for somebody who already has an account**,
+  where nothing is re-verified because the licence was already theirs. Two honest stops: `S7`
+  while a person checks the register, and `S10` when the seven-day link has died.
 
-Offline validation: **ALL 70 CLEAN, FULLY OFFLINE ✓** (`node validate.js`).
+Offline validation: **ALL 90 CLEAN, FULLY OFFLINE ✓** (`node validate.js`) · **PROTOTYPE COMPLETE ✓**, 90/90 screens reachable, no broken hotspots.
 
 ## Nomenclature
 People using Medra for their own care are **members**, not "patients". "Patient" is kept only for

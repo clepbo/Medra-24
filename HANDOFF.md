@@ -57,12 +57,12 @@ while capturing enough record to be clinically useful.
 
 ## 3. Where the design is now
 
-Five rendered bundles, **780 frames**, all validated clean and fully offline.
+Five rendered bundles, **800 frames**, all validated clean and fully offline.
 
 | Bundle | Frames | Pages | Status |
 |---|---:|---:|---|
 | `figma/medra-ds` — design system + journeys | 27 | 1 | Done |
-| `figma/medra-auth` — authentication, 4 roles | 70 | 4 | Done · **v2.0 retrofit applied** · **prototype complete** |
+| `figma/medra-auth` — authentication, 4 roles + staff joining an organisation | 90 | 5 | Done · **v2.0 retrofit applied** · **prototype complete** |
 | `figma/medra-member` — the whole member app | 158 | 8 | Done · **prototype complete** |
 | `figma/medra-doctor` — full doctor module | 275 | 8 | Done · **prototype complete** |
 | `figma/medra-org` — organisation, every department, clinical chain, external | 277 | 9 | Done · **prototype complete** · **not yet rendered into Figma** |
@@ -443,6 +443,41 @@ because it is often the largest number and never the story.
 the render script drew it, the linker never wired it, and the audit reported an unreachable
 screen. Two of those were live in this bundle.
 
+### B4. Staff onboarding — **DONE (17 Aug)**
+
+The gap that stopped the organisation story running end to end: an admin could invite somebody
+on `C5`, and nothing existed for the person who received it. Ten screens on a new `Staff` page
+in the auth bundle, `S1`–`S10`.
+
+Deliberately shorter than the doctor's own registration, and for a reason worth keeping: the
+organisation has already been verified and is vouching for the person, so what Medra still has
+to establish is only that the human holding the link is the human the admin invited, and that a
+clinical seat is held by somebody on a register. That is Abraham's caution — *"even with new
+features you have KYC for that feature… before you know it, it gets too complicated"* — and
+Godwin's answer in the same breath: *"all they need to do now is set up an account, put and
+verify information."*
+
+| | Screen | What it does |
+|---|---|---|
+| | **S1 The invitation** | Who invited you, which department, which branch, when it expires — all of it typed by the admin on `C5`, which is exactly why it is shown back. Under it, what the seat lets you do and the two things it never will |
+| 1 | **S2 Prove it is you** | One code. The screen says out loud that it went to the address *the admin typed*, and that if that address is not yours you should stop |
+| 2 | **S3 Your details** | Name, NIN, date of birth, and your own phone rather than the department's — it is how you get back in when you no longer work there. "Your admin typed your name when she invited you. Correct anything she got wrong; from here it is your account, not hers" |
+| 3 | **S4 Your registration** | MDCN / NMCN / MLSCN / PCN, the number, the licence. Front desk and billing choose None and the step is one tap. Until the register confirms it, the account can see the building and nothing clinical |
+| 4 | **S5 The undertaking** | Five lines, no schedule of definitions: everything you open is logged, you may open a record only while that person is in your care, break-glass is reported the same day, and looking up a colleague or yourself is never allowed. Signed by name |
+| 5 | **S6 Set a password** | With the line that matters in a shared clinic: a computer eight people use is one device, which is why you never leave yourself logged in on it |
+| | **S7 Waiting for your seat** | Three steps, one still running, and an honest admission that there is nothing useful to do here until it finishes. No invented task |
+| | **S8 You are in** | Seat active, seven samples waiting — and the point of the whole model: the registration now sits on the person's Medra account rather than on Garki's |
+| | **S9 Add this workplace** | The second entrance. Somebody who already uses Medra logs in and confirms; nothing is re-verified, because the MDCN number was theirs the first time. What changes and what does not, in five lines |
+| | **S10 Invitation expired** | Seven days, then the link dies — the same rule as the single-use links Medra sends to laboratories. Withdrawn and already-used land here too |
+
+`S1` and `S9` are the two entrances, `S7` and `S10` the two places a person legitimately stops.
+The flow is entered from a link in an email or WhatsApp, not from a screen in the console, so
+nothing in the organisation module navigates into it.
+
+**One thing to leave alone.** The auth bundle's headlines wrap — the plain half of a
+`head_chip` breaks over two lines with the teal chip beside it. That is the house style of this
+bundle and has been since the first render; it is not a layout defect and does not want fixing.
+
 ### C. Member mobile hub → section conversion
 
 Machinery is in place (`addx()` in `tools/figma/build_member.py`); 55 screens unconverted.
@@ -450,9 +485,9 @@ Evidence says it is not needed (see §3); the product owner asked for it anyway.
 
 ### D. Not started
 
-Platform admin portal · staff onboarding (~10 screens, keep it lean per Abraham) · insurance
-eligibility checks · in-app video · shift handover · duty roster as an admin tool · what
-happens to work in flight when a staff member is removed · deceased/inactive record state.
+Platform admin portal · insurance eligibility checks · in-app video · shift handover · duty
+roster as an admin tool · what happens to work in flight when a staff member is removed ·
+deceased/inactive record state.
 
 ### A3. The auth prototype — **DONE (11 Aug)**
 

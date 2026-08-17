@@ -76,5 +76,27 @@
     "I10-reset-m.jsx",
     "I11-success-d.jsx",
     "I11-success-m.jsx"
+  ],
+  "Staff": [
+    "S1-invite-d.jsx",
+    "S1-invite-m.jsx",
+    "S2-verify-d.jsx",
+    "S2-verify-m.jsx",
+    "S3-details-d.jsx",
+    "S3-details-m.jsx",
+    "S4-registration-d.jsx",
+    "S4-registration-m.jsx",
+    "S5-undertaking-d.jsx",
+    "S5-undertaking-m.jsx",
+    "S6-password-d.jsx",
+    "S6-password-m.jsx",
+    "S7-pending-d.jsx",
+    "S7-pending-m.jsx",
+    "S8-ready-d.jsx",
+    "S8-ready-m.jsx",
+    "S9-workplace-d.jsx",
+    "S9-workplace-m.jsx",
+    "S10-expired-d.jsx",
+    "S10-expired-m.jsx"
   ]
 }
