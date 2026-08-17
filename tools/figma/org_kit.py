@@ -27,7 +27,8 @@ from member2_kit import (hr, tabs, status_pill, prep_step, radio_row, consent_ro
 from doctor_kit import (dcard, dgroup, drow, dtoggle, dbtn, dcta, eyerow, dhead, stat_tile,
                         alert_strip, kpi_line, bar, progress_row, see_all, capped, checklist_row,
                         patient_row, request_row, level_chip, file_row, month_cal, task_row,
-                        rail_section, outcome_choice, field_chips)
+                        rail_section, outcome_choice, field_chips, range_cal, dept_choice,
+                        track_step, note_field)
 
 AMBER_IC = "#B8801F"; GRAPH_IC = "#2A313A"; DIM_IC = "#8A94A0"
 
@@ -244,7 +245,9 @@ DEPT = {"nursing": ("dept-nursing.jpg", "syringe", "Nursing"),
         "lab": ("dept-lab.jpg", "flask-conical", "Laboratory"),
         "pharmacy": ("dept-pharmacy.jpg", "pill", "Pharmacy"),
         "desk": ("dept-desk.jpg", "concierge-bell", "Front desk"),
-        "clinic": ("dept-clinic.jpg", "stethoscope", "Consulting")}
+        "clinic": ("dept-clinic.jpg", "stethoscope", "Consulting"),
+        "imaging": ("dept-imaging.jpg", "scan", "Imaging"),
+        "billing": ("dept-billing.jpg", "receipt", "Billing")}
 
 
 def dept_badge(key, size=34):
@@ -400,3 +403,41 @@ def alloc_row_m(time, who, meta, reason, nm, assigned=None):
             f'<Frame w="fill" flex="row" gap={{8}} items="center" px={{10}} py={{8}} rounded={{10}} '
             f'bg="var:neutral/50">{I("file-text",11,M_IC)}'
             f'{T(10,"regular","var:text/muted",reason,w="fill")}</Frame>{act}</Frame>')
+
+
+# --------------------------------------------------------------------------------------
+# Talking to each other. A conversation row is not a patient row: what matters is who is
+# waiting on you, how long they have waited, and by which route it reached you — a phone
+# call at 09:44 that nobody answered is the difference between a near miss and a death.
+# --------------------------------------------------------------------------------------
+CHANNEL = {"inapp": ("message-square-text", "In Medra"),
+           "call":  ("phone-call", "Rang you"),
+           "wa":    ("smartphone", "WhatsApp"),
+           "sms":   ("mail", "SMS")}
+
+def msg_row(avatar, who, preview, when, name, unread=False, channel="inapp"):
+    ic, ch = CHANNEL[channel]
+    dot = (f'<Frame w={{8}} h={{8}} rounded={{999}} bg="var:state/error" />' if unread else '')
+    return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{11}} items="start" py={{11}}>'
+            f'<Image image="assets/img/{avatar}" w={{38}} h={{38}} rounded={{12}} />'
+            f'<Frame grow={{1}} flex="col" gap={{3}}>'
+            f'<Frame w="fill" flex="row" gap={{8}} items="center">'
+            f'{T(13,"semibold" if unread else "medium","var:text/strong",who)}{dot}'
+            f'<Frame grow={{1}} flex="row" justify="end" gap={{6}} items="center">'
+            f'{I(ic,12,M_IC)}{T(10,"regular","var:text/muted",when)}</Frame></Frame>'
+            f'{T(11,"regular","var:text/default" if unread else "var:text/muted",preview,w="fill")}'
+            f'{T(10,"regular","var:text/faint",ch)}</Frame></Frame>')
+
+def shift_row(who, role, until, name, on=True, sub=None):
+    """Who is actually here. Every department screen needs it and none of them had it."""
+    pill = (f'<Frame flex="row" gap={{5}} items="center" px={{9}} py={{3}} rounded={{999}} '
+            f'bg="var:state/success-bg">{I("circle-dot",11,OK_IC)}'
+            f'{T(10,"semibold","var:state/success",until)}</Frame>' if on else
+            f'<Frame flex="row" px={{9}} py={{3}} rounded={{999}} bg="var:bg/muted">'
+            f'{T(10,"semibold","var:text/muted",until)}</Frame>')
+    s = T(10, "regular", "var:text/muted", sub or role, w="fill")
+    return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{11}} items="center" py={{10}}>'
+            f'<Frame w={{34}} h={{34}} rounded={{11}} bg="var:bg/muted" flex="col" justify="center" '
+            f'items="center">{I("user-round",16,GRAPH_IC if on else DIM_IC)}</Frame>'
+            f'<Frame grow={{1}} flex="col" gap={{1}}>{T(13,"medium","var:text/strong",who)}{s}</Frame>'
+            f'{pill}</Frame>')

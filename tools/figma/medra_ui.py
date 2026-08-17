@@ -6,10 +6,19 @@ import os, re, json
 W_IC="#FFFFFF"; N_IC="#1B3A5B"; T_IC="#39B0CF"; M_IC="#7E8F9D"; A_IC="#2F8BAC"
 OK_IC="#2FA36B"; WARN_IC="#E0A32E"; ERR_IC="#D14343"
 
+ENT = re.compile(r'&(?![a-zA-Z#][a-zA-Z0-9]*;)')
+
+def esc(txt):
+    """A `<` in prose is not a tag. "Normal < 5.7" and "<1h" are both real Medra copy, and both
+    make the file un-parseable as XML — which is what every tool downstream of the builder does
+    to it. Escape the three characters that matter, leaving entities that are already correct
+    alone so `&amp;` does not become `&amp;amp;`."""
+    return ENT.sub('&amp;', str(txt)).replace('<', '&lt;').replace('>', '&gt;')
+
 def T(size,weight,color,txt,w=None,align=None):
     a=f' align="{align}"' if align else ''
     ww=f' w={{{w}}}' if isinstance(w,int) else (' w="fill"' if w=="fill" else '')
-    return f'<Text font="Inter" size={{{size}}} weight="{weight}" color="{color}"{ww}{a}>{txt}</Text>'
+    return f'<Text font="Inter" size={{{size}}} weight="{weight}" color="{color}"{ww}{a}>{esc(txt)}</Text>'
 def I(n,s=18,c=M_IC): return f'<Icon name="lucide:{n}" size={{{s}}} color="{c}" />'
 def SP(h): return f'<Frame h={{{h}}} />'
 

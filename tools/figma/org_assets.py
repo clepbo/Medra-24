@@ -69,7 +69,8 @@ save(mesh(600, 400, SLATE, [(0.15, 0.15, 0.8, (66, 78, 92), .7)], grain=0), "btn
 # per-department tints, so a queue reads by colour before it reads by label
 for nm, col in (("dept-nursing.jpg", (72, 140, 122)), ("dept-lab.jpg", (66, 108, 160)),
                 ("dept-pharmacy.jpg", (150, 96, 156)), ("dept-desk.jpg", (196, 128, 58)),
-                ("dept-clinic.jpg", (58, 122, 150))):
+                ("dept-clinic.jpg", (58, 122, 150)), ("dept-imaging.jpg", (96, 104, 168)),
+                ("dept-billing.jpg", (86, 132, 96))):
     save(mesh(400, 260, col, [(0.2, 0.2, 0.8, tuple(min(255, c + 34) for c in col), .7),
                               (0.9, 0.9, 0.6, tuple(max(0, c - 22) for c in col), .6)], grain=0), nm)
 

@@ -57,7 +57,7 @@ while capturing enough record to be clinically useful.
 
 ## 3. Where the design is now
 
-Five rendered bundles, **729 frames**, all validated clean and fully offline.
+Five rendered bundles, **765 frames**, all validated clean and fully offline.
 
 | Bundle | Frames | Pages | Status |
 |---|---:|---:|---|
@@ -65,7 +65,7 @@ Five rendered bundles, **729 frames**, all validated clean and fully offline.
 | `figma/medra-auth` — authentication, 4 roles | 70 | 4 | Done · **v2.0 retrofit applied** · **prototype complete** |
 | `figma/medra-member` — the whole member app | 158 | 8 | Done · **prototype complete** |
 | `figma/medra-doctor` — full doctor module | 275 | 8 | Done · **prototype complete** |
-| `figma/medra-org` — organisation + clinical chain + external | 226 | 8 | Done · **not yet rendered into Figma** |
+| `figma/medra-org` — organisation, every department, clinical chain, external | 262 | 9 | Done · **prototype complete** · **not yet rendered into Figma** |
 
 `medra-member` was two bundles until the merge (`medra-member` for find & book,
 `medra-member-2` for everything the bottom nav led to). The split existed because batch 1 was
@@ -176,6 +176,18 @@ Elements: `<Frame> <Text> <Icon> <Rect> <Ellipse> <Image>`. One `.jsx` = one Fig
 12. **`items="center"` centres the text node, not the text inside it.** A label ends up
     left-aligned in a visibly centred card. `normalise.py` adds `align="center"` to any text in
     a centred container; 4,115 nodes needed it.
+13. **A `<` in prose makes the file un-parseable.** "Normal < 5.7" and "<1h" are both real Medra
+    copy. `T()` in `medra_ui.py` now escapes `<`, `>` and bare `&`, leaving existing entities
+    alone. Four org frames and one doctor frame were silently unmeasurable before this — and one
+    of them, `D7-lab-result-m`, turned out to overflow its phone by 77px the moment it could be
+    measured, which is exactly the class of defect the escape hides.
+14. **`{{n}}` only becomes `{n}` inside an f-string.** Concatenating a plain `'…gap={{12}}…'`
+    onto an f-string emits the literal double braces. Three of them shipped. Grep the built
+    bundle for `={{` after any change to a builder — validate.js does not catch it.
+15. **Keep the icon cache in step with the JSX.** `render-*.ps1` copies `assets/icon-cache/*.svg`
+    into figma-ds-cli's own cache before rendering, so an icon that is missing fails quietly
+    part-way through a run. `python3 tools/figma/icons.py` scans every bundle for the
+    `lucide:<name>` it actually uses and fetches whatever is absent. Run it after every build.
 
 ### How the prototype is wired
 
@@ -341,6 +353,48 @@ not exist until the member agrees to it).
 by counting. It is now `medra.ng/s/<random token>` in both the doctor and organisation modules.
 This one is worth carrying into build as a requirement, not a detail.
 
+### B2. Every persona in the organisation gets a dashboard — **DONE (17 Aug)**
+
+Godwin's request after the second review, and the subject of the next one: *"an admin view,
+front desk/receptionist view, doctors view, nurses, lab technician, pharmacy including any
+other department that is important in a medical organization… what do they each see?…
+including how they communicate with each other."* Nursing, laboratory, pharmacy and the front
+desk already had theirs. This pass added the three that were missing.
+
+**Imaging / radiology — D16, D17, D18.** The third review asked for instrumental diagnostics
+(ECG, echo, CT, MRI, gastroscopy) alongside blood and urine. They do not behave like blood: a
+specimen leaves the patient, an image does not, so the person has to be present, prepared and
+safe before anything happens, and the result is a radiologist's sentence rather than a number
+against a range.
+
+| Screen | What it is |
+|---|---|
+| **D16 Worklist** | Six studies ordered by appointment rather than by request time, because an image needs the person, the room and the machine at once. A rooms-and-machines panel, and a count of what has been acquired but not yet read |
+| **D17 Safety check** | The only screen in Medra that refuses to move. Identity said aloud, metal, pregnancy, claustrophobia, and what the patient was told. Two unanswered here, so the start button is off. Dose and operator are recorded on every study, not only abnormal ones |
+| **D18 Report a study** | The radiologist's screen: findings, impression, urgency, and a critical-finding switch that routes into the D15 pathway. Signed by a named person, amendable only by a second version that says so |
+
+**Billing / cashier — D19, D20, D21.** The front desk takes money at check-in; running the
+money is a different job. In a Nigerian clinic the leak is the claim that was submitted,
+queried and never resubmitted.
+
+| Screen | What it is |
+|---|---|
+| **D19 The money today** | Taken, outstanding, sitting with HMOs, unreconciled — and how it came in, because cash is the only line Medra cannot verify by itself. Closing the till needs two named people and cannot be turned off |
+| **D20 Take a payment** | An itemised bill, part payment as a first-class case, method and reference, receipt to her phone. Append-only: a wrong amount is corrected by a second entry, never by editing the first |
+| **D21 Insurance claims** | Fourteen claims with HMOs and NHIS by state, an ageing profile, and the four causes of a query — three of which are fixed at the front desk before the person is seen |
+
+**The doctor inside a hospital — G1 to G4**, on a new `Clinic` page. One account, two
+workplaces: Dr. Eze's MDCN number is his, so the hospital inviting him added a workplace to an
+account that already existed. The consultation is identical to his private one; four things
+differ and the screens say which.
+
+| Screen | What it is |
+|---|---|
+| **G1 My day** | A list he did not build — the front desk booked it and the admin allocated it. Beside it, the four things this workplace owns and he does not: who fills his day, who sets the slot length, whose money it is, who supervises him |
+| **G2 My roster** | The hospital's roster, not his availability. He cannot open or close a session; he asks, and a named person answers. Overbooking is visible as a fact somebody decided |
+| **G3 Messages** | Godwin asked for this directly. A message goes to a **department** and whoever is on shift picks it up — sending it to a named person is how a question waits until Monday because that person went home |
+| **G4 A conversation** | Attached to the visit, so the next doctor can see why the order of the day changed. Nothing clinical is decided here; an order, a result and a referral each keep their own screen and their own record |
+
 ### C. Member mobile hub → section conversion
 
 Machinery is in place (`addx()` in `tools/figma/build_member.py`); 55 screens unconverted.
@@ -348,7 +402,9 @@ Evidence says it is not needed (see §3); the product owner asked for it anyway.
 
 ### D. Not started
 
-Platform admin portal · imaging department · insurance eligibility checks · in-app video.
+Platform admin portal · staff onboarding (~10 screens, keep it lean per Abraham) · insurance
+eligibility checks · in-app video · shift handover · duty roster as an admin tool · what
+happens to work in flight when a staff member is removed · deceased/inactive record state.
 
 ### A3. The auth prototype — **DONE (11 Aug)**
 
@@ -393,8 +449,9 @@ mistaken for a clean one.
 
 ### E. Render the organisation module into Figma
 
-`figma/medra-org` is built, validated and audited but has never been rendered. It creates its
-own eight `Medra Organisation —` pages and touches nothing else.
+`figma/medra-org` is built, validated, audited and prototype-complete — 262 frames, 243 screens,
+all reachable — but it has never been rendered. It lays out in the `120,000` band on the one
+shared page; see `figma/RENDER.md` for the order and the delete-first warning.
 
 ---
 

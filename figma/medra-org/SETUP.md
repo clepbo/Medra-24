@@ -1,15 +1,18 @@
 # Medra — Organisation module
 
-**217 frames · 8 Figma pages · Desktop 1440 + mobile 390 · organisation-module only**
+**262 frames · 9 Figma pages · Desktop 1440 + mobile 390 · organisation-module only**
 
-57 desktop screens covering PRD v2.0 Modules 10–13. On mobile each is a hub with its own sections
-and sheets — 141 mobile frames — plus 19 component-state frames.
+66 desktop screens covering PRD v2.0 Modules 10–13. On mobile each is a hub with its own sections
+and sheets, plus 19 component-state frames.
 
 Offline validation
-- `node validate.js` → **ALL 217 CLEAN, FULLY OFFLINE ✓** (222 icons, 41 tokens, 0 warnings)
-- headless measurement → **0 horizontal overflow** at 390 and 1440; mobile median 844px, max 1,437px
+- `node validate.js` → **ALL 262 CLEAN, FULLY OFFLINE ✓** (240 icons, 41 tokens, 0 warnings)
+- headless measurement → **0 horizontal overflow** at 390 and 1440
 - `python3 tools/figma/proto_check.py figma/medra-org link-org.js` → **PROTOTYPE COMPLETE ✓**,
-  197/197 screens reachable, 699 explicit links, no broken hotspots
+  243/243 screens reachable, 880 explicit links, no broken hotspots
+
+Every department in the organisation now has its own dashboard — what that person sees when they
+log in, with their own navigation, their own tab bar on a phone and their own persona pill.
 
 ## 1. It is a third product, not a re-skin
 
@@ -49,6 +52,9 @@ C6 Person detail · C7 Roles & permissions
 **Laboratory** D5 Order queue · D6 Order · D7 Enter structured result · D8 Sample problem
 **Pharmacy** D9 Prescription queue · D10 Dispense · D11 Cannot dispense
 **Front desk** D12 The day · D13 Register a walk-in · D14 Check in & payment
+**Laboratory** D15 Critical value — a value that has to reach a human by voice, with a read-back
+**Imaging** D16 Worklist · D17 Safety check (the one screen that refuses to move) · D18 Report a study
+**Billing** D19 The money today · D20 Take a payment · D21 Insurance claims
 
 ### 5 · Referrals & external access
 E1 Referred out · E2 Refer someone · E3 Referral sent · E4 Referred to us · E5 Referral detail ·
@@ -57,9 +63,17 @@ upload → done → expired)
 
 ### 6 · Access, money & reports
 F1 Who has access · F2 Audit log · F3 Privacy & compliance · F4 Reports · F5 Settings ·
-F6 Subscription
+F6 Subscription · F7 Critical results and the escalation ladder
 
-### 7 · States
+### 7 · The doctor inside the organisation
+G1 My day · G2 My roster · G3 Messages · G4 A conversation
+
+One account, two workplaces. A doctor's MDCN number is theirs, not the hospital's, so an invite
+adds a workplace to an account that already exists rather than making a second clinician. The
+consultation is identical to their private one; who fills the day, who sets the slot length,
+whose money it is and who supervises them all differ, and `G1` says so on the screen.
+
+### 8 · States
 X1 Seats full · X2 Not verified · X3 Locked · X4 Nothing booked · X5 Offline · X6 Error ·
 X7 Loading
 
@@ -77,5 +91,5 @@ does — including inside a nurse's view and an external party's. The label is p
 
 ## 4. Render — organisation module only
 
-See `CLI-PROMPT.md`. `.\render-org.ps1` creates the eight `Medra Org —` pages and touches nothing
+See `CLI-PROMPT.md`. `.\render-org.ps1` renders into the `120,000` band of the one shared page and touches nothing
 else. Re-rendering **appends** — delete old frames first if a page already has them.
