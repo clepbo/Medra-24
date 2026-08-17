@@ -969,7 +969,7 @@ R_TABS = tabs(["All", "Visits", "Labs", "Medicines"], 0, "Records tab")
 R_FILTERS = rows_of([
     mini_btn("All", "Filter records all", None, "navy"),
     mini_btn("Consultations", "Filter records visits", "stethoscope", "ghost"),
-    mini_btn("Lab results", "Filter records labs", "flask-conical", "ghost"),
+    mini_btn("Results &amp; diagnostics", "Filter records labs", "flask-conical", "ghost"),
     mini_btn("Prescriptions", "Filter records rx", "pill", "ghost"),
     mini_btn("Vitals", "Filter records vitals", "activity", "ghost"),
     mini_btn("My uploads", "Filter records uploads", "file-plus", "ghost"),
@@ -1017,7 +1017,7 @@ R_SUMMARY = group_card("Your health summary", [
 R_STATS = rows_of([
     stat_card("clipboard-list", "14", "Records", "Across 3 clinics", "tint-teal.jpg"),
     stat_card("stethoscope", "8", "Consultations", "Since Jan 2026", "tint-ocean.jpg"),
-    stat_card("flask-conical", "4", "Lab results", "1 needs attention", "tint-amber.jpg"),
+    stat_card("flask-conical", "4", "Results &amp; diagnostics", "1 needs attention", "tint-amber.jpg"),
     stat_card("shield-check", "1", "Active share", "Expires in 6 days", "tint-blue.jpg"),
 ], 4, 16)
 
@@ -1112,6 +1112,11 @@ R3_HEAD = (f'<Frame w="fill" flex="col" gap={{14}} p={{20}} rounded={{28}} bg="v
            f'{T(11,"regular","var:text/muted","MLSCN accredited · ordered by Dr. Ngozi Okafor",w="fill")}</Frame>'
            f'{mini_btn("Original","View original","image","ghost",grow=False)}</Frame></Frame>')
 
+# 14 Aug — Godwin: "there should be another thing like instrumental diagnostics, ECG, echo,
+# CT scans, MRIs, gastroscopy, colonoscopy." Abraham: "it should be under lab results... adding
+# it here will make this a segment, so when you open it you can see the different types."
+R3_KINDS = tabs(["Blood & urine", "Imaging", "Cardiac", "Endoscopy"], 0, "Result kind", size=13)
+
 R3_VALUES = group_card("Results", [
     lab_line("Haemoglobin", "11.2 g/dL", "12.0 – 15.5", "Low"),
     lab_line("White cell count", "6.4 ×10⁹/L", "4.0 – 11.0"),
@@ -1133,7 +1138,7 @@ R3_PLAIN = (f'<Frame w="fill" flex="col" gap={{12}} p={{20}} rounded={{24}} bg="
             f'{mini_btn("Ask a doctor about this","Ask about lab","message-square-text","teal",full=True)}</Frame>')
 
 add("Records", "R3-lab",
-    desk("Member · Records — R3 Lab Result",
+    desk("Member · Records — R3 Lab Results &amp; Diagnostics",
         f'<Frame w="fill" flex="row" justify="between" items="center">'
         f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",18,N_IC)}'
         f'{T(14,"semibold","var:text/default","All records")}</Frame>'
@@ -1141,7 +1146,7 @@ add("Records", "R3-lab",
         f'{mini_btn("Share","Share R5","share-2","ghost",grow=False)}'
         f'{mini_btn("Download PDF","Download lab","download","ghost",grow=False)}</Frame></Frame>'
         + f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-          f'<Frame grow={{1}} flex="col" gap={{16}}>{R3_HEAD}{R3_VALUES}</Frame>'
+          f'<Frame grow={{1}} flex="col" gap={{16}}>{R3_HEAD}{R3_KINDS}{R3_VALUES}</Frame>'
           f'<Frame w={{380}} flex="col" gap={{16}}>{R3_PLAIN}'
           f'{group_card("Compare with earlier", [list_row("trending-down","Haemoglobin",value="11.2",sub="Was 12.4 in Jan 2026",name="Trend hb"),list_row("trending-up","Platelets",value="268",sub="Was 240 in Jan 2026",name="Trend plt"),list_row("activity","See all trends",name="Open vitals R4")])}</Frame></Frame>',
         SIDE["Records"]),

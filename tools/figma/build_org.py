@@ -596,6 +596,18 @@ C2_QUEUE = dgroup("What the laboratory is holding", [
     drow("triangle-alert", "Samples rejected", value="1", sub="Haemolysed — the member has been asked to return", name="Open lab D8", tone="err"),
 ])
 
+# The other half of Godwin's split on 14 August: a private doctor sets their own consultation
+# length, and an organisation sets it for the doctors working in it. A hospital trading volume
+# against depth is a management decision, so it belongs to the department, not to each doctor.
+C2_LENGTH = dgroup("How long is one consultation here?", [
+    field_chips("Standard length", ["10 min", "15 min", "20 min", "30 min"], 2, "Dept slot length"),
+    drow("calendar-days", "What a member sees", value="10:20 · 10:40 · 11:00",
+         sub="Your length repeated. It overrides what an individual doctor set for their own rooms",
+         name="Dept slot preview", chevron=False, tone="ok"),
+    drow("user-cog", "A consultant may set their own", sub="Two doctors here are allowed to — it is off for everyone else",
+         name="Dept slot override", tone="warn"),
+], footer="Shorter slots mean more patients and less time each. That is a decision for whoever runs the department, and it is recorded as one.")
+
 C2_PERMS = dgroup("What this department can do", [
     perm_row("Receive test orders addressed to it", True),
     perm_row("Read the clinical detail attached to an order", True, "Only the detail on the order — not the member's whole record"),
@@ -611,7 +623,7 @@ addx("People", "C2-department",
         f'{dhead([("Laboratory",True)],26)}</Frame>'
         f'{dbtn("Invite someone","Open invite C5","user-plus","navy",grow=False,size="sm")}</Frame>'
         f'<Frame w="fill" flex="row" gap={{16}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{14}}>{C2_PEOPLE}{C2_PERMS}</Frame>'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{C2_PEOPLE}{C2_LENGTH}{C2_PERMS}</Frame>'
         f'<Frame w={{330}} flex="col" gap={{14}}>{C2_QUEUE}</Frame></Frame>',
         NAV["Departments"], dept="Laboratory", badges=BADGES),
     o_head("Laboratory", "3 of 4 seats · 4 orders waiting",
@@ -625,6 +637,7 @@ addx("People", "C2-department",
          seat_row_m("avatar-6.jpg", "Mr. Tunde Alabi", "Laboratory lead", "Laboratory", "Person tunde"),
          seat_row_m("avatar-3.jpg", "chidera@garki.ng", "Lab technician", "Laboratory", "Person chidera", state="invited"),
        ], footer="One seat is free. Anyone you invite inherits the laboratory's permissions and nothing else."), None),
+      ("length", "clock", "How long is one consultation here?", "20 minutes — the department decides", "20 min", None, C2_LENGTH, None),
       ("perms", "shield-check", "What this department can do", "And what it deliberately cannot", "5", None, C2_PERMS, None),
     ],
     foot=dbtn("Invite someone", "Open invite C5", "user-plus", "navy", full=True),

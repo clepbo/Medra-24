@@ -118,7 +118,14 @@ def date_strip(sel=2):
                 f'{T(17,"bold","var:text/on-dark" if on else "var:text/strong",n)}</Frame>')
     return f'<Frame w="fill" flex="row" gap={{8}}>{cells}</Frame>'
 
-def slot_grid(sel="10:30"):
+def slot_grid(sel="10:30", every="30 minutes", by="Dr. Okafor"):
+    """The grid is not a free-for-all: it is one consultation length, repeated.
+
+    Godwin, 14 Aug — "a private practitioner can say my consultation is 30 minutes, and we leave
+    a room for the institution where we ask them how many minutes they are allocating to each
+    patient. So if I am booking, what I see is 10:30, 11:00, 11:30." A member picking their own
+    length is how a clinic loses a day, so the length belongs to whoever runs the practice and
+    the grid says whose it is."""
     slots=[("09:00",True),("09:30",True),("10:00",False),("10:30",True),
            ("11:00",True),("11:30",False),("14:00",True),("14:30",True),("15:00",True)]
     cells=[]
@@ -131,7 +138,10 @@ def slot_grid(sel="10:30"):
             st='bg="var:bg/base" stroke="var:border/default" strokeWidth={1}'; col="var:text/default"
         cells.append(f'<Frame name="Btn Slot {t}" grow={{1}} flex="row" justify="center" py={{13}} rounded={{16}} {st}>'
                 f'{T(14,"semibold",col,t)}</Frame>')
-    return rows_of(cells, 3, 9)
+    note = (f'<Frame w="fill" flex="row" gap={{7}} items="center" pt={{2}}>'
+            f'{I("clock",13,M_IC)}'
+            f'{T(11,"regular","var:text/muted","Every " + every + " — set by " + by, w="fill")}</Frame>')
+    return rows_of(cells, 3, 9) + note
 
 def summary_row(ic,label,value):
     return (f'<Frame w="fill" flex="row" gap={{12}} items="center">'

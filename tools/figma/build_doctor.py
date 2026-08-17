@@ -396,7 +396,8 @@ K1_STATS = rows_of([
     stat_tile("users", "8", "Booked today", "3 seen · 5 to go", "teal", "Stat today"),
     stat_tile("clock", "6 min", "Median wait", "You are 4 minutes early", "ok", "Stat wait"),
     stat_tile("video", "5", "Virtual", "3 in person", "info", "Stat virtual"),
-    stat_tile("banknote", "₦96,000", "Collected today", "In Friday's payout", "navy", "Stat money"),
+    stat_tile("banknote", "₦96,000", "Collected today", "In Friday's payout", "navy", "Stat money",
+              delta=("up", "12% on last Thursday")),
 ], 4, 14)
 
 K1_DONE = dgroup("Already seen", [
@@ -462,9 +463,10 @@ K1_PROGRESS = dcard(
     + person_progress("avatar-3.jpg", "Grace Okeke", 84, "navy", "Q Grace"),
     p=18, gap=4)
 
-K1_DONUT = donut_card(38, "Clinic progress",
-                      [("Seen", "teal"), ("Still to see", "navy")],
-                      "Three of eight done. At this rate you finish at 16:40.")
+# The clinic-progress donut used to sit here. It left on 14 August, for two reasons Godwin
+# gave in the same breath: it repeated the stat tiles beside it, and a doctor does not care how
+# the clinic is doing. It now lives on the organisation admin and front-desk dashboards, where
+# the whole clinic is actually the subject.
 
 K1_MEDIA = dcard(
     eyerow("Shared with your patients", f'<Frame name="Btn Nav Patients" flex="row">{T(11,"semibold","var:text/accent","View all")}</Frame>')
@@ -501,12 +503,12 @@ addx("Today", "K1-today",
         f'{dbtn("Requests","Open requests K2","inbox","warn",grow=False,size="sm")}'
         f'{dbtn("Whole week","Open week K6","calendar-days","ghost",grow=False,size="sm")}</Frame></Frame>'
         f'{QUEUE_TOP}</Frame>'
-        f'<Frame w={{312}} flex="col" gap={{14}}>{K1_DONUT}{K1_ALSO_SHORT}{K1_LATER_SHORT}</Frame></Frame>',
+        f'<Frame w={{312}} flex="col" gap={{14}}>{K1_ALSO_SHORT}{K1_LATER_SHORT}</Frame></Frame>',
         NAV["Today"], PANEL_TODAY, badges=BADGES),
     dr_head("Good morning", "Dr. Okafor · 8 today, 3 seen", back=False, illo=True,
             stats=[("3/8", "Seen"), ("6 min", "Wait"), ("₦96k", "Today")]),
     # Pinned: the patient you are about to see, and how far through the day you are. Nothing else.
-    pinned=f'{K1_CRIT}' + f'{NOW_M}{donut_card(38,"Clinic progress",[("Seen","teal"),("Still to see","navy")],"Three of eight done. At this rate you finish at 16:40.",size=150)}',
+    pinned=f'{K1_CRIT}{NOW_M}',
     sections=[
       ("waiting", "users", "Waiting", "Chidi, Musa, Grace and Tunde", "5", None,
        f'{QUEUE_M}{K1_PROGRESS}', [("5", "Waiting"), ("6 min", "Median"), ("16:40", "Finish")]),
@@ -830,6 +832,28 @@ K7_DAYS = dgroup("Your working week", [
     dtoggle("calendar-days", "Saturday", sub="10:00 – 14:00 · virtual only", on=True, name="Day sat"),
     dtoggle("calendar-days", "Sunday", sub="Not working", on=False, name="Day sun"),
 ])
+# One consultation length, set by whoever runs the practice — the doctor here, the department
+# on an organisation screen. It is what turns an open day into a slot grid, and Godwin was
+# explicit that a member choosing their own length is not the model.
+# The weekly pattern says which days you work. This says which specific days you will not be
+# here — weeks ahead, on one calendar, in as many separate stretches as it takes.
+K7_AHEAD = dcard(
+    eyerow("Days you will not be here", f'<Frame name="Btn Open timeoff K8" flex="row">'
+           f'{T(11,"semibold","var:text/accent","Manage")}</Frame>')
+    + range_cal(ranges=[("22", "26", "22–26 Aug · conference"), ("30", "30", "30 Aug")],
+                booked=("23", "25", "30"), name="Avail"))
+
+K7_LENGTH = dgroup("How long is one consultation?", [
+    field_chips("Standard length", ["15 min", "20 min", "30 min", "45 min", "1 hour"], 2, "Slot length"),
+    dtoggle("video", "Virtual visits are shorter", sub="20 minutes instead of 30 — most of them are follow-ups",
+            on=True, name="Slot virtual shorter"),
+    dtoggle("user-plus", "Give a first visit longer", sub="45 minutes, once, so a new member is not rushed",
+            on=True, name="Slot first longer"),
+    drow("calendar-days", "What a member sees", value="10:30 · 11:00 · 11:30",
+         sub="The grid is your length repeated. Change it and tomorrow's open slots change with it",
+         name="Slot preview", chevron=False, tone="ok"),
+], footer="Appointments already booked keep the length they were booked at. Changing this never moves somebody who has paid.")
+
 K7_RULES = dgroup("Booking rules", [
     drow("clock", "Default slot length", value="30 minutes", sub="Each consultation type can override this", name="Open fees S2"),
     drow("hourglass", "Gap between patients", value="0 minutes", sub="Add a buffer if you regularly run over", name="Rule buffer"),
@@ -856,7 +880,7 @@ addx("Today", "K7-availability",
         f'{dbtn("Save changes","Save availability K7","check","navy",grow=False,size="sm")}</Frame>'
         f'{T(14,"regular","var:text/muted","Change this and the open slots on Medra change with it. Appointments already booked are never touched.",w="fill")}'
         f'<Frame w="fill" flex="row" gap={{16}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{14}}>{K7_DAYS}</Frame>'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{K7_LENGTH}{K7_DAYS}{K7_AHEAD}</Frame>'
         f'<Frame w={{380}} flex="col" gap={{14}}>{K7_RULES}'
         f'{alert_strip("info","4 people have booked Friday 29 August","Turning Friday off will not cancel them. Move or cancel each one yourself so they hear it from you.","info")}</Frame></Frame>',
         NAV["Schedule"], PANEL_SCHED, badges=BADGES),
@@ -877,11 +901,15 @@ addx("Today", "K7-availability",
     tab=MTAB["Today"])
 
 # ---------------- K8 time off
+# From/to dropdowns were here until 14 August. Two stretches away meant filling the form twice,
+# and you could not see what you were about to cancel until after you had chosen. A month you
+# select on solves both: several ranges at once, and the days somebody is already booked on are
+# marked before you touch them.
+K8_CAL = range_cal(ranges=[("22", "26", "22–26 Aug · conference"), ("30", "30", "30 Aug")],
+                   booked=("23", "25", "30"), name="Off")
+
 K8_FORM = dcard(
     field_chips("What is this?", ["Leave", "Conference", "Theatre list", "Sick", "Personal"], 0, "Timeoff type")
-    + f'<Frame w="fill" flex="row" gap={{12}}>'
-    + f'<Frame grow={{1}} flex="col">{field("From","calendar-days","Fri, 22 August",ph=False)}</Frame>'
-    + f'<Frame grow={{1}} flex="col">{field("To","calendar-days","Fri, 22 August",ph=False)}</Frame></Frame>'
     + checkbox("All day", "Timeoff allday")
     + field("Note for your own records (optional)", "message-square-text", "Cardiology conference in Lagos"))
 
@@ -910,14 +938,14 @@ addx("Today", "K8-timeoff",
         f'{T(13,"semibold","var:text/default","Schedule")}</Frame>'
         f'{dhead([("Block time",False),("off",True)],26)}'
         f'<Frame w="fill" flex="row" gap={{16}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{14}}>{K8_FORM}{K8_AFFECTED}{K8_COVER}</Frame>'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{K8_CAL}{K8_FORM}{K8_AFFECTED}{K8_COVER}</Frame>'
         f'<Frame w={{344}} flex="col" gap={{14}}>{K8_IMPACT}'
         f'{dcta("Block this time","Save timeoff K8","calendar-x")}'
         f'{dbtn("Offer everyone my next open slot","Offer slots K8","repeat","ghost",full=True)}</Frame></Frame>',
         NAV["Schedule"], PANEL_SCHED, badges=BADGES),
-    dr_head("Time off", "Friday 22 August",
-            stats=[("9", "Slots close"), ("4", "Booked"), ("₦60k", "To refund")]),
-    pinned=K8_FORM,
+    dr_head("Time off", "22–26 and 30 August",
+            stats=[("6", "Days off"), ("4", "Booked"), ("₦60k", "To refund")]),
+    pinned=f'{K8_CAL}{K8_FORM}',
     sections=[
       ("impact", "info", "What this affects", "Nine slots, four patients, ₦60,000", None, "warn",
        K8_IMPACT, None),
@@ -2677,9 +2705,9 @@ addx("Practice", "S4-contact",
 
 # ---------------- S5 earnings
 S5_STATS = rows_of([
-    stat_tile("banknote", "₦486,000", "Collected this month", "32 consultations", "teal", "Stat month"),
+    stat_tile("banknote", "₦486,000", "Collected this month", "32 consultations", "teal", "Stat month",
+              delta=("up", "18% on July")),
     stat_tile("wallet", "₦129,750", "Next payout", "Friday 22 August", "ok", "Stat payout"),
-    stat_tile("trending-up", "+18%", "Vs last month", "More follow-ups", "ocean", "Stat trend"),
     stat_tile("circle-slash", "₦15,000", "Refunded", "1 cancellation by you", "warn", "Stat refund"),
 ], 4, 14)
 

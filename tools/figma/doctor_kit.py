@@ -99,15 +99,27 @@ def eyerow(title, action=None):
 def dhead(parts, size=26):
     return head_chip(parts, size)
 
-def stat_tile(ic, value, label, sub=None, tone="info", name=None):
+def stat_tile(ic, value, label, sub=None, tone="info", name=None, delta=None):
+    """`delta` is (direction, text) — "up" or "down" and what it is against. Abraham asked for
+    money to read as a movement rather than a number: "their earnings, like a regression against
+    previous, an arrow down means less than what they..." A figure with nothing to compare it to
+    tells a doctor whether they are busy, not whether they are doing better."""
     tint = {"info": "tint-blue.jpg", "ok": "tint-mint.jpg", "warn": "tint-amber.jpg",
             "err": "tint-red.jpg", "teal": "tint-teal.jpg", "slate": "tint-slate.jpg",
             "navy": "tint-navy.jpg", "ocean": "tint-ocean.jpg"}[tone]
     s = T(11, "regular", "var:text/muted", sub, w="fill") if sub else ""
-    return (f'<Frame name="Btn {name or label}" grow={{1}} flex="col" gap={{10}} p={{16}} rounded={{16}} '
-            f'bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>'
+    d = ''
+    if delta:
+        up = delta[0] == "up"
+        d = (f'<Frame flex="row" gap={{4}} items="center" px={{8}} py={{3}} rounded={{999}} '
+             f'bg="{"var:state/success-bg" if up else "var:state/error-bg"}">'
+             f'{I("trending-up" if up else "trending-down", 12, OK_IC if up else ERR_IC)}'
+             f'{T(10,"semibold","var:state/success" if up else "var:state/error",delta[1])}</Frame>')
+    head = (f'<Frame w="fill" flex="row" justify="between" items="center">'
             f'<Frame w={{34}} h={{34}} rounded={{11}} image="assets/img/{tint}" overflow="hidden" '
-            f'flex="col" justify="center" items="center">{I(ic,17,W_IC)}</Frame>'
+            f'flex="col" justify="center" items="center">{I(ic,17,W_IC)}</Frame>{d}</Frame>')
+    return (f'<Frame name="Btn {name or label}" grow={{1}} flex="col" gap={{10}} p={{16}} rounded={{16}} '
+            f'bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>{head}'
             f'<Frame w="fill" flex="col" gap={{2}}>{T(24,"bold","var:text/strong",value)}'
             f'{T(12,"semibold","var:text/default",label,w="fill")}{s}</Frame></Frame>')
 
@@ -879,3 +891,73 @@ def link_row_dr(who, what, state, when, name):
             f'<Frame flex="row" px={{9}} py={{4}} rounded={{7}} bg="{conf[0]}">'
             f'{T(10,"semibold",conf[1],conf[2])}</Frame>'
             f'{T(10,"regular","var:text/faint",when)}</Frame>{I("chevron-right",15,M_IC)}</Frame>')
+
+
+def range_cal(month="August 2026", ranges=(), booked=(), name="Off"):
+    """A month you select on, not two dropdowns you type into.
+
+    Godwin, 14 Aug — "instead of selecting from 22nd August to 26th, and I still want to select
+    from 30th, I need to do that multiple times. I can just pick the dates on the calendar and
+    it is easier that way." Abraham: "a single calendar where you can click and it highlights
+    the range for you… you need a single calendar to do that."
+
+    `ranges` is a list of (start, end, label) day numbers; a day inside one is filled, the ends
+    are rounded, and a day carrying an appointment keeps its marker so you can see what you are
+    about to cancel before you select it, not after.
+    """
+    inside, starts, ends, solo = set(), set(), set(), set()
+    for a, b, _ in ranges:
+        a, b = int(a), int(b)
+        if a == b:
+            solo.add(str(a)); continue
+        starts.add(str(a)); ends.add(str(b))
+        for d in range(a + 1, b):
+            inside.add(str(d))
+
+    cols = ""
+    for day, nums in MONTH:
+        cells = f'{T(10,"semibold","var:text/faint",day)}'
+        for n in nums:
+            # the first row carries the tail of the previous month, and those numbers repeat
+            # later in the grid — 30 July and 30 August are both "30". A selection must never
+            # land on the leading ones.
+            faint = n in ("27", "28", "29", "30") and nums.index(n) == 0
+            sel = (not faint) and (n in inside or n in starts or n in ends or n in solo)
+            if sel:
+                r = ("rounded={10}" if n in solo else
+                     "roundedTopLeft={10} roundedBottomLeft={10}" if n in starts else
+                     "roundedTopRight={10} roundedBottomRight={10}" if n in ends else "")
+                cells += (f'<Frame name="Btn {name} {n}" w="fill" flex="col" gap={{2}} items="center" '
+                          f'py={{7}} {r} image="assets/img/btn-navy.jpg" overflow="hidden">'
+                          f'{T(12,"bold","var:text/on-dark",n)}'
+                          + ('<Ellipse w={4} h={4} bg="#FFFFFF" />' if n in booked
+                             else '<Frame h={4} w={4} />') + '</Frame>')
+            else:
+                dot = ('<Ellipse w={4} h={4} bg="#2F8BAC" />' if n in booked else '<Frame h={4} w={4} />')
+                cells += (f'<Frame name="Btn {name} {n}" w="fill" flex="col" gap={{2}} items="center" py={{7}} '
+                          f'rounded={{10}}>{T(12,"medium","var:text/faint" if faint else "var:text/default",n)}'
+                          f'{dot}</Frame>')
+        cols += f'<Frame grow={{1}} flex="col" gap={{3}} items="center">{cells}</Frame>'
+
+    chips = ""
+    for a, b, label in ranges:
+        chips += (f'<Frame name="Btn Range {a}" flex="row" gap={{7}} items="center" px={{11}} py={{6}} '
+                  f'rounded={{999}} bg="var:state/info-bg">'
+                  f'{T(11,"semibold","var:text/accent",label)}{I("x",12,A_IC)}</Frame>')
+    legend = (f'<Frame w="fill" flex="row" gap={{16}} items="center" pt={{2}}>'
+              f'<Frame flex="row" gap={{6}} items="center">'
+              f'<Frame w={{10}} h={{10}} rounded={{3}} image="assets/img/btn-navy.jpg" overflow="hidden" />'
+              f'{T(10,"regular","var:text/muted","Not available")}</Frame>'
+              f'<Frame flex="row" gap={{6}} items="center"><Ellipse w={{6}} h={{6}} bg="#2F8BAC" />'
+              f'{T(10,"regular","var:text/muted","Somebody is booked")}</Frame></Frame>')
+    return (f'<Frame w="fill" flex="col" gap={{12}} p={{18}} rounded={{16}} bg="var:bg/base" '
+            f'stroke="var:border/subtle" strokeWidth={{1}}>'
+            f'<Frame w="fill" flex="row" justify="between" items="center">'
+            f'{T(15,"bold","var:text/strong",month)}'
+            f'<Frame flex="row" gap={{8}} items="center">'
+            f'<Frame name="Btn Prev month" flex="row">{I("chevron-left",17,M_IC)}</Frame>'
+            f'<Frame name="Btn Next month" flex="row">{I("chevron-right",17,M_IC)}</Frame></Frame></Frame>'
+            f'{T(11,"regular","var:text/muted","Drag across the days you will not be here. Pick as many separate stretches as you need.",w="fill")}'
+            f'<Frame w="fill" flex="row" gap={{4}}>{cols}</Frame>'
+            + (f'<Frame w="fill" flex="row" gap={{8}}>{chips}</Frame>' if chips else '')
+            + f'{legend}</Frame>')

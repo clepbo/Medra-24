@@ -5,7 +5,11 @@
 and the organisation module was not reached.
 
 The transcript is machine-generated and heavily garbled. Everything below is an item I am
-confident of; where a reading is uncertain it is marked. Nothing here has been built yet.
+confident of; where a reading is uncertain it is marked.
+
+**Status, 14 Aug:** the five unblocked items are **built**. Two remain blocked and are marked
+as such — private notes needs a clinician, and the examination template needs one to write the
+field list.
 
 ---
 
@@ -14,7 +18,7 @@ confident of; where a reading is uncertain it is marked. Nothing here has been b
 These are not additions. Each one reverses a decision that is currently baked into screens, the
 PRD, or both, so each needs an explicit yes before it is applied.
 
-### 1.1 Private notes — the patient should see almost everything
+### 1.1 Private notes — the patient should see almost everything — ⛔ blocked
 
 > **Abraham (43:19):** "I know these notes are private, the patient does not get to see them,
 > right?"
@@ -38,7 +42,7 @@ If it is confirmed, the change is small in the file and large in meaning: `C7`'s
 default on, the private toggle becomes speciality-conditional, and `R2` on the member side gains
 the section.
 
-### 1.2 The clinic-progress donut does not belong to the doctor
+### 1.2 The clinic-progress donut does not belong to the doctor — ✅ done
 
 > **Godwin (15:11):** "Clinic progress is for the whole clinic. It should go to the
 > administrators or the receptionists… this part is not necessary for the doctor."
@@ -53,7 +57,7 @@ tiles beside it, and a doctor genuinely does not care how the clinic is doing. I
 organisation admin and front-desk dashboards, where it is the actual subject. This is already
 item 5 on the content cut-list, so it costs nothing extra.
 
-### 1.3 Consultation length is set by the practice, not by the patient
+### 1.3 Consultation length is set by the practice, not by the patient — ✅ done
 
 > **Godwin (13:16):** "I think we can standardise everything… a private practitioner can say my
 > consultation is 30 minutes, and we leave a room for the institution where we ask them how many
@@ -74,10 +78,10 @@ from it.
 
 | # | What | Where | Size |
 |---|---|---|---|
-| 2.1 | **Block specific dates ahead**, on a **single month calendar with drag-selectable ranges**, not from/to dropdowns. "I can just pick the dates on the calendar and it is easier that way." Multiple ranges in one view | `K7`, `K8` | 2 screens redrawn |
-| 2.2 | **Instrumental diagnostics** — ECG, echo, CT, MRI, gastroscopy, colonoscopy — alongside blood and urine. Agreed resolution: rename the section **"Lab results and diagnostics"** and put a type toggle inside rather than splitting it in two | member `R3`, doctor `P2`/`P8` | rename + a toggle |
-| 2.3 | **A structured examination template.** "Blood pressure this over this, and the doctor just puts in the numbers… sometimes you are rushing with a patient and you forget some of the things you needed to do, but if you see a template of what you need to fill in, then you know." Blood pressure, pulse, weight, height, and **BMI computed** rather than typed | doctor `C1` | 1 section redrawn |
-| 2.4 | **Earnings shown against the previous period**, with a direction arrow | doctor `K1`, `S5` | 1 tile |
+| 2.1 | ✅ **Block specific dates ahead**, on a **single month calendar with drag-selectable ranges**, not from/to dropdowns. "I can just pick the dates on the calendar and it is easier that way." Multiple ranges in one view | `K7`, `K8` | 2 screens redrawn |
+| 2.2 | ✅ **Instrumental diagnostics** — ECG, echo, CT, MRI, gastroscopy, colonoscopy — alongside blood and urine. Agreed resolution: rename the section **"Lab results and diagnostics"** and put a type toggle inside rather than splitting it in two | member `R3`, doctor `P2`/`P8` | rename + a toggle |
+| 2.3 | ⛔ **A structured examination template.** "Blood pressure this over this, and the doctor just puts in the numbers… sometimes you are rushing with a patient and you forget some of the things you needed to do, but if you see a template of what you need to fill in, then you know." Blood pressure, pulse, weight, height, and **BMI computed** rather than typed | doctor `C1` | 1 section redrawn |
+| 2.4 | ✅ **Earnings shown against the previous period**, with a direction arrow | doctor `K1`, `S5` | 1 tile |
 
 ### On 2.3 — this is the strongest request in the review
 
