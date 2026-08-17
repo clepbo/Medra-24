@@ -8,7 +8,7 @@ they do not land on top of each other.
 |---|---:|---:|
 | Member | y = 0 | 158 |
 | Doctor | y = 60,000 | 275 |
-| Organisation | y = 120,000 | 262 |
+| Organisation | y = 120,000 | 277 |
 | Auth | y = 180,000 | 70 |
 
 The page is called **`Medra`**. If you would rather use a page you already have, change
@@ -51,7 +51,7 @@ Each script primes the icon cache, imports the tokens, selects the one page, ren
 in flow order, and then runs its linker. The linker wires the prototype, lays that module's band
 out, and sets its flow starting points.
 
-**765 frames is a lot to render in one sitting.** If a script stops part-way, re-run it — but
+**780 frames is a lot to render in one sitting.** If a script stops part-way, re-run it — but
 delete that module's frames first, or you will get duplicates of everything it already drew.
 
 ## Afterwards
@@ -66,7 +66,7 @@ Verify before and after:
 python3 tools/figma/proto_check.py figma/medra-member link-member.js
 ```
 
-All four currently report **PROTOTYPE COMPLETE** — 765 frames, 678 screens, every one reachable,
+All four currently report **PROTOTYPE COMPLETE** — 780 frames, 693 screens, every one reachable,
 no broken hotspots.
 
 ## What you will see on the page

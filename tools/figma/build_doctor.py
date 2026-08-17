@@ -503,7 +503,7 @@ addx("Today", "K1-today",
         f'{dbtn("Requests","Open requests K2","inbox","warn",grow=False,size="sm")}'
         f'{dbtn("Whole week","Open week K6","calendar-days","ghost",grow=False,size="sm")}</Frame></Frame>'
         f'{QUEUE_TOP}</Frame>'
-        f'<Frame w={{312}} flex="col" gap={{14}}>{K1_ALSO_SHORT}{K1_LATER_SHORT}</Frame></Frame>',
+        f'<Frame w={{300}} flex="col" gap={{14}}>{K1_ALSO_SHORT}{K1_LATER_SHORT}</Frame></Frame>',
         NAV["Today"], PANEL_TODAY, badges=BADGES),
     dr_head("Good morning", "Dr. Okafor · 8 today, 3 seen", back=False, illo=True,
             stats=[("3/8", "Seen"), ("6 min", "Wait"), ("₦96k", "Today")]),
@@ -800,7 +800,7 @@ addx("Today", "K6-week",
         f'{dcard(WEEK + LEGEND, p=18)}'
         f'<Frame w="fill" flex="row" gap={{16}} items="start">'
         f'<Frame grow={{1}} flex="col" gap={{12}}>{T(15,"bold","var:text/strong","Thursday 21 August")}{QUEUE_TOP}</Frame>'
-        f'<Frame w={{330}} flex="col" gap={{14}}>{K6_SUM}'
+        f'<Frame w={{300}} flex="col" gap={{14}}>{K6_SUM}'
         f'{alert_strip("triangle-alert","Friday is fully blocked","Four people had already booked — decide for each from Time off.","warn")}</Frame></Frame>',
         NAV["Schedule"], PANEL_SCHED, badges=BADGES),
     dr_head("Schedule", "Week of 18 August", back=False,
@@ -3447,6 +3447,16 @@ for page, fn, jsx in frames:
     open(os.path.join(OUT, fn), "w").write(sanitize(normalise(jsx)))
     manifest.setdefault(page, []).append(fn)
 open(os.path.join(OUT, "pages.json"), "w").write(json.dumps(manifest, indent=2))
+
+# A renamed or deleted section leaves its .jsx behind, and the render script then draws a
+# frame the builder no longer knows about — the linker never wires it and the audit reports
+# a screen nobody can reach. Prune what this build did not write.
+_written = {fn for _p, fn, _j in frames}
+for _stale in sorted(set(os.listdir(OUT)) - _written):
+    if _stale.endswith(".jsx"):
+        os.remove(os.path.join(OUT, _stale))
+        print("  pruned stale frame:", _stale)
+
 
 AUTH_DR = ("Auth · Doctor — D6 Log In", "Auth · Doctor — D6 Log In · Mobile")
 

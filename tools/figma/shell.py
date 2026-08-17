@@ -21,7 +21,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from medra_ui import *
 
 RAIL_W  = 76          # collapsed — icons only
-RAIL_WX = 248         # expanded — icons with their labels
+RAIL_WX = 208         # expanded — icons with their labels; a screen that also carries a
+                      # 340 context rail has three columns to fit inside 1440, so this is as
+                      # wide as the labelled state can be without squeezing the middle one
 GROUND = "var:bg/subtle"
 
 # The pill is the only place a persona is named. Everything else is identical across modules,
@@ -29,14 +31,14 @@ GROUND = "var:bg/subtle"
 PERSONAS = {
     "member": ("circle-user", "Member"),
     "doctor": ("stethoscope", "Doctor"),
-    "admin":  ("building-2", "Organisation · Admin"),
-    "desk":   ("concierge-bell", "Organisation · Front desk"),
-    "nurse":  ("heart-pulse", "Organisation · Nursing"),
-    "lab":    ("flask-conical", "Organisation · Laboratory"),
-    "pharm":  ("pill", "Organisation · Pharmacy"),
-    "imaging":("scan", "Organisation · Imaging"),
-    "billing":("receipt", "Organisation · Billing"),
-    "orgdoc": ("stethoscope", "Organisation · Doctor"),
+    "admin":  ("building-2", "Org admin"),
+    "desk":   ("concierge-bell", "Front desk"),
+    "nurse":  ("heart-pulse", "Nursing"),
+    "lab":    ("flask-conical", "Laboratory"),
+    "pharm":  ("pill", "Pharmacy"),
+    "imaging":("scan", "Imaging"),
+    "billing":("receipt", "Billing"),
+    "orgdoc": ("stethoscope", "Org doctor"),
 }
 
 
@@ -98,8 +100,10 @@ def rail_item(ic, name, label=None, on=False, badge=None, wide=False):
             f'{dot}</Frame>')
 
 
-def rail(items, active=0, badges=(), expanded=False, who=("Amara Okeke", "Member")):
-    """items: (icon, hotspot-name, label). Collapsed by default; expanded shows the labels.
+def rail(items, active=0, badges=(), expanded=True, who=("Amara Okeke", "Member")):
+    """items: (icon, hotspot-name, label). Expanded by default — labelled, the way a sidebar
+    reads to somebody who has not learnt the icons yet. Pass `expanded=False` for the collapsed
+    icon-only state, which is a state of the same rail rather than a second navigation.
 
     The two states are the same list, the same order and the same hotspot names, so every
     transition in the prototype works in either — the rail is a view of one thing, not two
@@ -116,13 +120,16 @@ def rail(items, active=0, badges=(), expanded=False, who=("Amara Okeke", "Member
                 f'<Frame name="Btn Collapse rail" flex="row">{I(toggle_ic,18,"#A7B6C2")}</Frame></Frame>')
         foot = (f'<Frame w="fill" flex="col" gap={{4}}>'
                 f'{rail_item("circle-help","Open help","Help",wide=True)}'
-                f'<Frame name="Btn Nav Profile" w="fill" flex="row" gap={{11}} items="center" p={{10}} '
+                # The role goes on its own full-width line rather than beside the avatar:
+                # "Organisation admin" does not fit in what is left of 208px after an avatar
+                # and a sign-out icon, and a wrapped role reads as a mistake.
+                f'<Frame name="Btn Nav Profile" w="fill" flex="col" gap={{6}} p={{10}} '
                 f'rounded={{14}} bg="var:neutral/50">'
-                f'<Image image="assets/img/me.jpg" w={{34}} h={{34}} rounded={{999}} />'
-                f'<Frame grow={{1}} flex="col" gap={{1}}>'
-                f'{T(13,"semibold","var:text/strong",who[0])}'
-                f'{T(11,"regular","var:text/muted",who[1])}</Frame>'
-                f'<Frame name="Btn Sign out" flex="row">{I("log-out",16,"#A7B6C2")}</Frame></Frame></Frame>')
+                f'<Frame w="fill" flex="row" gap={{9}} items="center">'
+                f'<Image image="assets/img/me.jpg" w={{30}} h={{30}} rounded={{999}} />'
+                f'{T(12,"semibold","var:text/strong",who[0],w="fill")}'
+                f'<Frame name="Btn Sign out" flex="row">{I("log-out",15,"#A7B6C2")}</Frame></Frame>'
+                f'{T(10,"regular","var:text/muted",who[1],w="fill")}</Frame></Frame>')
         pad = 'px={16} py={20}'
         align = ''
     else:
@@ -143,7 +150,7 @@ def rail(items, active=0, badges=(), expanded=False, who=("Amara Okeke", "Member
 def topbar(title, persona, sub=None, right=None, search="Btn Search", place=None, extra=""):
     subline = T(12, "regular", "var:text/muted", sub) if sub else ""
     tools = right if right is not None else (
-        (f'<Frame name="{search}" w={{300}} flex="row" gap={{10}} items="center" px={{15}} py={{11}} '
+        (f'<Frame name="{search}" w={{248}} flex="row" gap={{10}} items="center" px={{15}} py={{11}} '
          f'rounded={{999}} bg="var:neutral/50" stroke="var:border/subtle" strokeWidth={{1}}>'
          f'{I("search",17,"#7E8F9D")}{T(13,"regular","var:text/faint","Search",w="fill")}</Frame>'
          if search else '')
@@ -151,10 +158,10 @@ def topbar(title, persona, sub=None, right=None, search="Btn Search", place=None
         + f'<Frame name="Btn Notifications" w={{40}} h={{40}} rounded={{999}} bg="var:neutral/50" '
           f'stroke="var:border/subtle" strokeWidth={{1}} flex="row" justify="center" items="center">'
           f'{I("bell",18,"#1B3A5B")}</Frame>')
-    return (f'<Frame w="fill" flex="row" justify="between" items="center" gap={{18}} pb={{4}}>'
-            f'<Frame flex="col" gap={{3}}>'
-            f'<Frame flex="row" gap={{11}} items="center">'
-            f'{T(20,"bold","var:text/strong",title)}{persona_pill(persona)}</Frame>'
+    return (f'<Frame w="fill" flex="row" justify="between" items="center" gap={{16}} pb={{4}}>'
+            f'<Frame grow={{1}} flex="col" gap={{3}}>'
+            f'<Frame w="fill" flex="row" gap={{11}} items="center">'
+            f'{T(20,"bold","var:text/strong",title,w="fill")}{persona_pill(persona)}</Frame>'
             f'{subline}</Frame>'
             f'<Frame flex="row" gap={{10}} items="center">{tools}</Frame></Frame>')
 
@@ -166,7 +173,7 @@ def tool_btn(ic, name):
 
 
 def app_desk(name, persona, title, children, items, active=0, sub=None,
-             side=None, badges=(), right=None, expanded=False, who=None, place=None,
+             side=None, badges=(), right=None, expanded=True, who=None, place=None,
              search="Btn Search", extra=""):
     """One shell, every persona. `side` is the optional 340px context rail.
 

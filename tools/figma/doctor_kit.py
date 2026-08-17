@@ -527,7 +527,11 @@ def queue_row(time, avatar, who, meta, reason, kind, vtype, name, now=False, fla
             f'<Rect w={{1}} h={{40}} bg="var:border/subtle" />'
             f'<Image image="assets/img/{avatar}" w={{40}} h={{40}} rounded={{12}} />'
             f'<Frame grow={{1}} flex="col" gap={{3}}>'
-            f'<Frame flex="row" gap={{8}} items="center">{T(14,"semibold","var:text/strong",who)}{status_pill(kind,size=10)}</Frame>'
+            # w="fill" on the row and the name: the column this sits in shrinks when a screen
+            # also carries a context rail, and a hugging row inside a shrinking column overflows
+            # it rather than wrapping.
+            f'<Frame w="fill" flex="row" gap={{8}} items="center">'
+            f'{T(14,"semibold","var:text/strong",who,w="fill")}{status_pill(kind,size=10)}</Frame>'
             f'{T(11,"regular","var:text/muted",meta,w="fill")}</Frame>'
             f'<Frame flex="row" gap={{6}} items="center" px={{9}} py={{5}} rounded={{8}} bg="var:bg/muted">'
             f'{I(tic,11,A_IC)}{T(10,"medium","var:text/default",vtype)}</Frame>{action}</Frame>'

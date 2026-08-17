@@ -973,6 +973,16 @@ for page,fn,jsx in frames:
     manifest.setdefault(page,[]).append(fn)
 open(os.path.join(OUT,"pages.json"),"w").write(json.dumps(manifest,indent=2))
 
+# A renamed or deleted section leaves its .jsx behind, and the render script then draws a
+# frame the builder no longer knows about — the linker never wires it and the audit reports
+# a screen nobody can reach. Prune what this build did not write.
+_written = {fn for _p, fn, _j in frames}
+for _stale in sorted(set(os.listdir(OUT)) - _written):
+    if _stale.endswith(".jsx"):
+        os.remove(os.path.join(OUT, _stale))
+        print("  pruned stale frame:", _stale)
+
+
 PAGE_FIGMA={"Entry":"Medra Auth — Entry","Member":"Medra Auth — Member",
             "Doctor":"Medra Auth — Doctor","Institution":"Medra Auth — Institution"}
 TRN=[

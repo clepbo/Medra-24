@@ -441,3 +441,185 @@ def shift_row(who, role, until, name, on=True, sub=None):
             f'items="center">{I("user-round",16,GRAPH_IC if on else DIM_IC)}</Frame>'
             f'<Frame grow={{1}} flex="col" gap={{1}}>{T(13,"medium","var:text/strong",who)}{s}</Frame>'
             f'{pill}</Frame>')
+
+
+# =====================================================================================
+# CHARTS
+#
+# The admin is the only persona who reads Medra as a set of numbers rather than as a
+# queue, so this is the only place charts belong. Four rules hold across all of them,
+# and they are the reason these are functions rather than hand-drawn frames:
+#
+#   1. **One hue, light to dark.** Magnitude is the job on every one of these charts, so
+#      the colour carries size and nothing else. The Medra blue ramp below is monotonic
+#      in lightness and its adjacent steps clear ΔE 15 for normal vision and 13 under
+#      protanopia — four steps is where that holds, which is why there are four.
+#   2. **Green, amber and red never appear in a chart.** They mean state everywhere else
+#      in this file, and a bar that is red because it is fourth is a bar somebody reads
+#      as a problem. Amber stays what it is in the console: seats and counts the admin
+#      owns, not a series colour.
+#   3. **Every cell and every bar carries its number.** The lighter steps do not reach
+#      3:1 against white, so the label is what makes them readable — not decoration.
+#   4. **Thin marks, 2px of surface between them, no gridline heavier than the data.**
+#
+# There are no line charts because the renderer has no path primitive. A month-by-month
+# column chart is the honest substitute and reads the same way.
+# =====================================================================================
+RAMP = ["#E8F1F6", "#9FC7DA", "#4E93B4", "#1B3A5B"]   # light → dark, one hue
+RAMP_BG = "#F2F6F9"                                    # the unfilled part of a track
+
+
+def step_of(v, hi, n=4):
+    """Which ramp step a value lands on. Quartiles of the range, not of the data — an
+    admin comparing two weeks needs the colour to mean the same thing in both."""
+    if hi <= 0:
+        return 0
+    k = int(v * n / hi)
+    return max(0, min(n - 1, k - 1 if k == n else k))
+
+
+def col_chart(series, note=None, h=150, action=None, title=None, emphasis=True):
+    """Columns over time. `series` is (label, value, display) — the last one is treated as
+    the current period and gets the darkest step, because on every one of these screens the
+    question is "and where are we now"."""
+    hi = max(v for _, v, _ in series) or 1
+    cells = ""
+    for i, (label, v, disp) in enumerate(series):
+        last = i == len(series) - 1
+        col = RAMP[3] if (last and emphasis) else RAMP[1]
+        px = max(6, int(v * h / hi))
+        cells += (f'<Frame grow={{1}} flex="col" gap={{7}} items="center">'
+                  f'{T(10,"semibold","var:text/strong" if last else "var:text/muted",disp)}'
+                  # capped at 44px: six months across 700px would otherwise be six blocks of
+                  # colour with no air in the band, and the leftover space is the chart
+                  f'<Frame w="fill" h={{{h}}} flex="col" justify="end" items="center">'
+                  f'<Frame w={{44}} h={{{px}}} rounded={{4}} bg="{col}" />'
+                  f'</Frame>'
+                  f'{T(10,"regular","var:text/muted",label)}</Frame>')
+    head = eyerow(title, action) if title else ''
+    ft = T(11, "regular", "var:text/muted", note, w="fill") if note else ''
+    return dcard(f'{head}<Frame w="fill" flex="row" gap={{10}} items="end">{cells}</Frame>{ft}', p=18, gap=12)
+
+
+def rank_bars(rows, title=None, note=None, action=None, name=None):
+    """Ranked horizontal bars — the right form for "who did how much", because the names are
+    long and the order is the message. `rows` is (label, sub, value, display) with an optional
+    fifth item: pass True to pin a row to the bottom, which is what a residual "everything
+    else" bucket needs — it is often the largest number on the chart and is never the story."""
+    # Sorted here rather than trusting the caller: on a ranked chart the order *is* the
+    # message, and a list that arrives in some other order silently tells the wrong story.
+    rows = [tuple(r) + (False,) if len(r) == 4 else tuple(r) for r in rows]
+    rows = sorted(rows, key=lambda r: (r[4], -r[2]))
+    hi = max(v for _, _, v, _, _ in rows) or 1
+    body = ""
+    for i, (label, sub, v, disp, tail) in enumerate(rows):
+        pct = max(2, int(v * 100 / hi))
+        # the tail bucket wears the de-emphasis gray, not the palest ramp step — that step
+        # is almost the colour of the track and the bar disappears
+        col = "#CBD6DF" if tail else RAMP[3] if i == 0 else RAMP[2] if pct > 55 else RAMP[1]
+        s = T(10, "regular", "var:text/muted", sub) if sub else ""
+        body += (f'<Frame name="Btn {(name or "Rank") + " " + label}" w="fill" flex="col" gap={{6}} py={{9}}>'
+                 f'<Frame w="fill" flex="row" gap={{10}} items="center">'
+                 f'<Frame grow={{1}} flex="col" gap={{1}}>{T(12,"medium","var:text/strong",label)}{s}</Frame>'
+                 f'{T(13,"semibold","var:text/strong",disp)}</Frame>'
+                 f'<Frame w="fill" flex="row" h={{10}} rounded={{999}} bg="{RAMP_BG}" overflow="hidden">'
+                 f'<Frame grow={{{pct}}} h={{10}} rounded={{999}} bg="{col}" />'
+                 f'<Frame grow={{{max(1, 100 - pct)}}} h={{10}} /></Frame></Frame>')
+    head = eyerow(title, action) if title else ''
+    ft = T(11, "regular", "var:text/muted", note, w="fill") if note else ''
+    return dcard(f'{head}{body}{ft}', p=18, gap=4)
+
+
+def heat_grid(cols, rows, title=None, note=None, unit="", action=None):
+    """When the place is busy. `rows` is (label, [values…]) against `cols` headings — a grid
+    is the only form that answers "which morning" and "which hour" in one look, and the
+    number in each cell is what makes the pale steps readable."""
+    hi = max(max(vals) for _, vals in rows) or 1
+    head_row = (f'<Frame w="fill" flex="row" gap={{4}} items="center">'
+                f'<Frame w={{46}} />'
+                + "".join(f'<Frame grow={{1}} flex="row" justify="center">'
+                          f'{T(9,"semibold","var:text/muted",c)}</Frame>' for c in cols)
+                + '</Frame>')
+    body = ""
+    for label, vals in rows:
+        cells = ""
+        for v in vals:
+            k = step_of(v, hi)
+            ink = "#FFFFFF" if k >= 2 else "var:text/strong"
+            cells += (f'<Frame grow={{1}} h={{34}} rounded={{6}} bg="{RAMP[k]}" flex="col" '
+                      f'justify="center" items="center">{T(10,"semibold",ink,str(v))}</Frame>')
+        body += (f'<Frame w="fill" flex="row" gap={{4}} items="center">'
+                 f'<Frame w={{46}} flex="row">{T(10,"medium","var:text/muted",label)}</Frame>'
+                 f'{cells}</Frame>')
+    key = (f'<Frame w="fill" flex="row" gap={{8}} items="center" pt={{2}}>'
+           f'{T(9,"regular","var:text/faint","Quieter")}'
+           + "".join(f'<Rect w={{18}} h={{9}} rounded={{3}} bg="{c}" />' for c in RAMP)
+           + f'{T(9,"regular","var:text/faint","Busier")}'
+           + (f'<Frame grow={{1}} flex="row" justify="end">{T(9,"regular","var:text/faint",unit)}</Frame>' if unit else '')
+           + '</Frame>')
+    hd = eyerow(title, action) if title else ''
+    ft = T(11, "regular", "var:text/muted", note, w="fill") if note else ''
+    return dcard(f'{hd}<Frame w="fill" flex="col" gap={{4}}>{head_row}{body}</Frame>{key}{ft}', p=18, gap=11)
+
+
+def part_bar(segments, title=None, note=None, total=None, action=None):
+    """One stacked bar for a part-to-whole. `segments` is (label, pct, display). Ordered
+    largest first and stepped down the same ramp, so the order of the stack and the depth of
+    the colour say the same thing — a reader never has to match a hue to a legend to know
+    which slice is bigger."""
+    fills = ""
+    for i, (label, pct, disp) in enumerate(segments):
+        col = RAMP[max(0, 3 - i)]
+        fills += f'<Frame grow={{{max(1, int(pct))}}} h={{28}} bg="{col}" />'
+        if i < len(segments) - 1:
+            fills += f'<Frame w={{2}} h={{28}} bg="var:bg/base" />'   # the 2px surface gap
+    legend = ""
+    for i, (label, pct, disp) in enumerate(segments):
+        legend += (f'<Frame flex="row" gap={{7}} items="center">'
+                   f'<Rect w={{10}} h={{10}} rounded={{3}} bg="{RAMP[max(0, 3 - i)]}" />'
+                   f'{T(11,"regular","var:text/muted",label)}'
+                   f'{T(11,"semibold","var:text/strong",disp)}</Frame>')
+    hd = eyerow(title, action) if title else ''
+    tot = (f'<Frame w="fill" flex="row" justify="between" items="center">'
+           f'{T(11,"regular","var:text/muted","Total")}{T(14,"bold","var:text/strong",total)}</Frame>') if total else ''
+    ft = T(11, "regular", "var:text/muted", note, w="fill") if note else ''
+    keys = f'<Frame w="fill" flex="col" gap={{7}}>{legend}</Frame>'
+    return dcard(f'{hd}{tot}<Frame w="fill" flex="row" rounded={{8}} overflow="hidden">{fills}</Frame>'
+                 f'{keys}{ft}', p=18, gap=12)
+
+
+def data_table(headers, rows, title=None, note=None, action=None, name="Row", widths=None):
+    """A table, deliberately. Seven departments is past the point where colour can carry
+    identity, and the admin's question here is "what is the number" rather than "which is
+    biggest" — so the numbers are the chart."""
+    widths = widths or [None] * len(headers)
+
+    def cell(txt, i, header=False, strong=False):
+        w = widths[i]
+        wp = f' w={{{w}}}' if w else ' grow={1}'
+        al = ' align="right"' if i and not header else ''
+        col = "var:text/muted" if header else ("var:text/strong" if strong or i == 0 else "var:text/default")
+        sz = 10 if header else 12
+        wt = "semibold" if header or strong or i == 0 else "regular"
+        return (f'<Frame{wp} flex="row" justify="{"start" if not i else "end"}">'
+                f'<Text font="Inter" size={{{sz}}} weight="{wt}" color="{col}"{al}>{esc(txt)}</Text></Frame>')
+
+    head = (f'<Frame w="fill" flex="row" gap={{10}} items="center" pb={{8}}>'
+            + "".join(cell(h, i, header=True) for i, h in enumerate(headers)) + '</Frame>')
+    body = ""
+    for r in rows:
+        body += (f'<Frame name="Btn {name} {r[0]}" w="fill" flex="row" gap={{10}} items="center" py={{10}}>'
+                 + "".join(cell(str(c), i) for i, c in enumerate(r)) + '</Frame>' + hr())
+    hd = eyerow(title, action) if title else ''
+    ft = T(11, "regular", "var:text/muted", note, w="fill") if note else ''
+    return dcard(f'{hd}{head}{hr()}{body}{ft}', p=18, gap=2)
+
+
+def hero_stat(value, label, sub=None, right=None):
+    """The one number a screen leads with. Exactly one per screen."""
+    return dcard(f'<Frame w="fill" flex="row" justify="between" items="center" gap={{16}}>'
+                 f'<Frame grow={{1}} flex="col" gap={{4}}>'
+                 f'{T(11,"semibold","var:text/accent",label.upper())}'
+                 f'{T(44,"bold","var:text/strong",value)}'
+                 + (T(12, "regular", "var:text/muted", sub, w="fill") if sub else '')
+                 + f'</Frame>{right or ""}</Frame>', p=20, gap=0)

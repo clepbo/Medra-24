@@ -57,7 +57,7 @@ while capturing enough record to be clinically useful.
 
 ## 3. Where the design is now
 
-Five rendered bundles, **765 frames**, all validated clean and fully offline.
+Five rendered bundles, **780 frames**, all validated clean and fully offline.
 
 | Bundle | Frames | Pages | Status |
 |---|---:|---:|---|
@@ -65,7 +65,7 @@ Five rendered bundles, **765 frames**, all validated clean and fully offline.
 | `figma/medra-auth` — authentication, 4 roles | 70 | 4 | Done · **v2.0 retrofit applied** · **prototype complete** |
 | `figma/medra-member` — the whole member app | 158 | 8 | Done · **prototype complete** |
 | `figma/medra-doctor` — full doctor module | 275 | 8 | Done · **prototype complete** |
-| `figma/medra-org` — organisation, every department, clinical chain, external | 262 | 9 | Done · **prototype complete** · **not yet rendered into Figma** |
+| `figma/medra-org` — organisation, every department, clinical chain, external | 277 | 9 | Done · **prototype complete** · **not yet rendered into Figma** |
 
 `medra-member` was two bundles until the merge (`medra-member` for find & book,
 `medra-member-2` for everything the bottom nav led to). The split existed because batch 1 was
@@ -394,6 +394,54 @@ differ and the screens say which.
 | **G2 My roster** | The hospital's roster, not his availability. He cannot open or close a session; he asks, and a named person answers. Overbooking is visible as a fact somebody decided |
 | **G3 Messages** | Godwin asked for this directly. A message goes to a **department** and whoever is on shift picks it up — sending it to a named person is how a question waits until Monday because that person went home |
 | **G4 A conversation** | Attached to the visit, so the next doctor can see why the order of the day changed. Nothing clinical is decided here; an order, a result and a referral each keep their own screen and their own record |
+
+### B3. The rail is expanded by default, and the admin has real reports — **DONE (17 Aug)**
+
+Two things from the same sitting.
+
+**The sidebar now opens labelled.** `expanded=True` is the default on `rail()` and `app_desk()`;
+collapsed is still there and still carries the same hotspot names, so it is a state of one rail
+rather than a second navigation. Making it the default cost 172px of main column and that
+turned up three fits that had been passing only because the rail was 76px wide: `K1` and `K6`
+in the doctor module both put a fixed inner column beside a context rail, and a hugging row
+inside a shrinking column overflows rather than wraps. Fixed by capping the expanded rail at
+208px, narrowing those two inner columns to 300, and giving `queue_row`'s name line `w="fill"`.
+The persona pill lost its "Organisation · " prefix — at 208px "Organisation · Laboratory" was
+two lines in a pill — and the rail's profile block puts the role on its own line for the same
+reason.
+
+**Reports became four screens instead of one.** The old `F4` was a bar chart and five ratios,
+which is a summary rather than an answer. An administrator's questions are four:
+
+| Screen | What it answers |
+|---|---|
+| **F4 Reports** | The overview: 1,412 seen, six months of volume, a day × hour grid of when the place is actually busy, and the way into the other three |
+| **F8 Patients** | New against returning, where the visits came from, why people came, who they were by age, and who did not turn up — with the finding that a phone booking is three times more likely to be a no-show than one made in Medra |
+| **F9 Clinicians** | The number Godwin asked for by name: **hours actually spent consulting**, per doctor, against hours rostered. Plus median consultation length, notes signed same day, criticals acknowledged, and where a clinical hour goes — 62 hours a month spent waiting for somebody to walk in |
+| **F10 Departments** | Seven departments side by side, transactions per person, turnaround against each department's own target, and who is on shift right now |
+
+**The charts are generated, not drawn** — `col_chart`, `rank_bars`, `heat_grid`, `part_bar`,
+`data_table`, `hero_stat` in `org_kit.py`. Four rules hold across all of them and are written
+at the top of that section:
+
+1. **One blue ramp, light to dark.** Magnitude is the job on every chart here, so colour
+   carries size and nothing else. Four steps, because that is where adjacent pairs still clear
+   ΔE 15 for normal vision and 13 under protanopia.
+2. **Green, amber and red never appear inside a chart.** They mean *state* everywhere else in
+   this file, and a bar that is red because it is fourth is a bar somebody reads as a problem.
+3. **Every mark carries its number.** The pale steps do not reach 3:1 against white; the label
+   is what makes them readable, not decoration.
+4. **A table once there are more than about seven things.** Seven departments is past the point
+   where colour can carry identity, and the admin came for the number anyway.
+
+There are no line charts: the renderer has no path primitive, so a month-by-month column chart
+is the honest substitute. `rank_bars` sorts its own rows — on a ranked chart the order *is* the
+message — and pins a residual "everything else" bucket to the bottom in the de-emphasis gray,
+because it is often the largest number and never the story.
+
+**Builders now prune their own folders.** A renamed section used to leave its `.jsx` behind;
+the render script drew it, the linker never wired it, and the audit reported an unreachable
+screen. Two of those were live in this bundle.
 
 ### C. Member mobile hub → section conversion
 

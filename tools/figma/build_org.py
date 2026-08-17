@@ -1878,9 +1878,10 @@ addx("Chain", "D19-billing",
         NAV["Departments"], dept="Billing", who=BILLING, badges=BADGES, persona="billing", urgent=3),
     o_head("The money today", "₦412,000 in · ₦1.4m outstanding", back=False, ctx="Billing · Garki",
            stats=[("₦412k", "Taken"), ("₦186k", "Owed"), ("₦1.24m", "HMOs")]),
-    pinned=D19_TILLS,
+    # The four tiles are a desktop row. On a phone the header already carries the same three
+    # numbers, so the pin is the list of people who owe money — the thing you act on.
+    pinned=D19_OWED,
     sections=[
-      ("owed", "receipt", "Money owed to us", "9 people, oldest 11 days", "9", "warn", D19_OWED, None),
       ("method", "chart-column", "How it came in", "Cash is 23% of it", "4", None, D19_METHOD, None),
       ("shift", "lock", "Closing the till", "Two people, never one", "3", "err", D19_SHIFT, None),
     ],
@@ -2544,48 +2545,249 @@ addx("Govern", "F3-compliance",
     tab_items=TAB_ADMIN, tab=4)
 
 # ---------------- F4 reports
-F4_CHART = dcard(
-    eyerow("Visits a month", f'<Frame name="Btn Report range" flex="row">{T(11,"semibold","var:text/accent","Last 6 months")}</Frame>')
-    + f'<Frame w="fill" flex="row" gap={{10}} items="end" h={{176}}>'
-    + "".join(f'<Frame grow={{1}} flex="col" gap={{7}} items="center">'
-              f'<Frame w="fill" h={{{h}}} rounded={{10}} image="assets/img/btn-amber.jpg" overflow="hidden" />'
-              f'{T(10,"regular","var:text/muted",m)}</Frame>'
-              for m, h in (("Mar", 74), ("Apr", 96), ("May", 88), ("Jun", 118), ("Jul", 132), ("Aug", 146)))
-    + '</Frame>'
-    + T(11, "regular", "var:text/muted", "1,412 visits in August so far — up 11% on July, mostly follow-ups.", w="fill"))
+# =====================================================================================
+# F4, F8–F10  WHAT THE ADMIN CAN SEE
+#
+# Godwin: "our next meeting should be the dashboard of the institutions." The console had
+# one Reports screen with a bar chart and five ratios on it, which is a summary rather
+# than an answer. An administrator's real questions are four, and each one is a screen:
+# how many people did we see and who were they; what are the doctors actually doing with
+# their time; is each department keeping up; and where is the money coming from.
+#
+# The charts obey the rules at the top of org_kit.py — one blue ramp light to dark, no
+# green/amber/red inside a chart, a number on every mark, and a table wherever there are
+# more than about seven things to tell apart.
+# =====================================================================================
+VISITS = [("Mar", 986, "986"), ("Apr", 1104, "1,104"), ("May", 1043, "1,043"),
+          ("Jun", 1218, "1,218"), ("Jul", 1272, "1,272"), ("Aug", 1412, "1,412")]
 
-F4_BREAK = dgroup("Where the load is", [
-    kpi_line("Consulting", "1,412 visits"),
-    kpi_line("Laboratory", "612 orders"),
-    kpi_line("Pharmacy", "489 dispensed"),
-    kpi_line("Nursing", "1,106 tasks"),
-    kpi_line("Front desk", "1,842 check-ins"),
-], footer="Nursing and the front desk do more transactions than anyone. It is worth remembering when you decide how many seats each department gets.")
+# The week as the front desk experiences it. Monday morning and Friday afternoon are not
+# the same clinic, and no ratio on the old screen could say so.
+BUSY_ROWS = [("Mon", [18, 26, 31, 22, 14, 9]), ("Tue", [14, 21, 24, 19, 12, 7]),
+             ("Wed", [16, 23, 27, 20, 11, 6]), ("Thu", [15, 22, 26, 21, 13, 8]),
+             ("Fri", [19, 28, 33, 25, 17, 11]), ("Sat", [8, 12, 14, 9, 4, 2])]
+BUSY_COLS = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00"]
 
-F4_QUALITY = dgroup("Things worth watching", [
+F4_HERO = hero_stat("1,412", "People seen in August", "Up 11% on July · 148 expected today across three branches",
+    right=f'<Frame flex="col" gap={{7}} items="end">'
+          f'{dbtn("Export as a spreadsheet","Export report F4","download","ghost",grow=False,size="sm")}'
+          f'{T(10,"regular","var:text/faint","Last updated 09:41")}</Frame>')
+
+F4_CHART = col_chart(VISITS, title="Visits a month",
+    action=f'<Frame name="Btn Report range" flex="row">{T(11,"semibold","var:text/accent","Last 6 months")}</Frame>',
+    note="August is the busiest month on record and it is not finished. Most of the growth is follow-ups rather than new members, which is what the returning-patient rate on Patients is measuring.")
+
+F4_JUMP = dgroup("Look closer", [
+    drow("users", "Patients", value="1,412", sub="Who they were, where they came from, who did not turn up", name="Open patients F8"),
+    drow("stethoscope", "Clinicians", value="9", sub="Consultation hours, how long each doctor spends, notes signed", name="Open clinicians F9"),
+    drow("building-2", "Departments and staff", value="7", sub="Throughput, turnaround, who is carrying the load", name="Open depts F10"),
+    drow("banknote", "Money", value="₦8.4m", sub="Collected, outstanding, and ₦1.24m sitting with HMOs", name="Open claims D21"),
+], footer="Every number on these four screens is for the branch and department named in the subtitle above. Change either one and they all change with it — that is the whole reason this console has a context line.")
+
+F4_WATCH = dgroup("Things worth watching", [
     drow("circle-slash", "No-show rate", value="7.2%", sub="Down from 11% before payment-before-booking", name="Rep noshow", tone="ok", chevron=False),
-    drow("clock", "Median wait to be seen", value="14 min", sub="Up 4 minutes this week — Tuesdays are the worst", name="Rep wait", tone="warn", chevron=False),
-    drow("notebook-pen", "Notes signed same day", value="94%", sub="Six unsigned notes older than 48 hours", name="Rep signed", tone="warn", chevron=False),
+    drow("clock", "Median wait to be seen", value="14 min", sub="Up 4 minutes this week — Friday mornings are the worst", name="Rep wait", tone="warn", chevron=False),
+    drow("notebook-pen", "Notes signed same day", value="94%", sub="Six unsigned notes older than 48 hours, across two doctors", name="Open clinicians F9", tone="warn"),
     drow("timer", "Laboratory turnaround", value="2h 40m", sub="Target 4 hours", name="Rep lab", tone="ok", chevron=False),
-    drow("share-2", "Referrals answered in a day", value="88%", sub="Three took longer than two days", name="Rep ref", chevron=False),
-])
+    drow("siren", "Criticals acknowledged in 15 min", value="12 of 14", sub="Two took longer. Both are in the audit log with who was rung.", name="Open critical F7", tone="warn"),
+], footer="Five numbers, and each one is somebody's job rather than a score. A rate with nobody attached to it does not get fixed.")
 
 addx("Govern", "F4-reports",
     o_desk("Org · Reports — F4 Reports", ("Reports",),
-        f'<Frame w="fill" flex="row" justify="between" items="center">'
-        f'{dhead([("How the",False),("organisation is running",True)],26)}'
-        f'{dbtn("Export","Export report F4","download","ghost",grow=False,size="sm")}</Frame>'
-        f'{F4_CHART}'
+        f'{F4_HERO}'
         f'<Frame w="fill" flex="row" gap={{16}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{14}}>{F4_QUALITY}</Frame>'
-        f'<Frame w={{344}} flex="col" gap={{14}}>{F4_BREAK}</Frame></Frame>',
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{F4_CHART}'
+        f'{heat_grid(BUSY_COLS, BUSY_ROWS, title="When the place is busy", unit="People arriving",note="Friday at ten is the peak and Monday is close behind. The wait times on those two mornings are the ones members complain about, and this is the shape you would be staffing against.")}</Frame>'
+        f'<Frame w={{344}} flex="col" gap={{14}}>{F4_JUMP}{F4_WATCH}</Frame></Frame>',
         NAV["Reports"], badges=BADGES),
-    o_head("Reports", "August · 1,412 visits", back=False, ctx="All branches",
-           stats=[("1,412", "Visits"), ("7.2%", "No-show"), ("14m", "Wait")]),
-    pinned=F4_CHART,
+    o_head("Reports", "August · 1,412 seen", back=False, ctx="All branches",
+           stats=[("1,412", "Seen"), ("7.2%", "No-show"), ("14m", "Wait")]),
+    pinned=f'{F4_CHART}{F4_JUMP}',
     sections=[
-      ("quality", "activity", "Things worth watching", "Waits are up, notes are behind", "5", "warn", F4_QUALITY, None),
-      ("load", "layers", "Where the load is", "Nursing and the desk do the most", "5", None, F4_BREAK, None),
+      ("busy", "calendar-clock", "When the place is busy", "Friday at ten is the peak", None, None,
+       heat_grid(BUSY_COLS, BUSY_ROWS, note="This is the shape you would be staffing against."), None),
+      ("watch", "activity", "Things worth watching", "Waits are up, six notes unsigned", "5", "warn", F4_WATCH, None),
+    ],
+    tab_items=TAB_ADMIN, tab=4)
+
+# ---------------- F8 patients
+F8_HERO = hero_stat("1,412", "People seen in August", "412 of them had never been here before")
+
+F8_SPLIT = part_bar([("Returning", 71, "1,000"), ("New to this organisation", 22, "312"),
+                     ("Referred in from elsewhere", 7, "100")],
+    title="New against returning", total="1,412",
+    note="Seven in ten were people you had seen before. That ratio is the single best measure of whether an organisation is keeping the people it treats, and it is the one Medra can prove because the record follows the member rather than the visit.")
+
+F8_SOURCE = data_table(
+    ["How they got here", "August", "Share", "No-show"],
+    [["Booked in Medra", "612", "43%", "4.1%"],
+     ["Walked in", "487", "34%", "—"],
+     ["Booked by phone", "213", "15%", "12.6%"],
+     ["Referred by another organisation", "100", "7%", "6.0%"]],
+    title="Where the visits came from",
+    note="A phone booking is three times more likely to be a no-show than one made in Medra, because nobody paid for it and nobody was reminded. That difference is worth more than any marketing decision on this screen.")
+
+F8_WHY = rank_bars([
+    ("Hypertension review", "Mostly 45 and over", 318, "318"),
+    ("Antenatal", "Booked as a course, not one visit", 224, "224"),
+    ("Diabetes review", "Two thirds are repeat visits", 186, "186"),
+    ("Malaria and febrile illness", "Peaks after rain", 171, "171"),
+    ("Paediatric general", "Half arrive as walk-ins", 149, "149"),
+    ("Everything else", "84 different reasons", 364, "364", True),
+], title="Why people came",
+   note="Six lines rather than a pie, because the tail matters: 364 visits across 84 reasons is what a general practice actually is, and no chart with slices would let you see it.")
+
+F8_AGE = data_table(
+    ["Age", "People", "Share", "Repeat rate"],
+    [["Under 5", "138", "10%", "48%"], ["5 – 17", "121", "9%", "31%"],
+     ["18 – 34", "396", "28%", "52%"], ["35 – 54", "418", "30%", "74%"],
+     ["55 and over", "339", "24%", "88%"]],
+    title="Who they were", name="Age",
+    note="Nobody over 55 comes here once. That is the group your follow-up capacity has to be planned around, and it is also the group most affected by a doctor leaving.")
+
+F8_MISS = dgroup("Who did not turn up", [
+    drow("circle-slash", "102 no-shows in August", value="7.2%", sub="Down from 11% before payment-before-booking", name="F8 noshow", tone="ok", chevron=False),
+    drow("phone", "78 of them booked by phone", sub="Unpaid, unreminded. The desk can take payment at the time of booking.", name="F8 phone", tone="warn", chevron=False),
+    drow("repeat", "31 rebooked within a week", sub="A missed appointment is not a lost patient unless nobody follows up", name="F8 rebook", tone="ok", chevron=False),
+    drow("user-x", "9 people missed three or more", sub="Worth a call rather than another booking", name="F8 repeatmiss", tone="warn"),
+], footer="A no-show is treated here as something to understand rather than to charge for. The policy on F5 is what decides the charge; this is what decides whether the policy is working.")
+
+addx("Govern", "F8-patients",
+    o_desk("Org · Reports — F8 Patients", ("Reports", "Patients"),
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",17,N_IC)}'
+        f'{T(13,"semibold","var:text/default","Reports")}</Frame>'
+        f'{F8_HERO}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{F8_SPLIT}{F8_WHY}{F8_SOURCE}</Frame>'
+        f'<Frame w={{344}} flex="col" gap={{14}}>{F8_MISS}{F8_AGE}</Frame></Frame>',
+        NAV["Reports"], badges=BADGES),
+    o_head("Patients", "August · 1,412 seen", ctx="All branches",
+           stats=[("1,412", "Seen"), ("312", "New"), ("7.2%", "No-show")]),
+    pinned=f'{F8_HERO}{F8_SPLIT}',
+    sections=[
+      ("why", "list", "Why people came", "Hypertension leads, and the tail is long", "6", None, F8_WHY, None),
+      ("source", "route", "Where the visits came from", "Phone bookings are the no-shows", "4", "warn", F8_SOURCE, None),
+      ("age", "users", "Who they were", "Nobody over 55 comes here once", "5", None, F8_AGE, None),
+      ("miss", "circle-slash", "Who did not turn up", "102 no-shows, 78 booked by phone", "4", "warn", F8_MISS, None),
+    ],
+    tab_items=TAB_ADMIN, tab=4)
+
+# ---------------- F9 clinicians
+# The number Godwin asked for by name: how many hours a doctor spent consulting. It is not
+# the same as hours rostered, and the gap between the two is the most useful thing on this
+# screen — a doctor rostered for 40 hours who consulted for 22 is either under-booked or
+# doing something else, and only one of those is a problem.
+F9_HERO = hero_stat("218 h", "Consulting time in August", "Across 9 clinicians · 74% of the hours they were rostered for")
+
+F9_HOURS = rank_bars([
+    ("Dr. Ngozi Okafor", "Cardiology · 41 h rostered", 38, "38 h"),
+    ("Dr. Chuka Eze", "General practice · 40 h rostered", 34, "34 h"),
+    ("Dr. Amina Yusuf", "Paediatrics · 32 h rostered", 29, "29 h"),
+    ("Dr. Tunde Bello", "General practice · 40 h rostered", 24, "24 h"),
+    ("Dr. Femi Adeyemi", "Obstetrics · 24 h rostered", 22, "22 h"),
+    ("Dr. Sade Lawal", "General practice · 36 h rostered", 21, "21 h"),
+], title="Hours actually spent consulting", name="Doc",
+   note="Measured from the moment a consultation is opened to the moment it is signed, not from the roster. Dr. Bello is rostered the same as Dr. Eze and consulted ten hours less — that is a question, not a verdict, and the sessions on his roster will say which.")
+
+F9_TABLE = data_table(
+    ["Clinician", "Seen", "Hours", "Median", "Signed same day"],
+    [["Dr. Ngozi Okafor", "214", "38 h", "11 min", "99%"],
+     ["Dr. Chuka Eze", "198", "34 h", "10 min", "96%"],
+     ["Dr. Amina Yusuf", "176", "29 h", "10 min", "100%"],
+     ["Dr. Tunde Bello", "121", "24 h", "12 min", "78%"],
+     ["Dr. Femi Adeyemi", "104", "22 h", "13 min", "94%"],
+     ["Dr. Sade Lawal", "119", "21 h", "11 min", "91%"]],
+    title="Every clinician, side by side", name="Doc row",
+    note="A median consultation of ten minutes against a twenty-minute slot is worth looking at from both ends: it may mean the slot is too long, or it may mean people are being hurried. The department sets the slot length on its own screen and this is the evidence for changing it.")
+
+F9_QUALITY = dgroup("Quality, not volume", [
+    drow("notebook-pen", "Six notes unsigned over 48 hours", sub="Four are Dr. Bello's. A member cannot see a consultation until it is signed.", name="F9 unsigned", tone="err"),
+    drow("siren", "Two criticals took over 15 minutes", sub="Both acknowledged in the end, both in the audit log", name="Open critical F7", tone="warn"),
+    drow("repeat", "11% returned within 7 days", sub="Same complaint, same organisation — usually the honest signal that a first visit did not settle it", name="F9 return", tone="warn", chevron=False),
+    drow("share-2", "88% of referrals answered in a day", sub="Three took longer than two days", name="Nav Referrals", tone="ok"),
+], footer="Volume is easy to measure and easy to game. These four are the ones that say whether the work was any good, and none of them should ever be shown to a clinician as a league table without the conversation that goes with it.")
+
+F9_TIME = part_bar([("Consulting", 54, "218 h"), ("Notes and results", 21, "84 h"),
+                    ("Waiting on a patient", 15, "62 h"), ("Referrals and messages", 10, "40 h")],
+    title="Where a clinical hour goes", total="404 h",
+    note="Sixty-two hours of clinician time in one month spent waiting for somebody to walk through the door. That is the number the front desk and the booking rules can actually move.")
+
+addx("Govern", "F9-clinicians",
+    o_desk("Org · Reports — F9 Clinicians", ("Reports", "Clinicians"),
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",17,N_IC)}'
+        f'{T(13,"semibold","var:text/default","Reports")}</Frame>'
+        f'{F9_HERO}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{F9_HOURS}{F9_TABLE}</Frame>'
+        f'<Frame w={{344}} flex="col" gap={{14}}>{F9_TIME}{F9_QUALITY}</Frame></Frame>',
+        NAV["Reports"], badges=BADGES),
+    o_head("Clinicians", "August · 218 consulting hours", ctx="All branches",
+           stats=[("218 h", "Consulting"), ("74%", "Of rostered"), ("11 min", "Median")]),
+    pinned=f'{F9_HERO}{F9_HOURS}',
+    sections=[
+      ("table", "table", "Every clinician, side by side", "Seen, hours, median, signed", "6", None, F9_TABLE, None),
+      ("time", "clock", "Where a clinical hour goes", "62 hours waiting on a patient", "4", None, F9_TIME, None),
+      ("quality", "shield-check", "Quality, not volume", "Six notes unsigned over 48 hours", "4", "err", F9_QUALITY, None),
+    ],
+    tab_items=TAB_ADMIN, tab=4)
+
+# ---------------- F10 departments and staff
+F10_HERO = hero_stat("7", "Departments", "24 people on seats · 19 worked this week")
+
+F10_TABLE = data_table(
+    ["Department", "Done", "Waiting", "Median", "Seats"],
+    [["Consulting", "1,412", "9", "11 min", "11 of 12"],
+     ["Nursing", "1,106", "5", "6 min", "6 of 8"],
+     ["Front desk", "1,842", "12", "4 min", "5 of 5"],
+     ["Laboratory", "612", "7", "2 h 40", "3 of 4"],
+     ["Pharmacy", "489", "4", "9 min", "2 of 3"],
+     ["Imaging", "184", "6", "1 h 10", "2 of 3"],
+     ["Billing", "923", "9", "7 min", "2 of 2"]],
+    title="Every department, side by side", name="Dept row",
+    note="Seven rows and five numbers each, as a table rather than a chart — past about seven things, colour stops telling them apart and the number is what the admin came for anyway. Front desk is the only department with no spare seat and the highest volume in the building.")
+
+F10_LOAD = rank_bars([
+    ("Front desk", "5 people · 1,842 check-ins", 368, "368"),
+    ("Nursing", "6 people · 1,106 tasks", 184, "184"),
+    ("Consulting", "11 people · 1,412 visits", 128, "128"),
+    ("Billing", "2 people · 923 transactions", 462, "462"),
+    ("Laboratory", "3 people · 612 samples", 204, "204"),
+    ("Pharmacy", "2 people · 489 dispensed", 245, "245"),
+], title="Transactions per person", name="Load",
+   note="Billing does more per head than anyone in the building on two seats, and the front desk is second on five. This is the chart to look at before adding a clinician, because neither of those departments can absorb another one.")
+
+F10_TURN = dgroup("How long each department takes", [
+    progress_row("Front desk · check-in", "4 min", 20, "teal"),
+    progress_row("Nursing · vitals", "6 min", 30, "teal"),
+    progress_row("Pharmacy · dispense", "9 min", 45, "teal"),
+    progress_row("Imaging · report back", "1 h 10", 70, "amber"),
+    progress_row("Laboratory · result back", "2 h 40", 66, "amber"),
+], footer="Against each department's own target, not against each other — a laboratory is not slow because it takes longer than a pharmacy. Both of the amber ones are inside target and both are trending down.")
+
+F10_PEOPLE = dgroup("Who is actually here", [
+    shift_row("Sister Ifeoma Uche", "Nursing", "Until 15:00", "F10 ifeoma", sub="Nursing · 214 tasks this month"),
+    shift_row("Mr. Sola Adeniyi", "Laboratory", "Until 17:00", "F10 sola", sub="Laboratory · 198 samples"),
+    shift_row("Miss Ngozi Peter", "Front desk", "Until 16:00", "F10 ngozi", sub="Front desk · 412 check-ins"),
+    shift_row("Mr. Bayo Ogun", "Pharmacy", "Off today", "F10 bayo", on=False, sub="Pharmacy · 244 dispensed"),
+    shift_row("Mr. Emeka Obi", "Suspended 2 August", "Suspended", "Person emeka", on=False, sub="Front desk · seat returned"),
+], footer="Shown as people rather than as rows in a table, because this is the list an admin reads when somebody rings in sick. Everything anyone here did is in the audit log against their name, including anything they did on the day they were suspended.")
+
+addx("Govern", "F10-departments",
+    o_desk("Org · Reports — F10 Departments", ("Reports", "Departments"),
+        f'<Frame name="Btn Back" flex="row" gap={{7}} items="center">{I("arrow-left",17,N_IC)}'
+        f'{T(13,"semibold","var:text/default","Reports")}</Frame>'
+        f'{F10_HERO}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{F10_TABLE}{F10_LOAD}</Frame>'
+        f'<Frame w={{344}} flex="col" gap={{14}}>{F10_TURN}{F10_PEOPLE}</Frame></Frame>',
+        NAV["Reports"], badges=BADGES),
+    o_head("Departments", "7 departments · 24 on seats", ctx="All branches",
+           stats=[("7", "Departments"), ("24", "On seats"), ("2", "Seats spare")]),
+    pinned=f'{F10_HERO}{F10_TABLE}',
+    sections=[
+      ("load", "chart-column", "Transactions per person", "Billing does the most on two seats", "6", "warn", F10_LOAD, None),
+      ("turn", "timer", "How long each department takes", "All five inside target", "5", None, F10_TURN, None),
+      ("people", "users", "Who is actually here", "19 of 24 worked this week", "5", None, F10_PEOPLE, None),
     ],
     tab_items=TAB_ADMIN, tab=4)
 
@@ -3125,6 +3327,16 @@ for page, fn, jsx in frames:
     manifest.setdefault(page, []).append(fn)
 open(os.path.join(OUT, "pages.json"), "w").write(json.dumps(manifest, indent=2))
 
+# A renamed or deleted section leaves its .jsx behind, and the render script then draws a
+# frame the builder no longer knows about — the linker never wires it and the audit reports
+# a screen nobody can reach. Prune what this build did not write.
+_written = {fn for _p, fn, _j in frames}
+for _stale in sorted(set(os.listdir(OUT)) - _written):
+    if _stale.endswith(".jsx"):
+        os.remove(os.path.join(OUT, _stale))
+        print("  pruned stale frame:", _stale)
+
+
 AUTH_ORG = ("Auth · Institution — I6 Log In", "Auth · Institution — I6 Log In · Mobile")
 
 NAVMAP = {
@@ -3284,10 +3496,10 @@ TRN = [
  ("D18-report","Btn Back","D16-imaging"),("D18-report","Btn Sign report D18","D16-imaging"),
  ("D18-report","~Btn Rep critical","D15-critical"),
  # ---- billing: the till, a payment, the claims
- ("D19-billing","Btn Open owing D20","D20-payment"),("D19-billing","Btn Open claims D21","D21-claims"),
+ ("D19-billing","~Btn Open owing D20","D20-payment"),("D19-billing","Btn Open claims D21","D21-claims"),
  ("D19-billing","Btn Owe grace","D20-payment"),("D19-billing","Btn Owe halima","D20-payment"),
- ("D19-billing","Btn Owe musa","D20-payment"),("D19-billing","Btn Stat taken","D19-billing"),
- ("D19-billing","Btn Stat recon","D19-billing"),
+ ("D19-billing","Btn Owe musa","D20-payment"),("D19-billing","~Btn Stat taken","D19-billing"),
+ ("D19-billing","~Btn Stat recon","D19-billing"),
  ("D20-payment","Btn Back","D19-billing"),("D20-payment","Btn Save payment D20","D19-billing"),
  ("D20-payment","Btn Open plan D20","D19-billing"),
  ("D21-claims","Btn Claim fatima","D21-claims"),("D21-claims","Btn Answer claim D21","D21-claims"),
@@ -3309,6 +3521,13 @@ TRN = [
  ("G3-messages","Btn G new sup","G4-thread"),
  ("G4-thread","Btn Back","G3-messages"),("G4-thread","Btn Open member B3","B3-find"),
  ("G4-thread","Btn Open critical D15","D15-critical"),
+ # ---- reports: four screens under one overview
+ ("F4-reports","Btn Open patients F8","F8-patients"),("F4-reports","Btn Open clinicians F9","F9-clinicians"),
+ ("F4-reports","Btn Open depts F10","F10-departments"),("F4-reports","Btn Open claims D21","D21-claims"),
+ ("F4-reports","Btn Open critical F7","F7-critical"),("F4-reports","~Btn Export report F4","F4-reports"),
+ ("F8-patients","Btn Back","F4-reports"),
+ ("F9-clinicians","Btn Back","F4-reports"),("F9-clinicians","Btn Open critical F7","F7-critical"),
+ ("F10-departments","Btn Back","F4-reports"),("F10-departments","Btn Person emeka","C6-person"),
  # ---- states
  ("X1-seats","Btn Open plan A4","A4-plan"),("X1-seats","Btn Person emeka","C6-person"),
  ("X2-unverified","Btn Open verify A2","A2-verify"),("X2-unverified","Btn Open invite C5","C5-invite"),
@@ -3384,6 +3603,7 @@ PUSH = json.dumps(["Btn Open verify A2", "Btn Open branches A3", "Btn Open profi
                    "Btn Open walkin D13", "Btn Person okafor", "Btn Person ifeoma", "Btn Person sola",
                    "Btn Dept clinic", "Btn Dept nursing", "Btn Dept lab", "Btn Dept pharmacy", "Btn Dept desk",
                    "Btn Dept imaging", "Btn Dept billing", "Btn Open roster G2", "Btn Open messages G3",
+                   "Btn Open patients F8", "Btn Open clinicians F9", "Btn Open depts F10",
                    "Btn Open report D18", "Btn Open owing D20", "Btn Open claims D21", "Btn Open payment D20"])
 POP = json.dumps(["Btn Back"])
 SHEET = json.dumps(["Btn Open escalate D4", "Btn Open sub D11", "Btn Open lab D8", "Btn Add dept C3"])

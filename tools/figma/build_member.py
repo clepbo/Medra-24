@@ -2628,6 +2628,16 @@ for page, fn, jsx in frames:
     manifest.setdefault(page, []).append(fn)
 open(os.path.join(OUT, "pages.json"), "w").write(json.dumps(manifest, indent=2))
 
+# A renamed or deleted section leaves its .jsx behind, and the render script then draws a
+# frame the builder no longer knows about — the linker never wires it and the audit reports
+# a screen nobody can reach. Prune what this build did not write.
+_written = {fn for _p, fn, _j in frames}
+for _stale in sorted(set(os.listdir(OUT)) - _written):
+    if _stale.endswith(".jsx"):
+        os.remove(os.path.join(OUT, _stale))
+        print("  pruned stale frame:", _stale)
+
+
 AUTH_LOGIN = ("Auth · Member — M6 Log In", "Auth · Member — M6 Log In · Mobile")
 
 # The tab bar, on every frame. One map now — batch 2 used to read batch-1's frame names off
