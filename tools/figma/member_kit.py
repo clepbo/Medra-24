@@ -50,7 +50,7 @@ def next_visit_card(compact=False):
             f'<Frame w="fill" flex="row" gap={{10}}>'
             f'<Frame name="Btn Reschedule" grow={{1}} flex="row" gap={{7}} justify="center" items="center" px={{14}} py={{12}} rounded={{999}} bg="var:bg/band-2">'
             f'{I("calendar-days",15,W_IC)}{T(13,"semibold","var:text/on-dark","Reschedule")}</Frame>'
-            f'<Frame name="Btn Join visit" grow={{1}} flex="row" gap={{7}} justify="center" items="center" px={{14}} py={{12}} rounded={{999}} image="assets/img/btn-teal.jpg" overflow="hidden">'
+            f'<Frame name="Btn Join visit" grow={{1}} flex="row" gap={{7}} justify="center" items="center" px={{14}} py={{12}} rounded={{999}} image="assets/img/btn-calm.jpg" overflow="hidden">'
             f'{I("video",15,W_IC)}{T(13,"semibold","var:text/on-dark","Join")}</Frame></Frame></Frame>')
 
 SPECIALTIES=[("heart-pulse","Cardiology"),("brain","Neurology"),("baby","Paediatrics"),
@@ -89,7 +89,7 @@ def doctor_card(avatar, name, spec, clinic, fee, rating, slot, tag="Today", nm=N
             f'<Frame flex="row" gap={{6}} items="center" px={{11}} py={{7}} rounded={{999}} bg="var:state/success-bg">'
             f'{I("clock",12,OK_IC)}{T(11,"semibold","var:state/success",tag+" · "+slot)}</Frame>'
             f'<Frame grow={{1}} />'
-            f'<Frame name="Btn Book {name}" flex="row" gap={{7}} items="center" px={{16}} py={{9}} rounded={{999}} image="assets/img/btn-teal.jpg" overflow="hidden">'
+            f'<Frame name="Btn Book {name}" flex="row" gap={{7}} items="center" px={{16}} py={{9}} rounded={{999}} image="assets/img/btn-calm.jpg" overflow="hidden">'
             f'{T(13,"semibold","var:text/on-dark","Book")}{I("arrow-right",14,W_IC)}</Frame></Frame></Frame>')
 
 def bottom_nav(active=0):
@@ -177,7 +177,7 @@ def hero_banner():
 def med_row(name, dose, time, taken=True):
     pill=(f'<Frame flex="row" gap={{6}} items="center" px={{11}} py={{6}} rounded={{999}} bg="var:state/success-bg">'
           f'{I("check",12,OK_IC)}{T(11,"semibold","var:state/success","Taken")}</Frame>' if taken else
-          f'<Frame name="Btn Take {name}" flex="row" gap={{6}} items="center" px={{13}} py={{6}} rounded={{999}} image="assets/img/btn-teal.jpg" overflow="hidden">'
+          f'<Frame name="Btn Take {name}" flex="row" gap={{6}} items="center" px={{13}} py={{6}} rounded={{999}} image="assets/img/btn-calm.jpg" overflow="hidden">'
           f'{T(11,"semibold","var:text/on-dark","Mark taken")}</Frame>')
     return (f'<Frame w="fill" flex="row" gap={{12}} items="center" py={{11}}>'
             f'<Frame w={{38}} h={{38}} rounded={{12}} bg="var:bg/muted" flex="col" justify="center" items="center">{I("pill",17,A_IC)}</Frame>'

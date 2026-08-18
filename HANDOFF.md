@@ -578,10 +578,33 @@ the two people invited who never joined, see that the front desk has no spare se
 block on the administrator's own Today rather than two rows deep in People. It appears on
 nobody else's screen, because only an administrator can create a seat.
 
-### C. Member mobile hub → section conversion
+### B7. The member mobile calm register — **STARTED (17 Aug)**
 
-Machinery is in place (`addx()` in `tools/figma/build_member.py`); 55 screens unconverted.
-Evidence says it is not needed (see §3); the product owner asked for it anyway.
+> "Look at how subtle and calm the interface looks, the use of cards and icons to illustrate
+> functions, and also the glass effects… not too much colours/gradients, just subtle, calm and
+> minimal."
+
+Three things carry it, and they are deliberately small changes made in the kit so they land on
+every member screen at once rather than being hand-applied to fifty-seven:
+
+- **A calmer primary action.** The old one was a bright teal gradient and the most saturated
+  object on any member screen. `btn-calm.jpg` runs deep ocean into navy — still obviously the
+  action, without being the loudest thing in the room. `member2_kit.cta()` overrides
+  `medra_ui.cta()` for the member module only: the doctor and organisation consoles are
+  professional tools where a saturated primary is right, and they keep it.
+- **Function tiles.** `func_tile()` — an icon in a soft tinted square over a label and one quiet
+  line. This is the pattern he pointed at, and the member's home screen now leads with six of
+  them rather than with a specialty strip and a doctor card, which is a list to scroll before
+  you have decided anything.
+- **Soft cards.** `soft_card()` has no stroke and sits on `glass-card.jpg` — a baked frosted
+  panel, because the renderer has no blur. On a pale ground a hairline border is what makes an
+  interface feel busy before anything is on it.
+
+**What is not done.** The register is applied to `H1` and `H2`; the other fifty-five member
+mobile screens inherit the calmer button and the softer cards but have not been re-composed
+around function tiles. The hub → section conversion (`addx()` in `build_member.py`) is still
+unused — measured against the exported `.fig`, the member's mobile screens already fit one
+viewport, so it would add taps without removing scroll. Both remain open.
 
 ### D. Not started
 

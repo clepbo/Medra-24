@@ -79,4 +79,34 @@ mesh(2200,520,OCEAN,[(0.02,0.5,0.7,NAVY,.95),(0.55,0.2,0.6,BLUE,.7),
 for nm,col in (("tint-teal.jpg",TEAL),("tint-blue.jpg",BLUE),("tint-navy.jpg",NAVY),("tint-ocean.jpg",OCEAN)):
     mesh(600,400,col,[(0.15,0.15,0.8,tuple(min(255,c+40) for c in col),.7),
                       (0.9,0.9,0.6,tuple(max(0,c-25) for c in col),.6)],grain=0).save(f"{IMG}/{nm}",quality=92)
-print("surfaces + panels regenerated (subtle)")
+
+# ---------------------------------------------------------------------------------------
+# THE CALM REGISTER — member mobile only
+#
+# "Look at how subtle and calm the interface looks, the use of cards and icons to illustrate
+# functions, and also the glass effects… not too much colours/gradients, just subtle, calm and
+# minimal."
+#
+# The renderer has no blur and no shadow, so glass cannot be live — it is baked here as a
+# near-white panel with the faintest vertical lift, which is what a frosted card actually looks
+# like against a pale ground. The calm button is the other half: the old primary was a bright
+# teal gradient, the most saturated thing on any member screen. This one runs deep ocean into
+# navy, so it still reads as the action without shouting.
+CALM_DEEP = (23, 62, 84); CALM = (32, 92, 118)
+mesh(600, 400, CALM, [(0.12, 0.12, 0.85, CALM_DEEP, .8), (0.95, 0.9, 0.6, (28, 78, 102), .7)],
+     grain=0).save(f"{IMG}/btn-calm.jpg", quality=92)
+
+# A frosted card. Almost white, warmer at the top than the bottom, so a stack of them separates
+# by tone rather than by a drawn line.
+mesh(800, 600, (252, 253, 254), [(0.5, 0.0, 0.9, (255, 255, 255), .9),
+                                 (0.5, 1.0, 0.8, (243, 247, 250), .7)],
+     grain=0.5).save(f"{IMG}/glass-card.jpg", quality=94)
+
+# The function tile behind an icon — a breath of colour, never a block of it.
+for nm, col in (("soft-teal.jpg", (226, 241, 246)), ("soft-blue.jpg", (228, 238, 247)),
+                ("soft-mint.jpg", (228, 243, 236)), ("soft-sand.jpg", (247, 241, 230)),
+                ("soft-lilac.jpg", (238, 236, 248)), ("soft-rose.jpg", (250, 236, 238))):
+    mesh(300, 300, col, [(0.25, 0.2, 0.9, tuple(min(255, c + 6) for c in col), .8)],
+         grain=0).save(f"{IMG}/{nm}", quality=94)
+
+print("surfaces + panels regenerated (subtle) + calm register")

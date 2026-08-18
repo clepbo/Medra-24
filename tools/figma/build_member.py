@@ -119,9 +119,23 @@ HEALTH_CARD=card(section_head("Your health","Records","Nav Records")
     + health_fact("Blood group","O+",verified=False,name="Blood group")
     + summary_row("pill","Active prescriptions","2 medicines")
     + summary_row("triangle-alert","Allergies","Penicillin"), p=20, gap=14)
-home_body=(f'{searchbar()}{next_visit_card()}'
-           f'<Frame w="fill" flex="col" gap={{11}}>{section_head("Browse by specialty","See all","See specialties")}'
-           f'{specialty_row(3,3)}</Frame>'
+# The calm register on the phone. Godwin, after the CliniQ screens: "the use of cards and icons
+# to illustrate functions… not too much colours/gradients, just subtle, calm and minimal."
+#
+# So the member's first screen leads with what the app *does* — six function tiles, each an icon
+# in a soft tinted square — rather than with a strip of specialties and a doctor card, which is
+# a list to scroll before you have decided anything. The next visit stays above them, because
+# on the one day it exists it is the only thing that matters.
+HOME_FUNCS = func_grid([
+    func_tile("search", "Find care", "Verified doctors", "See doctors", 0),
+    func_tile("calendar-plus", "Book", "In person or video", "Nav Visits", 1),
+    func_tile("clipboard-list", "Records", "8 on file", "Nav Records", 2),
+    func_tile("pill", "Medicines", "2 active", "Nav Meds", 3),
+    func_tile("flask-conical", "Results", "1 to read", "Open lab R3", 4),
+    func_tile("share-2", "Share", "With a doctor", "Open share R5", 5),
+], 3)
+
+home_body=(f'{searchbar()}{next_visit_card()}{HOME_FUNCS}'
            f'<Frame w="fill" flex="col" gap={{11}}>{section_head("Available today","See all","See doctors")}'
            f'{doctor_card(*DOCTORS[0])}</Frame>')
 DASH_STATS=rows_of([
@@ -159,13 +173,21 @@ add("Member","H1-home",
 
 # ============================================================ H2 HOME (new member, empty)
 empty_body=(f'{searchbar()}'
-            f'<Frame w="fill" flex="col" gap={{14}} items="center" p={{26}} rounded={{26}} bg="var:bg/base" stroke="var:border/subtle" strokeWidth={{1}}>'
-            f'<Frame w={{78}} h={{78}} rounded={{999}} bg="var:state/info-bg" flex="col" justify="center" items="center">{I("calendar-plus",34,A_IC)}</Frame>'
-            f'{T(18,"bold","var:text/strong","No visits booked yet")}'
-            f'{T(14,"regular","var:text/muted","Find a verified doctor near you and book your first appointment — it takes about a minute.",w="fill",align="center")}'
-            f'{cta("Find a doctor","Find doctor H2","search")}</Frame>'
-            f'<Frame w="fill" flex="col" gap={{11}}>{section_head("Browse by specialty","See all","See specialties")}{specialty_row(3,3)}</Frame>'
-            )   # no second doctor block: keeps the first-run screen inside 844
+            + soft_card(
+                f'<Frame w="fill" flex="col" gap={{14}} items="center" py={{8}}>'
+                f'<Frame w={{72}} h={{72}} rounded={{24}} image="assets/img/soft-teal.jpg" overflow="hidden" '
+                f'flex="col" justify="center" items="center">{I("calendar-plus",30,"#2F8BAC")}</Frame>'
+                f'{T(18,"bold","var:text/strong","No visits booked yet")}'
+                f'{T(13,"regular","var:text/muted","Find a verified doctor near you. It takes about a minute.",w="fill",align="center")}'
+                f'{cta("Find a doctor","Find doctor H2","search")}</Frame>', p=22)
+            + f'<Frame w="fill" flex="col" gap={{11}}>'
+              f'{section_head("What you can do here","","See specialties")}'
+            + func_grid([
+                func_tile("search", "Find care", "Verified doctors", "See doctors", 0),
+                func_tile("clipboard-list", "My records", "Nothing yet", "Nav Records", 2),
+                func_tile("users-round", "My family", "Add a child", "Nav Profile", 3),
+              ], 3)
+            + '</Frame>')   # no doctor block: keeps the first-run screen inside 844
 EMPTY_PANEL=card(
     '<Frame w="fill" flex="col" gap={16} items="center" py={10}>'
     + '<Frame w={84} h={84} rounded={999} bg="var:state/info-bg" flex="col" justify="center" items="center">' + I("calendar-plus",36,A_IC) + '</Frame>'
@@ -2543,7 +2565,7 @@ def cmp_frame(comp, prop, value, body, w=320, h=None, dark=False):
 for st,body in [("Default",cta("Book appointment","CBtn")),
                 ("Hover",  cta("Book appointment","CBtn")),
                 ("Pressed",cta("Book appointment","CBtn")),
-                ("Loading",f'<Frame w="fill" flex="row" gap={{10}} justify="center" items="center" px={{24}} py={{17}} rounded={{999}} image="assets/img/btn-teal.jpg" overflow="hidden">{I("loader",18,W_IC)}{T(16,"semibold","var:text/on-dark","Booking…")}</Frame>'),
+                ("Loading",f'<Frame w="fill" flex="row" gap={{10}} justify="center" items="center" px={{24}} py={{17}} rounded={{999}} image="assets/img/btn-calm.jpg" overflow="hidden">{I("loader",18,W_IC)}{T(16,"semibold","var:text/on-dark","Booking…")}</Frame>'),
                 ("Disabled",f'<Frame w="fill" flex="row" gap={{10}} justify="center" items="center" px={{24}} py={{17}} rounded={{999}} bg="var:neutral/200">{T(16,"semibold","var:text/faint","Book appointment")}</Frame>')]:
     cmp_frame("Button Primary","State",st,body)
 # Input
@@ -2661,7 +2683,9 @@ NAV = {
 TRN = [
     # ---- find & book
     ("H1-home","Btn Search","S1-results"),("H1-home","~Btn Filters","S2-filters"),
-    ("H1-home","Btn See doctors","S1-results"),("H1-home","Btn See specialties","S1-results"),
+    ("H1-home","Btn See doctors","S1-results"),("H1-home","~Btn See specialties","S1-results"),
+    ("H1-home","Btn Nav Records","R1-records"),("H1-home","Btn Nav Meds","M1-meds"),
+    ("H1-home","~Btn Open lab R3","R3-lab"),("H1-home","~Btn Open share R5","R5-share"),
     ("H1-home","Btn Upcoming visit","P1-profile"),("H1-home","Btn Join visit","C1-confirmed"),
     ("H1-home","Btn Reschedule","B1-slot"),("H1-home","Btn Nav Visits","C1-confirmed"),
     ("H1-home","~Btn Nav Find","S1-results"),("H1-home","Btn Notifications","H1-home"),

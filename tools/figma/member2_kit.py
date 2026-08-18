@@ -59,7 +59,10 @@ def mini_btn(label, name, icon=None, kind="ghost", grow=True, full=False):
     # which is what happened to the in-call quick actions. Use full=True in columns.
     g = ' w="fill"' if full else (' grow={1}' if grow else '')
     if kind == "teal":
-        st = 'image="assets/img/btn-teal.jpg" overflow="hidden"'; col = "var:text/on-dark"; ic = W_IC
+        # The calm register: the old primary was a bright teal gradient and the most saturated
+        # thing on any member screen. This one runs deep ocean into navy — still obviously the
+        # action, without being the loudest object in the room.
+        st = 'image="assets/img/btn-calm.jpg" overflow="hidden"'; col = "var:text/on-dark"; ic = W_IC
     elif kind == "navy":
         st = 'image="assets/img/btn-navy.jpg" overflow="hidden"'; col = "var:text/on-dark"; ic = W_IC
     elif kind == "danger":
@@ -76,7 +79,7 @@ def mini_btn(label, name, icon=None, kind="ghost", grow=True, full=False):
 
 def fab(label, name, icon="plus"):
     return (f'<Frame name="Btn {name}" flex="row" gap={{9}} items="center" px={{18}} py={{14}} rounded={{999}} '
-            f'image="assets/img/btn-teal.jpg" overflow="hidden">{I(icon,17,W_IC)}'
+            f'image="assets/img/btn-calm.jpg" overflow="hidden">{I(icon,17,W_IC)}'
             f'{T(14,"semibold","var:text/on-dark",label)}</Frame>')
 
 # ---------------------------------------------------------------- visits
@@ -569,3 +572,69 @@ M_SHEET_PEEK = (f'{statusbar(dark=True)}'
                 f'<Frame grow={{1}} h={{58}} rounded={{18}} bg="#22303E" />'
                 f'<Frame grow={{1}} h={{58}} rounded={{18}} bg="#22303E" /></Frame>'
                 f'<Frame w="fill" h={{80}} rounded={{20}} bg="#22303E" /></Frame>')
+
+
+# =====================================================================================
+# THE CALM REGISTER
+#
+# What the product owner asked for after the CliniQ screens: "the use of cards and icons to
+# illustrate functions… not too much colours/gradients, just subtle, calm and minimal."
+#
+# Three things carry it, and they are deliberately small:
+#   · a **function tile** — an icon in a soft tinted square over a label and one quiet line,
+#     which is the pattern he pointed at;
+#   · a **soft card** with no stroke, separating by tone and space rather than by a drawn line;
+#   · **one saturated object per screen**, at most. Everything else is a tint.
+SOFT = ["soft-teal.jpg", "soft-blue.jpg", "soft-mint.jpg", "soft-sand.jpg",
+        "soft-lilac.jpg", "soft-rose.jpg"]
+SOFT_IC = ["#2F8BAC", "#3A6EA5", "#2FA36B", "#B8801F", "#6C5CB8", "#C0566B"]
+
+
+def func_tile(ic, label, sub=None, name=None, tone=0, big=False):
+    """One function, illustrated. The icon does the work of the label at a glance, which is the
+    whole point of a tile — you learn where things are by shape and colour, not by reading."""
+    # Three across a 350px column is about 108px a tile, and at 12px "Find a doctor" wraps to
+    # three lines and the row goes ragged. 11px, tight padding and short labels keep every tile
+    # one line deep, which is the whole reason a grid of them reads at a glance.
+    sz = 50 if big else 42
+    s = T(9, "regular", "var:text/muted", sub, w="fill", align="center") if sub else ""
+    return (f'<Frame name="Btn {name or label}" grow={{1}} flex="col" gap={{8}} items="center" '
+            f'px={{6}} py={{15}} rounded={{20}} image="assets/img/glass-card.jpg" overflow="hidden">'
+            f'<Frame w={{{sz}}} h={{{sz}}} rounded={{15}} image="assets/img/{SOFT[tone % 6]}" '
+            f'overflow="hidden" flex="col" justify="center" items="center">'
+            f'{I(ic, int(sz * 0.45), SOFT_IC[tone % 6])}</Frame>'
+            f'{T(11,"semibold","var:text/strong",label,w="fill",align="center")}{s}</Frame>')
+
+
+def func_grid(tiles, per_row=3):
+    return rows_of(tiles, per_row, 11)
+
+
+def soft_card(children, p=18, gap=14, r=24):
+    """A card with no stroke. On a pale ground a hairline border is the thing that makes an
+    interface feel busy before anything is even on it."""
+    return (f'<Frame w="fill" flex="col" gap={{{gap}}} p={{{p}}} rounded={{{r}}} '
+            f'image="assets/img/glass-card.jpg" overflow="hidden">{children}</Frame>')
+
+
+def calm_head(greet, name, right=None):
+    """A phone header with room to breathe: the greeting small, the name large, and nothing
+    else competing with them."""
+    return (f'<Frame w="fill" flex="row" justify="between" items="center" px={{20}} pt={{8}} pb={{14}}>'
+            f'<Frame flex="row" gap={{12}} items="center">'
+            f'<Image image="assets/img/me.jpg" w={{44}} h={{44}} rounded={{999}} />'
+            f'<Frame flex="col" gap={{1}}>{T(12,"regular","var:text/muted",greet)}'
+            f'{T(19,"bold","var:text/strong",name)}</Frame></Frame>{right or ""}</Frame>')
+
+
+def cta(label, name, icon="arrow-right", img="btn-calm.jpg"):
+    """The member's primary action, in the calm register.
+
+    `medra_ui.cta` defaults to the bright teal gradient and still does — the doctor and
+    organisation modules are professional tools where a saturated primary is right. This
+    override is imported last by `build_member.py`, so it is the member module's default and
+    only the member module's: one deep, quiet fill instead of the most saturated object on
+    every screen."""
+    return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{9}} justify="center" items="center" '
+            f'px={{24}} py={{17}} rounded={{999}} image="assets/img/{img}" overflow="hidden">'
+            f'{T(16,"semibold","var:text/on-dark",label)}{I(icon,18,W_IC) if icon else ""}</Frame>')
