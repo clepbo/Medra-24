@@ -385,7 +385,7 @@ NEXT_CARD=card(T(15,"bold","var:text/strong","What happens next")
 HISTORY_Q=(f'<Frame w="fill" flex="col" gap={{11}} p={{18}} rounded={{22}} bg="var:state/info-bg">'
            f'<Frame flex="row" gap={{9}} items="center">{I("notebook-pen",17,A_IC)}'
            f'{T(14,"semibold","var:text/strong","Anything not in your records?")}</Frame>'
-           f'{T(13,"regular","var:text/default","You choose what history to share. If something happened that you keep private, you can still tell the doctor here — or say nothing.",w="fill")}'
+           f'{T(13,"regular","var:text/default","You choose what to share. You can tell the doctor here instead, or say nothing.",w="fill")}'
            f'{field("Tell Dr. Okafor (optional)","message-square-text","e.g. I was treated for something in 2019 that I have kept off my record")}'
            f'{checkbox("I have nothing else to add","Nothing to add")}'
            f'{T(11,"regular","var:text/muted","We record your answer with the booking, so it is clear what the doctor was and was not told.",w="fill")}</Frame>')
@@ -399,7 +399,7 @@ REMINDERS_Q=(f'<Frame w="fill" flex="col" gap={{10}} p={{18}} rounded={{22}} bg=
 REVIEW=(f'{APPT_CARD}'
         f'{field("Reason for visit (optional)","file-text","e.g. chest pain for 3 days")}'
         f'{HISTORY_Q}'
-        f'{note("shield-check","Dr. Okafor will see your allergies and current medicines so they can prescribe safely. Nothing else is shared unless you allow it.","info")}'
+        f'{note("shield-check","Dr. Okafor sees your allergies and current medicines, so she can prescribe safely. Nothing else.","info")}'
         f'{REMINDERS_Q}')
 HISTORY_Q_M=(f'<Frame w="fill" flex="col" gap={{10}} p={{16}} rounded={{22}} bg="var:state/info-bg">'
              f'<Frame flex="row" gap={{9}} items="center">{I("notebook-pen",16,A_IC)}'
@@ -1012,7 +1012,7 @@ R_SUMMARY = group_card("Your health summary", [
                 by="Diagnosed by Dr. Ngozi Okafor, June 2026"),
     list_row("pill", "Current medicines", value="2", name="Open meds R1"),
     list_row("syringe", "Immunisations", value="Up to date", name="Open vaccines"),
-], footer="Blood group and genotype came from you, not from a test. Every doctor sees them marked that way until a laboratory result confirms them — which is what stops a guess being treated as a fact.")
+], footer="These came from you, not from a test, and every doctor sees them marked that way until a laboratory confirms them.")
 
 R_STATS = rows_of([
     stat_card("clipboard-list", "14", "Records", "Across 3 clinics", "tint-teal.jpg"),
@@ -1064,8 +1064,14 @@ R2_NOTE = group_card("The doctor's note", [
     note_section("Why you came", "Follow-up for high blood pressure. Home readings around 138/88 for two weeks. No chest pain, no shortness of breath, no swelling.", "message-square-text"),
     note_section("Examination", "BP 136/86 seated, pulse 78 regular. Weight 74 kg. Heart and lungs normal.", "stethoscope"),
     note_section("Assessment", "Hypertension, partially controlled. No sign of organ damage.", "clipboard-check"),
-    note_section("Plan", "Continue Amlodipine 5 mg every morning. Reduce added salt. Walk 30 minutes, five days a week. Fasting blood sugar test before the next visit. Review in three months, sooner if readings go above 160/100.", "list-checks"),
+    note_section("Plan", "Continue Amlodipine 5 mg every morning. Less salt, walk 30 minutes five days a week. Review in three months, sooner if readings go above 160/100.", "list-checks"),
 ])
+# The third review flipped the default: the member sees the note. When a clinician withholds
+# one item they have to name a ground, and this is where she is told which — not that "a
+# private note exists", which tells her something is being kept from her and nothing else.
+R2_WITHHELD = note("eye-off",
+    "One part of this note is not shown to you: somebody else’s information. Dr. Okafor can explain it, and you can ask her to review the decision.", "warn")
+
 R2_LINKED = group_card("Came out of this visit", [
     list_row("pill", "Amlodipine 5 mg", value="30 days", sub="Prescription · still active", name="Open med M2"),
     list_row("flask-conical", "Fasting blood sugar", value="Ordered", sub="Not done yet — any Medra lab", name="Open lab R3"),
@@ -1084,7 +1090,7 @@ add("Records", "R2-note",
         f'{mini_btn("Download PDF","Download note","download","ghost",grow=False)}'
         f'{mini_btn("Print","Print note","printer","ghost",grow=False)}</Frame></Frame>'
         + f'<Frame w="fill" flex="row" gap={{18}} items="start">'
-          f'<Frame grow={{1}} flex="col" gap={{16}}>{R2_HEAD}{R2_NOTE}{R2_PROV}</Frame>'
+          f'<Frame grow={{1}} flex="col" gap={{16}}>{R2_HEAD}{R2_NOTE}{R2_WITHHELD}{R2_PROV}</Frame>'
           f'<Frame w={{380}} flex="col" gap={{16}}>{R2_LINKED}'
           f'{note("shield-check","Only you decide who reads this. Dr. Okafor keeps her own copy at the clinic, as the law requires.","info")}'
           f'{mini_btn("Book a follow-up","Book follow-up","calendar-plus","teal")}</Frame></Frame>',
@@ -1094,7 +1100,7 @@ add("Records", "R2-note",
         + f'<Frame grow={{1}} w="fill" flex="col" gap={{13}} px={{20}} pt={{4}} pb={{8}}>'
           f'{R2_HEAD}'
           f'{group_card("The doctor’s note", [note_section("Assessment","Hypertension, partially controlled. No sign of organ damage.","clipboard-check"),note_section("Plan","Continue Amlodipine 5 mg every morning. Less salt. Walk 30 minutes, five days a week. Review in three months.","list-checks")], p=16)}'
-          f'{R2_PROV}</Frame>',
+          f'{R2_WITHHELD}{R2_PROV}</Frame>',
         nav=bottom_nav(2)))
 
 # ---------------- R3 lab result
@@ -1134,7 +1140,7 @@ R3_PLAIN = (f'<Frame w="fill" flex="col" gap={{12}} p={{20}} rounded={{24}} bg="
             f'<Frame flex="row" gap={{9}} items="center">{I("book-open",17,A_IC)}'
             f'{T(13,"semibold","var:text/default","In plain language")}</Frame>'
             f'{T(14,"regular","var:text/default","Your haemoglobin is slightly below the normal range. That often means low iron, which is common and usually easy to treat. Everything else in this test looks normal.",w="fill")}'
-            f'{T(12,"regular","var:text/muted","Written by Medra’s clinical team and reviewed by a doctor. It is not a diagnosis — Dr. Okafor will interpret it with the rest of your history.",w="fill")}'
+            f'{T(12,"regular","var:text/muted","Not a diagnosis. Dr. Okafor will read it with the rest of your history.",w="fill")}'
             f'{mini_btn("Ask a doctor about this","Ask about lab","message-square-text","teal",full=True)}</Frame>')
 
 add("Records", "R3-lab",
@@ -1477,7 +1483,7 @@ M2_HOW = group_card("How to take it", [
 M2_SIDE = (f'<Frame w="fill" flex="col" gap={{11}} p={{18}} rounded={{22}} bg="var:state/warning-bg">'
            f'<Frame flex="row" gap={{9}} items="center">{I("triangle-alert",17,WARN_IC)}'
            f'{T(13,"semibold","var:text/default","When to call a doctor")}</Frame>'
-           f'{T(13,"regular","var:text/default","Swollen ankles, a pounding heartbeat, or dizziness when you stand up. These are known effects of Amlodipine and the dose can be changed.",w="fill")}'
+           f'{T(13,"regular","var:text/default","Swollen ankles, a pounding heartbeat or dizziness standing up. Known effects, and the dose can change.",w="fill")}'
            f'{mini_btn("Report a side effect","Report side effect","flag","ghost",full=True)}</Frame>')
 
 M2_SOURCE = group_card("Where this came from", [
@@ -1744,7 +1750,7 @@ add("Profile", "P2-details",
 P3_LIST = group_card("People I care for", [
     dependant_row("avatar-6.jpg", "Chidi Okeke", "Son · 6 years · you manage his records", "Chidi"),
     dependant_row("avatar-2.jpg", "Mama Grace Okeke", "Mother · 68 years · diabetes, hypertension", "Grace"),
-], footer="You manage a child's records until they turn 18, then the account becomes theirs. An adult must confirm by SMS before you can manage theirs.")
+], footer="A child's records become theirs at 18. An adult must confirm by SMS first.")
 P3_EMPTY_HINT = group_back = group_card("Why add them", [
     list_row("calendar-plus", "Book for them without a second account", name="Why book", chevron=False),
     list_row("clipboard-list", "Keep their history in one place", sub="Immunisations, growth, prescriptions", name="Why history", chevron=False),
@@ -1973,7 +1979,7 @@ P9_GONE = group_card("What disappears", [
     list_row("share-2", "Every share you granted", sub="Revoked the moment you confirm", name="Gone shares", chevron=False),
 ])
 P9_KEPT = group_card("What we must keep, and why", [
-    list_row("hospital", "Notes a doctor wrote about you", sub="The clinic keeps its own copy — Nigerian medical-records law requires it, and it is not ours to delete", name="Kept notes", chevron=False),
+    list_row("hospital", "Notes a doctor wrote about you", sub="The clinic keeps its own copy — the law requires it of them, and it is not ours to delete", name="Kept notes", chevron=False),
     list_row("receipt", "Payment records", sub="Kept for tax and audit, without your medical details", name="Kept payments", chevron=False),
     list_row("eye", "The access log", sub="Anonymised, so nobody can quietly erase who looked at what", name="Kept audit", chevron=False),
 ], footer="We would rather tell you this plainly now than surprise you afterwards.")
@@ -1981,7 +1987,7 @@ P9_KEPT = group_card("What we must keep, and why", [
 # more effort than abandoning it — the review asked for exactly this.
 P9_CONFIRM = (f'<Frame w="fill" flex="col" gap={{14}} p={{20}} rounded={{24}} bg="var:state/error-bg">'
               f'{T(15,"semibold","var:state/error","Four steps, on purpose")}'
-              f'{T(13,"regular","var:text/default","This is not a button you can hit by accident. For 30 days after this you can still sign in and cancel — after that it is gone for good.",w="fill")}'
+              f'{T(13,"regular","var:text/default","Not a button you can hit by accident. For 30 days you can sign in and cancel; after that it is gone.",w="fill")}'
               f'{prep_step(1,"Tell us why","So we can fix whatever went wrong",done=True)}'
               f'{field("Type DELETE to confirm","type","DELETE",ph=False,focus=True)}'
               f'{prep_step(3,"Confirm it is you","We send a code to +234 801 234 5678")}'
@@ -1996,7 +2002,7 @@ P9_REASON = group_card("Why are you leaving?", [
     radio_row("It is too expensive", name="Del reason cost"),
     radio_row("I could not find the care I needed", name="Del reason care"),
     radio_row("Something else", name="Del reason other"),
-], footer="A real person reads these. If it is something we can fix, we would rather fix it than lose you.")
+], footer="A real person reads these.")
 P9_ALT = group_card("Or do something smaller", [
     list_row("moon", "Pause my account instead", sub="Nothing is deleted, no notifications, come back any time", name="Pause account"),
     list_row("bell-off", "Just stop the notifications", name="Open notifs P6"),
@@ -2251,7 +2257,7 @@ R10_PICK = group_card("What goes on the page?", [
     consent_row("flask-conical", "Latest lab results", "Full blood count, 12 Jun", "Print labs", on=False),
     consent_row("syringe", "Immunisations", "Yellow fever, tetanus", "Print vaccines", on=False),
     consent_row("phone-call", "Emergency contact", "Ijeoma Okeke · +234 805 998 1122", "Print emergency"),
-], footer="Blood group and allergies always print. In an emergency they are the two lines that matter — and anything you told us yourself is printed with an asterisk, so a stranger reading it in a hurry knows it was never tested.")
+], footer="Blood group and allergies always print — in an emergency they are the two lines that matter. Anything you told us yourself prints with an asterisk.")
 
 R10_PREVIEW = (f'<Frame w="fill" flex="col" gap={{13}} p={{22}} rounded={{22}} bg="var:bg/base" '
                f'stroke="var:border/default" strokeWidth={{1}}>'
@@ -2309,7 +2315,7 @@ R11_WHO = card(
     + f'<Frame w="fill" flex="col" gap={{7}} p={{16}} rounded={{18}} bg="var:state/warning-bg">'
     + T(15, "semibold", "var:text/strong", "She wants to send some of your details to Lifebridge Diagnostics")
     + T(13, "regular", "var:text/default",
-        "They are the imaging centre that will do your MRI. They are not on Medra, so they would get a one-time page rather than an account.", w="fill")
+        "The imaging centre doing your MRI. Not on Medra, so they get a one-time page.", w="fill")
     + f'</Frame>', p=20, gap=14)
 
 R11_WHAT = group_card("Exactly what they would see", [
@@ -2320,7 +2326,7 @@ R11_WHAT = group_card("Exactly what they would see", [
     consent_row("flask-conical", "Your last blood results", "Full blood count, 12 June", "Ok labs", on=False),
     consent_row("stethoscope", "Today's consultation note", "Everything Dr. Okafor wrote", "Ok note", on=False),
     consent_row("phone", "Your phone number", "So they could call you directly", "Ok phone", on=False),
-], footer="The two locked lines always travel — who you are, and what you are allergic to. Everything else is yours to switch off, and switching one off does not cancel the rest.")
+], footer="Two locked lines always travel: who you are, and what you are allergic to. Everything else is yours to switch off.")
 
 R11_LIFE = group_card("What you are agreeing to", [
     list_row("timer", "It dies when the scan is done", sub="And in 7 days regardless, even if they never open it", name="Ok life", chevron=False, tint="var:state/success-bg"),
@@ -2330,7 +2336,7 @@ R11_LIFE = group_card("What you are agreeing to", [
     list_row("history", "Every time they open it, you are told", sub="It goes into your access log, which nobody can edit", name="Ok log", chevron=False),
 ])
 
-R11_FREE = note("info", "Saying no does not affect your care. Dr. Okafor can print the request and hand it to you instead, or use a laboratory that is on Medra. You will not be asked why, and she is not told anything except that you declined.", "info")
+R11_FREE = note("info", "Saying no does not affect your care. Dr. Okafor can print the request instead. You will not be asked why.", "info")
 
 R11_ACTIONS = (f'{cta("Yes, share these 4 things","Approve share R11","circle-check")}'
                f'{ghost("No, do not share anything","Decline share R11","circle-x")}'
@@ -2389,7 +2395,7 @@ add("Records", "R12-shared",
           f'<Frame grow={{1}} flex="col" gap={{16}}>{R12_DONE}{R12_STATE}{R12_LOG}</Frame>'
           f'<Frame w={{380}} flex="col" gap={{16}}>{R12_STOP}'
           f'{mini_btn("See everyone who has access","Open access R6","shield-check","teal",full=True)}'
-          f'{note("info","Lifebridge keep their own copy of the report they write — the law requires it of them, exactly as it does of a clinic. Revoking closes their access to your Medra record, not their own file.","info")}</Frame></Frame>',
+          f'{note("info","Lifebridge keep their own copy of the report — the law requires it. Revoking closes their access to your record, not their file.","info")}</Frame></Frame>',
         SIDE["Records"]),
     mob("Member · Records — R12 Shared Outside Medra · Mobile",
         appbar("Shared", right=circle_btn("shield-check", "Open access R6"))
@@ -2476,7 +2482,7 @@ P3B_PLAN = (f'<Frame w="fill" flex="col" gap={{14}} p={{22}} rounded={{26}} bg="
             f'{proof("bell-ring","Their reminders on your phone",dark=False)}'
             f'{proof("credit-card","One payment method for the family",dark=False)}</Frame>'
             f'{hr("var:border/accent")}'
-            f'{T(12,"regular","var:text/muted","Or ₦1,500 per extra person per month if you only need one more. Cancel any time — nobody loses their records, you just stop managing them.",w="fill")}</Frame>')
+            f'{T(12,"regular","var:text/muted","Or ₦1,500 a month for one more. Cancel any time — nobody loses their records.",w="fill")}</Frame>')
 P3B_FREE = group_card("Always free, plan or no plan", [
     list_row("circle-user", "Your own account and records", name="Free own", chevron=False),
     list_row("users", "Two people in your care", sub="Chidi and Mama Grace stay free forever", name="Free two", chevron=False),
@@ -2963,6 +2969,15 @@ linker = ("(async () => {\n"
  "  return { linked, navLinked, stayOnScreen: stay, framesFound: Object.keys(byName).length, missing };\n"
  "})();\n")
 open(os.path.join(OUT, "link-member.js"), "w").write(linker)
+
+# The content cut is only worth anything if it holds. Report the prose budget on every build —
+# a screen that drifts back over shows up here rather than at the next review.
+try:
+    from prose_budget import report as _prose_report
+    _prose_report(['member'])
+except Exception as _e:      # never let a reporting tool break a build
+    print("  prose budget unavailable:", _e)
+
 
 # A repair pass for a canvas that was rendered before normalise.py existed. It fixes the
 # spacer frames and the centred text in place, so a page does not have to be deleted and

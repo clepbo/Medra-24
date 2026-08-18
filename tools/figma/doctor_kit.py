@@ -48,7 +48,8 @@ def dgroup(title, rows, footer=None, p=18, action=None):
     if title:
         head = (f'<Frame w="fill" flex="row" justify="between" items="center" pb={{2}}>'
                 f'{T(11,"semibold","var:text/accent",title.upper())}{action or ""}</Frame>')
-    ft = (f'{hr()}<Frame w="fill" flex="row" gap={{8}} items="start" pt={{2}}>{I("info",13,M_IC)}'
+    ft = (f'{hr()}<Frame name="Group footer" w="fill" flex="row" gap={{8}} items="start" pt={{2}}>'
+          f'{I("info",13,M_IC)}'
           f'{T(11,"regular","var:text/muted",footer,w="fill")}</Frame>') if footer else ''
     return dcard(f'{head}{body}{ft}', p=p, gap=6)
 
@@ -961,7 +962,73 @@ def range_cal(month="August 2026", ranges=(), booked=(), name="Off"):
             f'<Frame flex="row" gap={{8}} items="center">'
             f'<Frame name="Btn Prev month" flex="row">{I("chevron-left",17,M_IC)}</Frame>'
             f'<Frame name="Btn Next month" flex="row">{I("chevron-right",17,M_IC)}</Frame></Frame></Frame>'
-            f'{T(11,"regular","var:text/muted","Drag across the days you will not be here. Pick as many separate stretches as you need.",w="fill")}'
+            f'{T(11,"regular","var:text/muted","Drag across the days you will not be here.",w="fill")}'
             f'<Frame w="fill" flex="row" gap={{4}}>{cols}</Frame>'
             + (f'<Frame w="fill" flex="row" gap={{8}}>{chips}</Frame>' if chips else '')
             + f'{legend}</Frame>')
+
+
+# =====================================================================================
+# THE STRUCTURED EXAMINATION TEMPLATE
+#
+# Godwin, third review: "Blood pressure this over this, and the doctor just puts in the
+# numbers… sometimes you are rushing with a patient and you forget some of the things you
+# needed to do, but if you see a template of what you need to fill in, then you know."
+#
+# He is describing a checklist that prevents omission under time pressure, not a data-entry
+# convenience — which is why the empty fields are drawn as visibly empty rather than hidden.
+#
+# **The field list is taken from published convention, not invented, and still needs a
+# clinician's sign-off before build.** Sources, all in `docs/Clinical_Templates.md`:
+#
+#   · the five conventional vital signs — temperature, pulse, respiratory rate, blood
+#     pressure, oxygen saturation — plus height, weight and a **computed** BMI, which is how
+#     every vital-signs template and the CDISC VS domain define the set;
+#   · blood pressure **recorded twice**, because the WHO HEARTS protocol — the one running in
+#     60 primary-care centres in the FCT under the Hypertension Treatment in Nigeria
+#     programme, which is Medra's own pilot geography — defines hypertension on two readings,
+#     not one. A template that takes a single reading cannot express the diagnosis it is for;
+#   · BMI computed rather than typed, which is Godwin's explicit ask and also the thing that
+#     stops a busy clinic recording height and weight and never doing anything with them.
+#
+# What the template deliberately does NOT do is score, warn or diagnose. It colours a value
+# that is outside the reference range and stops there.
+# =====================================================================================
+VITAL_TONE = {"ok": ("var:state/success-bg", "var:state/success"),
+              "warn": ("var:state/warning-bg", "var:state/warning"),
+              "err": ("var:state/error-bg", "var:state/error"),
+              None: ("var:neutral/50", "var:text/strong"),
+              "empty": ("var:neutral/50", "var:text/faint")}
+
+
+def vital(label, value, unit, name, tone=None, ref=None, computed=False):
+    """One measurement. An empty one still draws its box and its unit, because the point of the
+    template is that you can see what you have not done yet."""
+    empty = not value
+    bg, col = VITAL_TONE["empty" if empty else tone]
+    # Three tiles across a 410px column leaves about 100px inside each one, and "136/86 mmHg"
+    # does not fit on one line in it — the first version broke the number itself, which on a
+    # blood-pressure field is worse than useless. Label above, value and unit on their own
+    # line at a size that fits, and the "Calculated" marker moves to the reference line where
+    # it does not compete with the label for width.
+    r = ref or ("Calculated" if computed else None)
+    foot = (f'<Frame w="fill" flex="row" gap={{4}} items="center">'
+            + (I("calculator", 9, M_IC) if computed else '')
+            + T(9, "regular", "var:text/faint", r, w="fill") + '</Frame>') if r else ''
+    return (f'<Frame name="Btn Vital {name}" grow={{1}} flex="col" gap={{5}} p={{11}} rounded={{12}} '
+            f'bg="{bg}" stroke="var:border/subtle" strokeWidth={{1}}>'
+            f'{T(10,"semibold","var:text/muted",label,w="fill")}'
+            f'<Frame w="fill" flex="row" gap={{3}} items="end">'
+            f'{T(17,"bold",col,value or "—")}'
+            f'{T(9,"regular","var:text/muted",unit)}</Frame>{foot}</Frame>')
+
+
+def vitals_grid(rows, title="Examination", action=None, foot=None):
+    """`rows` is a list of lists of `vital()` — you control the shape, because a paediatric
+    template and an antenatal one do not want the same grid."""
+    head = (f'<Frame w="fill" flex="row" justify="between" items="center">'
+            f'<Frame flex="row" gap={{7}} items="center">{I("stethoscope",14,A_IC)}'
+            f'{T(12,"semibold","var:text/default",title)}</Frame>{action or ""}</Frame>')
+    body = "".join(f'<Frame w="fill" flex="row" gap={{9}}>{"".join(r)}</Frame>' for r in rows)
+    ft = T(10, "regular", "var:text/muted", foot, w="fill") if foot else ''
+    return f'<Frame w="fill" flex="col" gap={{9}}>{head}{body}{ft}</Frame>'

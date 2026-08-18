@@ -231,10 +231,14 @@ def kv_pair(a, b):
     return f'<Frame w="fill" flex="row" gap={{16}} items="start">{a}{b}</Frame>'
 
 def note_section(title, body, ic="file-text"):
+    """A section of somebody's consultation note. Named "Btn Field …" for the same reason a
+    note_field is: what a clinician wrote is content, and the prose budget must not count a
+    doctor's own words against the screen showing them."""
     return (f'<Frame w="fill" flex="col" gap={{8}}>'
             f'<Frame flex="row" gap={{8}} items="center">{I(ic,15,A_IC)}'
             f'{T(13,"semibold","var:text/default",title)}</Frame>'
-            f'{T(14,"regular","var:text/muted",body,w="fill")}</Frame>')
+            f'<Frame name="Btn Field note {title}" w="fill" flex="col">'
+            f'{T(14,"regular","var:text/muted",body,w="fill")}</Frame></Frame>')
 
 def provenance(who, council, when):
     return (f'<Frame w="fill" flex="row" gap={{11}} items="start" p={{14}} rounded={{16}} bg="var:neutral/50">'
@@ -406,7 +410,8 @@ def tile(ic, label, sub, name, tint="var:bg/muted"):
 
 def group_card(title, rows, footer=None, p=18):
     body = hr().join(rows) if isinstance(rows, list) else rows
-    ft = (f'{hr()}<Frame w="fill" flex="row" gap={{9}} items="start" pt={{4}}>{I("info",14,M_IC)}'
+    ft = (f'{hr()}<Frame name="Group footer" w="fill" flex="row" gap={{9}} items="start" pt={{4}}>'
+          f'{I("info",14,M_IC)}'
           f'{T(11,"regular","var:text/muted",footer,w="fill")}</Frame>') if footer else ''
     head = f'{eyebrow(title)}' if title else ''
     return (f'<Frame w="fill" flex="col" gap={{6}} p={{{p}}} rounded={{24}} bg="var:bg/base" '

@@ -535,7 +535,7 @@ D1B=(f'<Frame w="fill" flex="col" gap={{16}}>{field("Full name","user","Dr. Ngoz
      f'{field("Phone number","phone","803 555 0110",prefix="+234")}'
      f'{field("MDCN number","id-card","MDCN/45201",helper="Your Medical &amp; Dental Council of Nigeria registration number.")}'
      f'{field("NIN","fingerprint","1234 5678 9012",helper="A second identifier alongside your MDCN number. Checked once, never shown to members.")}'
-     f'{field("Specialisation","stethoscope","General practice",ph=False,trailing=("chevron-down","Specialty dropdown"),helper="Pick from the list — the Medra team keeps it current. Choose “Other” to type your own.")}'
+     f'{field("Specialisation","stethoscope","General practice",ph=False,trailing=("chevron-down","Specialty dropdown"),helper="Pick from the list, which Medra keeps current, or choose “Other”.")}'
      f'<Frame w="fill" flex="col" gap={{9}}>{T(13,"medium","var:text/default","Also practises")}'
      f'<Frame w="fill" flex="row" gap={{9}}>'
      f'<Frame name="Btn Spec chip Internal medicine" flex="row" gap={{7}} items="center" px={{13}} py={{9}} rounded={{999}} bg="var:bg/muted">'
@@ -782,7 +782,7 @@ add("Institution","I2-documents",
         "We verify every institution before it goes live. Add your practice licence and CAC certificate.",
         DOCS,cta("Continue","Continue I2","arrow-right","btn-navy.jpg"),
         [link("Don’t have them handy?","Save and set up the rest first","Save later I2"),
-         note("info","You can finish setting up, invite staff and explore the dashboard while we verify. Only going live with public bookings needs the documents.","info")],step=(1,6)),
+         note("info","Set up, invite staff and explore while we verify. Only public bookings need the documents.","info")],step=(1,6)),
     mob_form("Auth · Institution — I2 Verify Documents · Mobile","Step 2 of 6",
         [("Upload your",False),("documents",True)],"Practice licence and CAC certificate.",DOCS,
         cta("Continue","Continue I2","arrow-right","btn-navy.jpg"),
@@ -854,7 +854,7 @@ add("Institution","I4-plan",
            sub="From a single practice to a multi-branch group — pay only for what you need.",
            proofs=[proof("credit-card","Paystack billing"),proof("receipt","Cancel anytime")]),
         "Step 4 of 6",[("Your free month",False),("starts now",True)],
-        "Start with a free month on the full plan. What you would pay afterwards is worked out below — change anything and it updates as you go.",
+        "A free month on the full plan. What you pay afterwards updates as you change things.",
         PLAN_B,cta("Start my free month","Start trial I4","sparkles"),
         [link("Rather pay now and skip the trial?","Choose a plan","Pay now I4"),
          link("Need something custom?","Talk to our team","Sales I4")],step=(3,6)),
@@ -1220,7 +1220,7 @@ S9_BODY = (f'<Frame w="fill" flex="col" gap={{16}}>{inv_card()}'
            f'{allowline("At Garki the hospital books your day and sets your slot length")}'
            f'{allowline("At Garki you see no fees, no payouts and no subscription")}'
            f'{allowline("Garki reading your private practice", False, "Never")}</Frame>'
-           f'{note("info","One account, two workplaces. You switch between them in the top bar, and the record of what you have signed is one record either way — because it is one clinician either way.")}</Frame>')
+           f'{note("info","One account, two workplaces, switched in the top bar. What you have signed is one record either way.")}</Frame>')
 
 add("Staff","S9-workplace",
     desk_form("Auth · Staff — S9 Add This Workplace",
@@ -1418,6 +1418,15 @@ linker=("(async () => {\n"
  "  return { linked, stayOnScreen: stay, framesFound: Object.keys(byName).length, missing };\n"
  "})();\n")
 open(os.path.join(OUT,"link-auth.js"),"w").write(linker)
+
+# The content cut is only worth anything if it holds. Report the prose budget on every build —
+# a screen that drifts back over shows up here rather than at the next review.
+try:
+    from prose_budget import report as _prose_report
+    _prose_report(['auth'])
+except Exception as _e:      # never let a reporting tool break a build
+    print("  prose budget unavailable:", _e)
+
 
 # A repair pass for a canvas that was rendered before normalise.py existed. It fixes the
 # spacer frames and the centred text in place, so a page does not have to be deleted and

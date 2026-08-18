@@ -7,9 +7,14 @@ and the organisation module was not reached.
 The transcript is machine-generated and heavily garbled. Everything below is an item I am
 confident of; where a reading is uncertain it is marked.
 
-**Status, 14 Aug:** the five unblocked items are **built**. Two remain blocked and are marked
-as such — private notes needs a clinician, and the examination template needs one to write the
-field list.
+**Status, 14 Aug:** the five unblocked items are **built**.
+
+**Status, 17 Aug:** the two blocked items are now **designed from published convention** rather
+than left blank — the examination template from the conventional vital-signs set and the WHO
+HEARTS protocol running in the FCT, and private notes from the serious-harm / third-party /
+psychotherapy-note grounds used for patient record access. Sources and the open questions for a
+clinician are in `docs/Clinical_Templates.md`. **Neither should reach build without that
+review** — what has changed is that a doctor is now reviewing a specific proposal.
 
 ---
 
@@ -18,7 +23,7 @@ field list.
 These are not additions. Each one reverses a decision that is currently baked into screens, the
 PRD, or both, so each needs an explicit yes before it is applied.
 
-### 1.1 Private notes — the patient should see almost everything — ⛔ blocked
+### 1.1 Private notes — the patient should see almost everything — ⚠️ designed, needs a clinician
 
 > **Abraham (43:19):** "I know these notes are private, the patient does not get to see them,
 > right?"
@@ -80,7 +85,7 @@ from it.
 |---|---|---|---|
 | 2.1 | ✅ **Block specific dates ahead**, on a **single month calendar with drag-selectable ranges**, not from/to dropdowns. "I can just pick the dates on the calendar and it is easier that way." Multiple ranges in one view | `K7`, `K8` | 2 screens redrawn |
 | 2.2 | ✅ **Instrumental diagnostics** — ECG, echo, CT, MRI, gastroscopy, colonoscopy — alongside blood and urine. Agreed resolution: rename the section **"Lab results and diagnostics"** and put a type toggle inside rather than splitting it in two | member `R3`, doctor `P2`/`P8` | rename + a toggle |
-| 2.3 | ⛔ **A structured examination template.** "Blood pressure this over this, and the doctor just puts in the numbers… sometimes you are rushing with a patient and you forget some of the things you needed to do, but if you see a template of what you need to fill in, then you know." Blood pressure, pulse, weight, height, and **BMI computed** rather than typed | doctor `C1` | 1 section redrawn |
+| 2.3 | ⚠️ **A structured examination template.** "Blood pressure this over this, and the doctor just puts in the numbers… sometimes you are rushing with a patient and you forget some of the things you needed to do, but if you see a template of what you need to fill in, then you know." Blood pressure, pulse, weight, height, and **BMI computed** rather than typed | doctor `C1` | 1 section redrawn |
 | 2.4 | ✅ **Earnings shown against the previous period**, with a direction arrow | doctor `K1`, `S5` | 1 tile |
 
 ### On 2.3 — this is the strongest request in the review

@@ -478,6 +478,55 @@ nothing in the organisation module navigates into it.
 `head_chip` breaks over two lines with the teal chip beside it. That is the house style of this
 bundle and has been since the first render; it is not a layout defect and does not want fixing.
 
+### B5. The content cut, and the two blocked clinical items — **DONE (17 Aug)**
+
+**The cut.** Godwin's objection was *"there are too much of irrelevant information been added
+to the screen while some major functions are been left out."* The rule applied is **one
+explanation per screen**: a screen may say *why* once, and every other group on it either says
+nothing or states a fact. A sentence that carries a rule — who may see this, what cannot be
+undone, what is charged, what is logged — is the product speaking and stays; a sentence that
+re-narrates the rows above it is what goes, and it was usually the longest one on the screen.
+
+**Explanation across the four bundles fell from 70,770 characters to 59,123 — down 16%**, over
+about 150 rewritten strings. `tools/figma/prose_budget.py` now measures it and every builder
+reports it, so drift shows up on the next build rather than at the next review.
+
+Two things the tool had to learn before its number meant anything:
+
+- **What a person authors is content, not chrome.** A consultation note is supposed to be a
+  paragraph. `note_field` and `note_section` bodies are excluded, or the tool would be telling
+  a doctor their own note is too long.
+- **A row subtitle is data, not prose.** The first version named `C11 Send the order` as one of
+  the worst screens in the file — but its longest line is 99 characters and the other thirty-two
+  are things like "Open now · 3 samples in the queue · median 4 hours". That is six destinations
+  each carrying the fact you choose between them on: the opposite of the reported problem.
+  Prose is now a line that is long enough to be a sentence **and punctuated like one**.
+
+**Screens whose job is to explain get a wider budget** — consent, revocation, deletion, the
+critical-value pathway, the MRI safety stop, the undertaking. A consent screen that does not say
+what saying no costs you is not a shorter screen, it is a worse one. They are named individually
+in `prose_budget.py` so "this screen is special" stays a decision somebody made.
+
+**The two blocked items are now designed rather than blank**, from published convention, and
+sourced in `docs/Clinical_Templates.md`. Neither should reach build without a clinician.
+
+**The examination template** (`C1`) — nine measurements: the five conventional vital signs plus
+height, weight and a **computed** BMI. Blood pressure is taken **twice**, because the WHO HEARTS
+protocol defines hypertension on two readings — and HEARTS is what runs in 60 primary-care
+centres in the FCT under the Hypertension Treatment in Nigeria programme, which is Medra's own
+pilot geography. An unfilled field stays visibly unfilled: Godwin was describing a checklist
+that prevents omission under time pressure, not a data-entry convenience. The template does not
+score, warn or diagnose — it tints a value outside the reference range and stops.
+
+**Private notes → withholding on stated grounds** (`C7`, `R2`). The blanket private note is
+gone. The member sees the note by default; a clinician may withhold **one item** and must pick a
+ground, and there are three: **serious harm** (explicitly not "she may find it upsetting"),
+**somebody else's information** (a colleague is never a third party), and a **psychotherapy
+note** (psychiatry and psychology only, kept apart from the record). The member is told *which
+ground* — not the old "a private note exists", which tells somebody that something is being kept
+from them and nothing else. This lands where Godwin did while keeping the two grounds a
+clinician genuinely needs and that a transcript line would have removed.
+
 ### C. Member mobile hub → section conversion
 
 Machinery is in place (`addx()` in `tools/figma/build_member.py`); 55 screens unconverted.

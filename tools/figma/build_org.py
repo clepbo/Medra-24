@@ -153,14 +153,14 @@ A2_STEPS = dgroup("Where your application is", [
     prep_step(2, "CAC register checked", "RC 1489302 found, active", done=True),
     prep_step(3, "Practice licence checked", "A Medra reviewer is confirming the licence with the registry. Started 3 hours ago."),
     prep_step(4, "Contact person confirmed", "NIN matched. Awaiting step 3 to complete."),
-], footer="Every organisation is checked by a person. An RC number only proves a company exists — the practice licence is the clinical credential, and it is the one that takes time.")
+], footer="Checked by a person. An RC number proves a company exists; the practice licence is the clinical credential.")
 
 A2_DOCS = dgroup("Documents", [
     drow("file-badge", "CAC certificate", value="Accepted", sub="RC 1489302 · uploaded 4 Feb", name="Doc cac", tone="ok"),
     drow("badge-check", "Organisation practice licence", value="Under review", sub="Uploaded 4 Feb · expires 31 Dec 2026", name="Doc licence", tone="warn"),
     drow("id-card", "Contact person ID", value="Accepted", sub="NIN · Mrs. Adaeze Nwosu", name="Doc nin", tone="ok"),
     drow("upload", "Add another document", sub="Anything that helps us confirm the organisation", name="Doc add", chevron=False),
-], footer="A diagnostic laboratory or a pharmacy also holds its own regulator's registration. Upload it here — the exact list per organisation type is being confirmed.")
+], footer="A laboratory or pharmacy also holds its own regulator's registration. Upload it here.")
 
 A2_MEANWHILE = dgroup("Worth doing while you wait", [
     drow("building-2", "Add your branches", value="3", name="Open branches A3"),
@@ -270,7 +270,7 @@ A4_SEATS = dgroup("What you are buying", [
     kpi_line("14 clinical support seats", "Included"),
     kpi_line("5 front desk seats", "Included"),
     kpi_line("Total each month", "₦296,000", "ok"),
-], footer="Support and front-desk seats are priced below a practitioner seat. They are what makes the record complete — pricing them like a consultant would defeat the point of having them.")
+], footer="Support and front-desk seats cost less than a practitioner seat. They are what makes the record complete.")
 
 A4_TRIAL = alert_strip("sparkles", "Free trial · 26 days left",
     "Nothing is charged until 5 March. You can change plan or cancel at any point and keep everything you have entered.", "info")
@@ -444,7 +444,7 @@ B2_UNASSIGNED = dgroup("Nobody assigned · 4", [
     alloc_row("11:30", "Halima Sani · MDR-9012-44", "Paid ₦15,000 · in person · Maitama",
               "“Blood pressure check.”", "Alloc Halima"),
     alloc_row("14:00", "Emeka Nwosu · MDR-4410-07", "Paid ₦15,000 · virtual", "“Follow-up on the knee.”", "Alloc Emeka"),
-], footer="A booking with nobody assigned is the one thing on this console that becomes a complaint if it is left. They are sorted by how soon they start, not by when they arrived.")
+], footer="A booking with nobody assigned becomes a complaint if it is left. Sorted by how soon they start.")
 
 B2_ASSIGNED = dgroup("Assigned · 12 of 16", [
     alloc_row("09:00", "Fatima Bello · MDR-2201-13", "Seen · signed 09:28", "Asthma review", "Alloc Fatima", assigned="Dr. Okafor"),
@@ -560,7 +560,7 @@ C1_WHY = dgroup("Why departments and not people", [
     drow("layers", "You buy seats, not licences for names", sub="When a technician leaves, the seat stays and you reassign it", name="Why seats", chevron=False),
     drow("shield-check", "Permissions follow the department", sub="Nobody carries access from a job they no longer do", name="Why perms", chevron=False),
     drow("inbox", "Work is routed to a department, never a person", sub="An order sits in the laboratory queue, so nothing waits on one individual being at work", name="Why route", chevron=False),
-], footer="This is also why the price follows practitioners, branches and seats — the unit of billing and the unit of administration are the same thing.")
+], footer="It is why the price follows practitioners, branches and seats.")
 
 C1_ASIDE = (rail_section("Seats",
     dcard(kpi_line("Practitioner seats", "11 of 12") + kpi_line("Clinical support", "11 of 15")
@@ -614,7 +614,7 @@ C2_LENGTH = dgroup("How long is one consultation here?", [
          name="Dept slot preview", chevron=False, tone="ok"),
     drow("user-cog", "A consultant may set their own", sub="Two doctors here are allowed to — it is off for everyone else",
          name="Dept slot override", tone="warn"),
-], footer="Shorter slots mean more patients and less time each. That is a decision for whoever runs the department, and it is recorded as one.")
+], footer="Shorter slots mean more patients and less time each. Whoever runs the department decides, and it is recorded.")
 
 C2_PERMS = dgroup("What this department can do", [
     perm_row("Receive test orders addressed to it", True),
@@ -757,7 +757,7 @@ C5_WHAT = dgroup("What they will be able to do", [
     perm_row("Release a result to a member", False, "A doctor releases"),
     perm_row("Open a member's consultation notes", False),
     perm_row("See any branch other than Garki", False, "Scope follows the branch you pick"),
-], footer="They inherit the department's permissions. There is no per-person permission editing — that is how organisations end up with someone holding access nobody remembers granting.")
+], footer="They inherit the department's permissions. Per-person editing is how organisations end up with access nobody remembers granting.")
 
 C5_STEPS = dgroup("What happens next", [
     prep_step(1, "They get the invitation", "Email and SMS, valid for 7 days"),
@@ -851,9 +851,9 @@ C7_DENIALS = dcard(
     f'<Frame flex="row" gap={{9}} items="center">{I("shield-alert",17,ERR_IC)}'
     f'{T(14,"semibold","var:text/strong","Two denials you cannot switch on")}</Frame>'
     + perm_row("Front desk reading clinical content", False,
-               "They register, schedule, check in and take money. Giving the busiest, highest-turnover seat in the building a window into diagnoses is the fastest way to lose a member's trust and breach the NDPA.")
+               "Giving the busiest, highest-turnover seat in the building a window into diagnoses is the fastest way to breach the NDPA.")
     + perm_row("A lab technician releasing a result to a member", False,
-               "They enter it; a doctor releases it. An out-of-range value arriving on a phone with nobody to explain it is a harm, not a feature.")
+               "They enter it, a doctor releases it. An out-of-range value with nobody to explain it is a harm.")
     + T(11, "regular", "var:text/muted",
         "These are platform rules rather than settings. Every other permission on this screen is yours to tighten.", w="fill"),
     bg="var:state/error-bg", stroke=None)
@@ -862,7 +862,7 @@ C7_EPISODE = dgroup("How access ends", [
     prep_step(1, "A member arrives", "Their record opens to the people on that episode of care, and only to what they shared"),
     prep_step(2, "The visit is marked complete", "Access closes the same moment, for everyone"),
     prep_step(3, "The member can see it happened", "Every read is in their own audit trail, by name and by time"),
-], footer="Access is per episode of care, never per person and never permanent. This is the one rule that makes a shared record safe to hand around a hospital.")
+], footer="Per episode of care, never per person and never permanent. It is what makes a shared record safe.")
 
 addx("People", "C7-roles",
     o_desk("Org · People — C7 Roles &amp; Permissions", ("People", "Roles"),
@@ -1071,7 +1071,7 @@ D4_FORM = dcard(
 D4_WHO = dgroup("Who this goes to", [
     patient_row("avatar-4.jpg", "Dr. Ngozi Okafor", "Cardiology", "Her doctor today · in room 3 · with a member", "Send", "Esc okafor", tag="confirmed"),
     patient_row("avatar-1.jpg", "Dr. Chuka Eze", "General practice", "On duty · free now", "Send", "Esc eze", tag="new"),
-], footer="If the first doctor does not answer within two minutes it goes to the duty doctor automatically. An escalation is never left sitting in one person's queue.")
+], footer="No answer in two minutes and it goes to the duty doctor. An escalation never sits in one person's queue.")
 
 addx("Chain", "D4-escalate",
     o_desk("Org · Nursing — D4 Escalate", ("Nursing", "Grace Okeke", "Escalate"),
@@ -1109,7 +1109,7 @@ D5_QUEUE = dgroup("Orders waiting · 4", [
     task_row_big("10:02", "Halima Sani · MDR-9012-44", "Referred in from Wuse Clinic",
                  "Urea, creatinine and electrolytes", "Order halima", action="Accept", avatar="avatar-5.jpg",
                  flags=[("share-2", "From a referral")]),
-], footer="You see the order and the clinical detail attached to it. Nothing else from the member's record opens here — a test is run the same way whatever the diagnosis is.")
+], footer="The order and its clinical detail, nothing else. A test is run the same way whatever the diagnosis.")
 
 D5_PROGRESS = dgroup("In progress · 3", [
     drow("beaker", "Fatima Bello · FBC", value="Running", sub="Accepted 09:20 · analyser 2", name="Prog fatima"),
@@ -1242,7 +1242,7 @@ D7_WHY = dcard(
     f'<Frame flex="row" gap={{9}} items="center">{I("info",16,A_IC)}'
     f'{T(14,"semibold","var:text/strong","Why a form and not a paragraph")}</Frame>'
     + T(12, "regular", "var:text/default",
-        "Typed prose cannot be trended, cannot be flagged against a range, and cannot be compared with a result from another laboratory. You fill numbers; Medra does the rest. The comment box is for anything a number cannot carry.", w="fill"),
+        "Prose cannot be trended, flagged against a range or compared with another laboratory. You fill numbers; the comment box carries the rest.", w="fill"),
     bg="var:state/info-bg", stroke=None)
 
 D7_NEXT = dgroup("What happens when you finish", [
@@ -1290,7 +1290,7 @@ D8_RULE = dcard(
     f'<Frame flex="row" gap={{9}} items="center">{I("shield-check",16,OK_IC)}'
     f'{T(14,"semibold","var:text/strong","A rejected sample is never a silent one")}</Frame>'
     + T(12, "regular", "var:text/default",
-        "The commonest failure in a paper laboratory is a sample quietly discarded, with the member turning up a week later to be told nothing was ever run. Rejecting here always tells someone.", w="fill"),
+        "In a paper laboratory a bad sample is quietly discarded and the member finds out a week later. Rejecting here always tells someone.", w="fill"),
     bg="var:state/success-bg", stroke=None)
 
 addx("Chain", "D8-lab-problem",
@@ -1392,13 +1392,13 @@ D9_QUEUE = dgroup("Prescriptions waiting · 4", [
     task_row_big("10:02", "Musa Ibrahim · MDR-7714-02", "Dr. Eze · collect for a relative",
                  "Ceftriaxone 1 g · 5 vials", "Rx musa", action="Dispense", avatar="avatar-1.jpg",
                  flags=[("users", "Collected by someone else")]),
-], footer="Someone standing at the counter comes first, whatever the order they arrived in. The queue is sorted by who is waiting, not by when it was signed.")
+], footer="Somebody at the counter comes first. Sorted by who is waiting, not by when it was signed.")
 
 D9_STOCK = dgroup("Watch the shelf", [
     drow("package", "Metformin 500 mg", value="18 left", sub="Three prescriptions today need 60", name="Stock metformin", tone="warn"),
     drow("package", "Amlodipine 5 mg", value="240 left", sub="Comfortable", name="Stock amlodipine", tone="ok"),
     drow("package-x", "Salbutamol inhaler", value="Out", sub="Two waiting — substitution needed", name="Open sub D11", tone="err"),
-], footer="Stock is a count you keep here, not a warehouse system. It exists so you can tell a member before they queue, not to run the pharmacy.")
+], footer="A count you keep here, not a warehouse system — so you can tell a member before they queue.")
 
 addx("Chain", "D9-pharmacy",
     o_desk("Org · Pharmacy — D9 Prescription Queue", ("Pharmacy", "Thursday 14 August"),
@@ -1440,7 +1440,7 @@ D10_COUNSEL = dgroup("Say this at the counter", [
     drow("sunrise", "Every morning, at about the same time", sub="A steady level is what makes it work", name="Cn time", chevron=False),
     drow("circle-alert", "Ankle swelling is the common side effect", sub="Tell her it is not dangerous but she should mention it", name="Cn side", chevron=False),
     drow("calendar-check", "Come back in 30 days", sub="One repeat is already authorised, so she does not need a new appointment", name="Cn repeat", chevron=False),
-], footer="Written by the prescriber, not by the pharmacy. If you disagree with any of it, flag it back rather than change it at the counter.")
+], footer="Written by the prescriber. Disagree with any of it and flag it back rather than change it here.")
 
 addx("Chain", "D10-dispense",
     o_desk("Org · Pharmacy — D10 Dispense", ("Pharmacy", "Amara Okeke"),
@@ -1685,7 +1685,7 @@ D16_WORK = dgroup("Studies requested · 6", [
     task_row_big("11:45", "Fatima Bello · MDR-2201-13", "Dr. Eze · routine · contrast",
                  "CT abdomen with contrast · 30 min", "Img fatima", action="Prepare", avatar="avatar-4.jpg",
                  flags=[("droplet", "Creatinine needed"), ("radiation", "Dose recorded")], tone="warn"),
-], footer="Ordered by appointment, not by when the doctor asked. An image needs the person, the room and the machine at the same moment — that is what makes it a booking rather than a queue.")
+], footer="Ordered by appointment, not by request. An image needs the person, the room and the machine at once.")
 
 D16_ROOMS = dgroup("Rooms and machines", [
     drow("scan", "MRI suite", value="In use", sub="Until 09:25 · Halima is next", name="Room mri", tone="warn"),
@@ -1693,7 +1693,7 @@ D16_ROOMS = dgroup("Rooms and machines", [
     drow("radiation", "X-ray room 1", value="Free", sub="Musa can go now", name="Room xr", tone="ok"),
     drow("monitor", "Ultrasound", value="Free", sub="Sonographer in at 10:30", name="Room us", tone="ok"),
     drow("activity", "ECG trolley", value="Ward 2", sub="Bring it back before 10:15", name="Room ecg"),
-], footer="A machine being free is not the same as a room being free, and neither is the same as somebody being there to run it. All three have to be true.")
+], footer="A free machine, a free room and somebody to run it are three different facts. All three have to be true.")
 
 D16_UNREAD = dgroup("Waiting for a radiologist", [
     drow("file-image", "3 studies acquired, not yet reported", sub="Oldest 2 hours · Dr. Nwachukwu is in until 16:00", name="Open report D18", tone="warn"),
@@ -1727,7 +1727,7 @@ D17_ORDER = dcard(
     + note_section("Why the doctor asked for it",
                    "Six weeks of lower back pain with numbness down the right leg. Not settling with rest. Looking for a disc pressing on the nerve root.",
                    "file-text")
-    + note("info", "A clinical question, not just a body part. A radiologist who knows what is being asked writes a better report than one reading a picture cold."))
+    + note("info", "A question, not just a body part. A radiologist who knows what is being asked writes a better report."))
 
 D17_SAFETY = dgroup("Before she goes anywhere near the magnet", [
     checklist_row(True,  "Identity checked out loud", "She said her own name and date of birth — you did not read it to her", "Sf id"),
@@ -1735,13 +1735,13 @@ D17_SAFETY = dgroup("Before she goes anywhere near the magnet", [
     checklist_row(False, "Could she be pregnant?", "Ask everyone who could be. It is a question, not an accusation.", "Sf preg"),
     checklist_row(True,  "She understands what will happen", "Loud, narrow, 45 minutes, she can talk to you the whole time", "Sf explain"),
     checklist_row(True,  "Claustrophobia asked about", "She says she will be fine with the intercom on", "Sf claus"),
-], footer="Two of these are unanswered, so the study cannot start. This is the only screen in Medra that refuses to move — a metal implant in an MRI scanner injures somebody in seconds.")
+], footer="Two are unanswered, so the study cannot start. A metal implant in an MRI scanner injures somebody in seconds.")
 
 D17_STOP = dcard(
     f'<Frame flex="row" gap={{9}} items="center">{I("octagon-alert",17,ERR_IC)}'
     f'{T(14,"semibold","var:text/strong","Two answers missing")}</Frame>'
     + T(12, "regular", "var:text/default",
-        "Metal and pregnancy are unanswered. Ask her, record what she says, and the button below turns on. If she is unsure about metal, do not guess — ask the radiologist.", w="fill")
+        "Ask her, record what she says, and the button turns on. If she is unsure about metal, ask the radiologist.", w="fill")
     + dbtn("Ask the radiologist first", "Open messages G3", "message-square-text", "ghost", full=True),
     bg="var:state/error-bg", stroke=None)
 
@@ -1749,7 +1749,7 @@ D17_DOSE = dgroup("What gets recorded", [
     drow("radiation", "No ionising radiation", sub="MRI is a magnet. Nothing to record here — on a CT or an X-ray this line carries the dose", name="Dose none", chevron=False, tone="ok"),
     drow("user-round", "Who ran the study", sub="You, by name, with the time it started and finished", name="Dose who", chevron=False),
     drow("scan", "Machine and sequence", sub="MRI suite · lumbar spine protocol", name="Dose machine", chevron=False),
-], footer="Every one of these lines is in the audit log whether the study is normal or not. A dose record that only exists when something goes wrong is not a dose record.")
+], footer="All of it is logged whether the study is normal or not.")
 
 addx("Chain", "D17-prepare",
     o_desk("Org · Imaging — D17 Safety Check", ("Imaging", "Halima Sani", "Safety"),
@@ -1802,13 +1802,13 @@ D18_CRIT = dgroup("What counts as critical here", [
     drow("siren", "Free air under the diaphragm", sub="Same — a phone call, then the report", name="Crit air", chevron=False, tone="err"),
     drow("siren", "A new mass", sub="Same day, by voice, whoever asked for the film", name="Crit mass", chevron=False, tone="err"),
     drow("circle-check", "Borderline cardiomegaly", sub="Not critical. It goes in the report and Dr. Eze reads it today.", name="Crit no", chevron=False, tone="ok"),
-], footer="This list belongs to the department, not to Medra. A radiologist agreed it and the admin can change it — but changing it is recorded, because it decides who gets rung at two in the morning.")
+], footer="The department owns this list, not Medra. Changing it is recorded — it decides who gets rung at two in the morning.")
 
 D18_SIGN = dcard(
     f'<Frame flex="row" gap={{9}} items="center">{I("shield-check",16,OK_IC)}'
     f'{T(14,"semibold","var:text/strong","Signed by you, as a named radiologist")}</Frame>'
     + T(12, "regular", "var:text/default",
-        "Dr. Ifeanyi Nwachukwu · MDCN 62109. Your name goes on this report and stays on it. Amending it later leaves both versions in the record, visible to anyone who reads it.", w="fill")
+        "Dr. Ifeanyi Nwachukwu · MDCN 62109. Amending it later leaves both versions in the record.", w="fill")
     + consent_row("file-check", "I have read the images myself",
                   "Not the radiographer's note, not the previous report — the images from this study.", "Rep read", on=True),
     bg="var:state/success-bg", stroke=None)
@@ -1853,20 +1853,20 @@ D19_METHOD = dgroup("How it came in today", [
     progress_row("Cash", "₦96,000", 23, "amber"),
     progress_row("Card · Paystack terminal", "₦74,000", 18, "teal"),
     progress_row("HMO at the desk", "₦28,000", 7, "navy"),
-], footer="Cash is the line to watch. It is the only one Medra cannot verify by itself, so it is the only one that has to be counted against a drawer at the end of a shift.")
+], footer="Cash is the only line Medra cannot verify itself, so it is the one counted against a drawer.")
 
 D19_OWED = dgroup("Money owed to us · 9", [
     patient_row("avatar-3.jpg", "Grace Okeke", "MDR-8842-21", "₦45,000 · consultation and labs · 11 days", "11 days", "Owe grace", tag="pending"),
     patient_row("avatar-5.jpg", "Halima Sani", "MDR-9012-44", "₦85,000 · MRI · part paid ₦20,000", "4 days", "Owe halima", tag="soon"),
     patient_row("avatar-1.jpg", "Musa Ibrahim", "MDR-7714-02", "₦31,500 · admitted, still on the ward", "Today", "Owe musa"),
     patient_row("avatar-4.jpg", "Fatima Bello", "MDR-2201-13", "₦25,000 · CT with contrast · HMO declined", "2 days", "Open claims D21", tag="new"),
-], footer="Nobody on this list has been refused care. Chasing a bill and withholding treatment are different decisions and Medra never makes the second one for you.")
+], footer="Nobody here has been refused care. Chasing a bill and withholding treatment are different decisions.")
 
 D19_SHIFT = dgroup("Closing the till", [
     checklist_row(True,  "Count the cash drawer", "₦96,000 counted against ₦96,000 recorded", "Till count"),
     checklist_row(True,  "Match the terminal", "Paystack settlement matches 8 card payments", "Till card"),
     checklist_row(False, "Two people sign it off", "You and a supervisor. Neither of you can do it alone.", "Till sign"),
-], footer="A till that one person opens, counts and signs off is not a till. This is the one place in Medra where two named people are required and it cannot be turned off.")
+], footer="A till one person opens, counts and signs off is not a till. Two named people, and it cannot be turned off.")
 
 addx("Chain", "D19-billing",
     o_desk("Org · Billing — D19 The Money Today", ("Billing", "Thursday 14 August"),
@@ -1916,7 +1916,7 @@ D20_AFTER = dgroup("What this changes", [
     drow("receipt", "Her balance becomes ₦35,000", sub="Visible to her in her own app, itemised the same way", name="Pay bal", chevron=False, tone="ok"),
     drow("smartphone", "She gets a receipt on WhatsApp", sub="With the reference, so she can match it to her bank alert", name="Pay wa", chevron=False),
     drow("lock", "You cannot edit this afterwards", sub="A wrong amount is corrected by a second entry that says so, never by changing the first", name="Pay lock", chevron=False, tone="warn"),
-], footer="Money entries are append-only for the same reason clinical notes are. The history is the point — a ledger you can quietly edit is worth nothing in a dispute.")
+], footer="Append-only, like a clinical note. A ledger you can quietly edit is worth nothing in a dispute.")
 
 addx("Chain", "D20-payment",
     o_desk("Org · Billing — D20 Take a Payment", ("Billing", "Halima Sani"),
@@ -1950,7 +1950,7 @@ D21_CLAIMS = dgroup("Claims with HMOs and NHIS · 14", [
     ref_row("circle-x", "Blessing Ade · AXA Mansard", "Physiotherapy · ₦12,000 · rejected: not covered on her plan",
             "5 days", "Claim blessing", tone="err", tag="cancelled",
             actions=[dbtn("Tell her, with the reason", "Tell member D21", "message-square-text", "navy", size="sm")]),
-], footer="A queried claim that nobody answers becomes a rejected claim, and a rejected claim that nobody tells the member about becomes a bill they were not expecting. Both of those are avoidable and both happen every week.")
+], footer="A query nobody answers becomes a rejection, and a rejection nobody passes on becomes a bill the member was not expecting.")
 
 D21_AGE = dgroup("How long the money has been out", [
     kpi_line("Under 30 days", "₦680,000"),
@@ -1964,7 +1964,7 @@ D21_WHY = dgroup("Why claims get queried here", [
     drow("user-x", "Member not active on the plan", value="3", sub="Their employer stopped paying and nobody told them", name="Why inactive", tone="warn"),
     drow("file-text", "Diagnosis code missing", value="3", sub="The doctor wrote it in words. The HMO wants the code as well.", name="Why code", tone="warn"),
     drow("calendar-x", "Submitted late", value="2", sub="Most plans give you 30 days from the visit", name="Why late", tone="err"),
-], footer="Four causes account for fourteen of this month's queries. Three of them are fixed at the front desk before the person is even seen, which is why this list belongs on the admin's screen too.")
+], footer="Four causes, fourteen queries. Three are fixed at the front desk before the person is even seen.")
 
 addx("Chain", "D21-claims",
     o_desk("Org · Billing — D21 Insurance Claims", ("Billing", "Claims"),
@@ -2041,7 +2041,7 @@ E2_DEST = dgroup("Where are they going?", [
     patient_row("avatar-1.jpg", "Wuse Diagnostics", "RC 2210934", "Laboratory and imaging · on Medra · 3.1 km", "Choose", "Dest wuse"),
     drow("link", "Somewhere not on Medra", sub="We generate a single-use link they open on any phone — no account, no app", name="Dest external", tone="warn"),
     drow("search", "Search Medra", sub="By name, specialty, organisation or MDCN number", name="Dest search"),
-], footer="If they are on Medra the referral lands in their inbox. If they are not, the same information goes down a link that expires the moment they are finished with it.")
+], footer="On Medra it lands in their inbox. Off it, the same information goes down a link that expires.")
 
 E2_WHAT = dgroup("What are you asking for?", [
     field_chips("Type", ["Consultation", "Test", "Imaging", "Procedure", "Admission"], 1, "Ref type"),
@@ -2057,7 +2057,7 @@ E2_SHARE = dgroup("What they will be able to see", [
     consent_row("flask-conical", "The results that led to it", "Two lumbar X-rays from June", "Sh results"),
     consent_row("pill", "Current medicines", "So they do not prescribe something that clashes", "Sh meds"),
     consent_row("history", "Her full consultation history", "Not shared — they do not need it for this", "Sh history"),
-], footer="The default is the minimum. Amara approves this list before anything leaves, and she can see afterwards exactly what was sent and to whom.")
+], footer="The default is the minimum, and Amara approves it before anything leaves.")
 
 addx("Referral", "E2-create",
     o_desk("Org · Referrals — E2 Refer Someone", ("Referrals", "New referral"),
@@ -2101,7 +2101,7 @@ E3_LINK = dcard(
     + I("link", 15, M_IC) + T(13, "regular", "var:text/strong", "medra.ng/s/7fQ2-K9mR-4vXt", w="fill")
     + f'<Frame name="Btn Copy link E3" flex="row">{I("copy",15,N_IC)}</Frame></Frame>'
     + T(11, "regular", "var:text/muted",
-        "A random token, never the member's Medra ID — nobody can reach a record by guessing, and one link tells you nothing about any other. It opens one job, expires when they finish it, and shows a privacy notice before anything else.", w="fill")
+        "A random token, never the member's Medra ID — nobody reaches a record by guessing, and one link tells you nothing about any other.", w="fill")
     + f'<Frame w="fill" flex="row" gap={{9}}>'
     + dbtn("Send on WhatsApp", "Send wa E3", "message-circle", "navy")
     + dbtn("Print the slip", "Print slip E3", "printer", "ghost") + '</Frame>')
@@ -2138,7 +2138,7 @@ E4_LIST = dgroup("Referred to us · 3", [
             "2 d", "In ngozi", tag="pending",
             actions=[dbtn("Accept", "Accept ngozi", "check", "navy", size="sm"),
                      dbtn("Decline", "Decline ngozi", "x", "danger", size="sm")]),
-], footer="Accepting creates a booking and tells the member and the referring doctor. Declining also tells them, with your reason in your words — silence is the one option that is not available.")
+], footer="Accepting books it and tells them both. Declining tells them too, in your words — silence is the one option not available.")
 
 E4_RULES = dgroup("Save yourself this screen", [
     dtoggle("zap", "Auto-accept from organisations we work with", sub="Wuse Clinic and Maitama Annex", on=False, name="Ref auto"),
@@ -2177,7 +2177,7 @@ E5_SHARED = dgroup("What Halima shared with us", [
     consent_row("pill", "Current medicines", "Lisinopril 10 mg, started 3 July", "Sh e5 meds"),
     consent_row("activity", "Recent blood pressure readings", "Six clinic readings since June", "Sh e5 bp"),
     consent_row("history", "Her full consultation history", "Not shared", "Sh e5 hist"),
-], footer="This is what she agreed to send, not everything we could ask for. If you need more, ask her — she can add to it from her own phone.")
+], footer="What she agreed to send, not everything we could ask for. Ask her and she can add to it.")
 
 E5_ACT = dgroup("Your answer", [
     outcome_choice("check-check", "Accept and book her in", "Creates a booking, tells her and Dr. Adeyemi.", "E5 accept", sel=True, tone="ok"),
@@ -2229,13 +2229,13 @@ E6_LIST = dgroup("Single-use links · 6", [
     link_row("Zenith Imaging", "Emeka Nwosu · knee X-ray", "used", "11 Aug", "Link zenith"),
     link_row("St. Mary's Clinic", "Ngozi Bala · discharge summary", "expired", "4 Aug", "Link stmarys"),
     link_row("Unknown recipient", "Blessing Ade · FBC", "revoked", "2 Aug", "Link revoked"),
-], footer="A link is one job, for one recipient, and it dies when they finish. Anything still open after 48 hours is chased; anything you no longer want open can be revoked here in one tap.")
+], footer="One job, one recipient, and it dies when they finish. Anything still open after 48 hours is chased.")
 
 E6_HOW = dcard(
     f'<Frame flex="row" gap={{9}} items="center">{I("shield-check",16,A_IC)}'
     f'{T(14,"semibold","var:text/strong","Why a link and not an account")}</Frame>'
     + T(12, "regular", "var:text/default",
-        "Most laboratories and clinics in Nigeria are not on Medra, and will not sign up to run one test. A member should not have to carry paper because of that. The link gives the other side exactly what they need, takes the result back in a structured form, and closes behind them.", w="fill")
+        "Most Nigerian laboratories are not on Medra and will not sign up to run one test. A member should not have to carry paper because of that.", w="fill")
     + T(11, "regular", "var:text/muted",
         "It is also how those organisations find us: a lab that keeps receiving these can onboard properly and stop using them.", w="fill"),
     bg="var:state/info-bg", stroke=None)
@@ -2431,13 +2431,13 @@ F1_NOW = dgroup("Who can see a record right now", [
     patient_row("avatar-2.jpg", "Sister Ifeoma Uche", "Nursing", "Amara Okeke · vitals · until complete", "End", "Acc ifeoma", tag="confirmed"),
     patient_row("avatar-1.jpg", "Mr. Sola Adeniyi", "Laboratory", "Amara Okeke · this order only, not the record", "End", "Acc sola", tag="soon"),
     patient_row("avatar-6.jpg", "Lifebridge Diagnostics", "External · single-use link", "Halima Sani · MRI request · expires when done", "Revoke", "Acc lifebridge", tag="pending"),
-], footer="Access is per episode of care. Ending one here closes it immediately and the member is told — use it when someone opened something they should not have.")
+], footer="Ending one closes it immediately and the member is told.")
 
 F1_RULE = dcard(
     f'<Frame flex="row" gap={{9}} items="center">{I("shield-check",17,OK_IC)}'
     f'{T(14,"semibold","var:text/strong","The organisation never owns the record")}</Frame>'
     + T(12, "regular", "var:text/default",
-        "Garki holds a copy of what happened here. The record belongs to the member, travels with them, and is theirs to share or withhold. If Garki left Medra tomorrow, every member would keep everything.", w="fill"),
+        "Garki holds a copy. The record belongs to the member — if Garki left Medra tomorrow, every member would keep everything.", w="fill"),
     bg="var:state/success-bg", stroke=None)
 
 F1_ASKS = dgroup("Requests we have made", [
@@ -2575,14 +2575,14 @@ F4_HERO = hero_stat("1,412", "People seen in August", "Up 11% on July · 148 exp
 
 F4_CHART = col_chart(VISITS, title="Visits a month",
     action=f'<Frame name="Btn Report range" flex="row">{T(11,"semibold","var:text/accent","Last 6 months")}</Frame>',
-    note="August is the busiest month on record and it is not finished. Most of the growth is follow-ups rather than new members, which is what the returning-patient rate on Patients is measuring.")
+    note="The busiest month on record, and not finished. Most of the growth is follow-ups rather than new members.")
 
 F4_JUMP = dgroup("Look closer", [
     drow("users", "Patients", value="1,412", sub="Who they were, where they came from, who did not turn up", name="Open patients F8"),
     drow("stethoscope", "Clinicians", value="9", sub="Consultation hours, how long each doctor spends, notes signed", name="Open clinicians F9"),
     drow("building-2", "Departments and staff", value="7", sub="Throughput, turnaround, who is carrying the load", name="Open depts F10"),
     drow("banknote", "Money", value="₦8.4m", sub="Collected, outstanding, and ₦1.24m sitting with HMOs", name="Open claims D21"),
-], footer="Every number on these four screens is for the branch and department named in the subtitle above. Change either one and they all change with it — that is the whole reason this console has a context line.")
+], footer="Every number here is for the branch and department in the subtitle. Change either and they all change with it.")
 
 F4_WATCH = dgroup("Things worth watching", [
     drow("circle-slash", "No-show rate", value="7.2%", sub="Down from 11% before payment-before-booking", name="Rep noshow", tone="ok", chevron=False),
@@ -2590,14 +2590,14 @@ F4_WATCH = dgroup("Things worth watching", [
     drow("notebook-pen", "Notes signed same day", value="94%", sub="Six unsigned notes older than 48 hours, across two doctors", name="Open clinicians F9", tone="warn"),
     drow("timer", "Laboratory turnaround", value="2h 40m", sub="Target 4 hours", name="Rep lab", tone="ok", chevron=False),
     drow("siren", "Criticals acknowledged in 15 min", value="12 of 14", sub="Two took longer. Both are in the audit log with who was rung.", name="Open critical F7", tone="warn"),
-], footer="Five numbers, and each one is somebody's job rather than a score. A rate with nobody attached to it does not get fixed.")
+], footer="Each of these is somebody's job rather than a score.")
 
 addx("Govern", "F4-reports",
     o_desk("Org · Reports — F4 Reports", ("Reports",),
         f'{F4_HERO}'
         f'<Frame w="fill" flex="row" gap={{16}} items="start">'
         f'<Frame grow={{1}} flex="col" gap={{14}}>{F4_CHART}'
-        f'{heat_grid(BUSY_COLS, BUSY_ROWS, title="When the place is busy", unit="People arriving",note="Friday at ten is the peak and Monday is close behind. The wait times on those two mornings are the ones members complain about, and this is the shape you would be staffing against.")}</Frame>'
+        f'{heat_grid(BUSY_COLS, BUSY_ROWS, title="When the place is busy", unit="People arriving",note="Friday at ten is the peak, Monday close behind. This is the shape you would be staffing against.")}</Frame>'
         f'<Frame w={{344}} flex="col" gap={{14}}>{F4_JUMP}{F4_WATCH}</Frame></Frame>',
         NAV["Reports"], badges=BADGES),
     o_head("Reports", "August · 1,412 seen", back=False, ctx="All branches",
@@ -2616,7 +2616,7 @@ F8_HERO = hero_stat("1,412", "People seen in August", "412 of them had never bee
 F8_SPLIT = part_bar([("Returning", 71, "1,000"), ("New to this organisation", 22, "312"),
                      ("Referred in from elsewhere", 7, "100")],
     title="New against returning", total="1,412",
-    note="Seven in ten were people you had seen before. That ratio is the single best measure of whether an organisation is keeping the people it treats, and it is the one Medra can prove because the record follows the member rather than the visit.")
+    note="Seven in ten had been here before — the best single measure of whether you keep the people you treat.")
 
 F8_SOURCE = data_table(
     ["How they got here", "August", "Share", "No-show"],
@@ -2625,7 +2625,7 @@ F8_SOURCE = data_table(
      ["Booked by phone", "213", "15%", "12.6%"],
      ["Referred by another organisation", "100", "7%", "6.0%"]],
     title="Where the visits came from",
-    note="A phone booking is three times more likely to be a no-show than one made in Medra, because nobody paid for it and nobody was reminded. That difference is worth more than any marketing decision on this screen.")
+    note="A phone booking is three times more likely to be a no-show: nobody paid, and nobody was reminded.")
 
 F8_WHY = rank_bars([
     ("Hypertension review", "Mostly 45 and over", 318, "318"),
@@ -2635,7 +2635,7 @@ F8_WHY = rank_bars([
     ("Paediatric general", "Half arrive as walk-ins", 149, "149"),
     ("Everything else", "84 different reasons", 364, "364", True),
 ], title="Why people came",
-   note="Six lines rather than a pie, because the tail matters: 364 visits across 84 reasons is what a general practice actually is, and no chart with slices would let you see it.")
+   note="Six lines rather than a pie, because the tail is the point: 364 visits across 84 reasons.")
 
 F8_AGE = data_table(
     ["Age", "People", "Share", "Repeat rate"],
@@ -2643,14 +2643,14 @@ F8_AGE = data_table(
      ["18 – 34", "396", "28%", "52%"], ["35 – 54", "418", "30%", "74%"],
      ["55 and over", "339", "24%", "88%"]],
     title="Who they were", name="Age",
-    note="Nobody over 55 comes here once. That is the group your follow-up capacity has to be planned around, and it is also the group most affected by a doctor leaving.")
+    note="Nobody over 55 comes here once. Plan follow-up capacity around them.")
 
 F8_MISS = dgroup("Who did not turn up", [
     drow("circle-slash", "102 no-shows in August", value="7.2%", sub="Down from 11% before payment-before-booking", name="F8 noshow", tone="ok", chevron=False),
     drow("phone", "78 of them booked by phone", sub="Unpaid, unreminded. The desk can take payment at the time of booking.", name="F8 phone", tone="warn", chevron=False),
     drow("repeat", "31 rebooked within a week", sub="A missed appointment is not a lost patient unless nobody follows up", name="F8 rebook", tone="ok", chevron=False),
     drow("user-x", "9 people missed three or more", sub="Worth a call rather than another booking", name="F8 repeatmiss", tone="warn"),
-], footer="A no-show is treated here as something to understand rather than to charge for. The policy on F5 is what decides the charge; this is what decides whether the policy is working.")
+], footer="Understood rather than charged for. F5 decides the charge; this decides whether it is working.")
 
 addx("Govern", "F8-patients",
     o_desk("Org · Reports — F8 Patients", ("Reports", "Patients"),
@@ -2687,7 +2687,7 @@ F9_HOURS = rank_bars([
     ("Dr. Femi Adeyemi", "Obstetrics · 24 h rostered", 22, "22 h"),
     ("Dr. Sade Lawal", "General practice · 36 h rostered", 21, "21 h"),
 ], title="Hours actually spent consulting", name="Doc",
-   note="Measured from the moment a consultation is opened to the moment it is signed, not from the roster. Dr. Bello is rostered the same as Dr. Eze and consulted ten hours less — that is a question, not a verdict, and the sessions on his roster will say which.")
+   note="Measured from opening a consultation to signing it, not from the roster. Dr. Bello is rostered like Dr. Eze and consulted ten hours less — a question, not a verdict.")
 
 F9_TABLE = data_table(
     ["Clinician", "Seen", "Hours", "Median", "Signed same day"],
@@ -2698,19 +2698,19 @@ F9_TABLE = data_table(
      ["Dr. Femi Adeyemi", "104", "22 h", "13 min", "94%"],
      ["Dr. Sade Lawal", "119", "21 h", "11 min", "91%"]],
     title="Every clinician, side by side", name="Doc row",
-    note="A median consultation of ten minutes against a twenty-minute slot is worth looking at from both ends: it may mean the slot is too long, or it may mean people are being hurried. The department sets the slot length on its own screen and this is the evidence for changing it.")
+    note="Ten minutes against a twenty-minute slot cuts both ways: the slot may be too long, or people may be being hurried.")
 
 F9_QUALITY = dgroup("Quality, not volume", [
     drow("notebook-pen", "Six notes unsigned over 48 hours", sub="Four are Dr. Bello's. A member cannot see a consultation until it is signed.", name="F9 unsigned", tone="err"),
     drow("siren", "Two criticals took over 15 minutes", sub="Both acknowledged in the end, both in the audit log", name="Open critical F7", tone="warn"),
     drow("repeat", "11% returned within 7 days", sub="Same complaint, same organisation — usually the honest signal that a first visit did not settle it", name="F9 return", tone="warn", chevron=False),
     drow("share-2", "88% of referrals answered in a day", sub="Three took longer than two days", name="Nav Referrals", tone="ok"),
-], footer="Volume is easy to measure and easy to game. These four are the ones that say whether the work was any good, and none of them should ever be shown to a clinician as a league table without the conversation that goes with it.")
+], footer="Volume is easy to game. These four say whether the work was any good.")
 
 F9_TIME = part_bar([("Consulting", 54, "218 h"), ("Notes and results", 21, "84 h"),
                     ("Waiting on a patient", 15, "62 h"), ("Referrals and messages", 10, "40 h")],
     title="Where a clinical hour goes", total="404 h",
-    note="Sixty-two hours of clinician time in one month spent waiting for somebody to walk through the door. That is the number the front desk and the booking rules can actually move.")
+    note="Sixty-two hours a month waiting for somebody to walk in. That is the number the booking rules can move.")
 
 addx("Govern", "F9-clinicians",
     o_desk("Org · Reports — F9 Clinicians", ("Reports", "Clinicians"),
@@ -2744,7 +2744,7 @@ F10_TABLE = data_table(
      ["Imaging", "184", "6", "1 h 10", "2 of 3"],
      ["Billing", "923", "9", "7 min", "2 of 2"]],
     title="Every department, side by side", name="Dept row",
-    note="Seven rows and five numbers each, as a table rather than a chart — past about seven things, colour stops telling them apart and the number is what the admin came for anyway. Front desk is the only department with no spare seat and the highest volume in the building.")
+    note="A table, not a chart: past about seven things colour stops telling them apart. Front desk has no spare seat and the highest volume in the building.")
 
 F10_LOAD = rank_bars([
     ("Front desk", "5 people · 1,842 check-ins", 368, "368"),
@@ -2754,7 +2754,7 @@ F10_LOAD = rank_bars([
     ("Laboratory", "3 people · 612 samples", 204, "204"),
     ("Pharmacy", "2 people · 489 dispensed", 245, "245"),
 ], title="Transactions per person", name="Load",
-   note="Billing does more per head than anyone in the building on two seats, and the front desk is second on five. This is the chart to look at before adding a clinician, because neither of those departments can absorb another one.")
+   note="Billing does the most per head on two seats, the front desk second on five. Look here before adding a clinician.")
 
 F10_TURN = dgroup("How long each department takes", [
     progress_row("Front desk · check-in", "4 min", 20, "teal"),
@@ -2762,7 +2762,7 @@ F10_TURN = dgroup("How long each department takes", [
     progress_row("Pharmacy · dispense", "9 min", 45, "teal"),
     progress_row("Imaging · report back", "1 h 10", 70, "amber"),
     progress_row("Laboratory · result back", "2 h 40", 66, "amber"),
-], footer="Against each department's own target, not against each other — a laboratory is not slow because it takes longer than a pharmacy. Both of the amber ones are inside target and both are trending down.")
+], footer="Against each department's own target, not against each other. Both amber ones are inside target.")
 
 F10_PEOPLE = dgroup("Who is actually here", [
     shift_row("Sister Ifeoma Uche", "Nursing", "Until 15:00", "F10 ifeoma", sub="Nursing · 214 tasks this month"),
@@ -2770,7 +2770,7 @@ F10_PEOPLE = dgroup("Who is actually here", [
     shift_row("Miss Ngozi Peter", "Front desk", "Until 16:00", "F10 ngozi", sub="Front desk · 412 check-ins"),
     shift_row("Mr. Bayo Ogun", "Pharmacy", "Off today", "F10 bayo", on=False, sub="Pharmacy · 244 dispensed"),
     shift_row("Mr. Emeka Obi", "Suspended 2 August", "Suspended", "Person emeka", on=False, sub="Front desk · seat returned"),
-], footer="Shown as people rather than as rows in a table, because this is the list an admin reads when somebody rings in sick. Everything anyone here did is in the audit log against their name, including anything they did on the day they were suspended.")
+], footer="People rather than rows, because this is the list you read when somebody rings in sick.")
 
 addx("Govern", "F10-departments",
     o_desk("Org · Reports — F10 Departments", ("Reports", "Departments"),
@@ -2945,14 +2945,14 @@ G1_QUEUE = dgroup("Allocated to you", [
     patient_row("avatar-1.jpg", "Musa Ibrahim", "MDR-7714-02", "11:00 · chest pain · potassium 7.2, not acknowledged", "Urgent", "Open critical D15", tag="new"),
     patient_row("avatar-6.jpg", "Halima Sani", "MDR-9012-44", "11:20 · referred in from Wuse Clinic", "Waiting", "G Halima"),
     patient_row("avatar-3.jpg", "Grace Okeke", "MDR-8842-21", "11:40 · diabetes review · HbA1c back", "Waiting", "G Grace"),
-], footer="You did not build this list — the front desk and the admin did. Ask for a change rather than editing it, so the clinic's day stays one day.")
+], footer="The front desk and the admin built this list. Ask for a change rather than editing it.")
 
 G1_DIFF = dgroup("What is different here", [
     drow("building-2", "Garki fills your day", sub="Reception books and the admin allocates. Your own booking link is off in this workplace", name="G diff book", chevron=False),
     drow("clock", "The department sets the slot length", sub="20 minutes here. In your own rooms you use 30", name="Open dept C2", chevron=False),
     drow("banknote", "The money is the hospital's", sub="No fees, no payouts, no subscription on this workplace", name="G diff money", chevron=False),
     drow("user-round-check", "Dr. Ade supervises this department", sub="She sees what you sign. Break-glass access is reported to her the same day", name="G diff sup", chevron=False),
-], footer="Switch to your private practice in the top bar and all four of these change back. It is one account either way — the same MDCN number, the same record of what you have signed.")
+], footer="Switch to your private practice in the top bar and all four change back. One account either way, one MDCN number.")
 
 addx("Clinic", "G1-orgdoc",
     o_desk("Org · Doctor — G1 My Day", ("Clinic", "Thursday 14 August"),
@@ -2981,13 +2981,13 @@ G2_WEEK = dgroup("Your sessions this week", [
     drow("calendar-days", "Tuesday · Outpatient clinic", value="08:00 – 13:00", sub="12 booked", name="G ses tue"),
     drow("calendar-days", "Thursday · Outpatient clinic", value="08:00 – 13:00", sub="11 booked · today", name="G ses thu", tone="ok"),
     drow("moon", "Friday · On call", value="17:00 – 08:00", sub="Covering the whole facility overnight", name="G ses fri", tone="warn"),
-], footer="This is the hospital's roster, not your availability. You cannot open or close a session here — you ask, and Dr. Ade or the admin answers.")
+], footer="The hospital's roster, not your availability. You ask; Dr. Ade or the admin answers.")
 
 G2_ASK = dgroup("Ask for a change", [
     outcome_choice("calendar-x", "I cannot make a session", "Say which and why. Cover has to be found before it is approved, so ask early.", "G ask off", tone="warn"),
     outcome_choice("repeat", "Swap with a colleague", "Dr. Bello has agreed. Both of you confirm and the desk is told.", "G ask swap", tone="info"),
     outcome_choice("clock", "This session is overbooked", "Monday has 20 people in 15 slots. Somebody decided that; this tells them what it will do.", "G ask over", sel=True, tone="err"),
-], footer="Every request goes to the department, is answered by a person, and is recorded either way. Nothing here silently changes a day somebody has already been booked into.")
+], footer="Answered by a person and recorded either way. Nothing here silently changes a day somebody is booked into.")
 
 addx("Clinic", "G2-roster",
     o_desk("Org · Doctor — G2 My Roster", ("Clinic", "Roster"),
@@ -3017,7 +3017,7 @@ G3_LIST = dgroup("Your messages", [
     msg_row("avatar-5.jpg", "Laboratory", "Sola: potassium 7.2 on Musa Ibrahim. I rang you at 09:44 — please acknowledge.", "18 min", "G thread lab", unread=True, channel="inapp"),
     msg_row("avatar-4.jpg", "Dr. Ade · Supervisor", "Two unsigned notes from Tuesday. Can you close them today?", "2 h", "G thread sup", channel="inapp"),
     msg_row("avatar-6.jpg", "Front desk", "Halima Sani has arrived early. Room 3 is free if you want her now.", "Yesterday", "G thread desk", channel="inapp"),
-], footer="A message goes to a department and whoever is on shift picks it up. Sending it to a named person is how a question waits until Monday because that person went home.")
+], footer="It goes to a department and whoever is on shift picks it up. A named person is how a question waits until Monday.")
 
 G3_NEW = dgroup("Start a conversation", [
     drow("heart-pulse", "Nursing", sub="Two on duty · usually answers in 3 minutes", name="G new nursing", tone="ok"),
@@ -3025,7 +3025,7 @@ G3_NEW = dgroup("Start a conversation", [
     drow("pill", "Pharmacy", sub="One on duty · usually answers in 20 minutes", name="G new pharm", tone="warn"),
     drow("concierge-bell", "Front desk", sub="Four on duty", name="G new desk"),
     drow("user-round-check", "Dr. Ade — your supervisor", sub="A named person, deliberately", name="G new sup"),
-], footer="Nothing clinical is decided in a message. An order, a result and a referral each have their own screen and their own record; this is for the sentence that goes with them.")
+], footer="Nothing clinical is decided in a message. Orders, results and referrals keep their own record.")
 
 addx("Clinic", "G3-messages",
     o_desk("Org · Doctor — G3 Messages", ("Clinic", "Messages"),
@@ -3051,7 +3051,7 @@ G4_THREAD = dcard(
     + audit_row("Ifeoma Uche · 09:52", "Musa Ibrahim's BP is 168/104 on repeat. He says the chest tightness is back. Do you want him seen before Amara?", "4 min")
     + audit_row("You · 09:54", "Yes — put him in room 3 now and tell Amara I will be ten minutes late.", "2 min")
     + audit_row("Ifeoma Uche · 09:55", "Done. Amara has been told and she is fine with it.", "1 min")
-    + note("info", "This conversation is attached to Musa Ibrahim's visit, so the next doctor reading his record can see why the order of the day changed.", "info")
+    + note("info", "Attached to Musa Ibrahim's visit, so the next doctor can see why the day changed order.", "info")
     + field("Reply", "message-square-text", "Type a message", ph=True))
 
 G4_ABOUT = dgroup("About this patient", [
@@ -3655,6 +3655,15 @@ linker = ("(async () => {\n"
  "  return { linked, navLinked, stayOnScreen: stay, framesFound: Object.keys(byName).length, missing };\n"
  "})();\n")
 open(os.path.join(OUT, "link-org.js"), "w").write(linker)
+
+# The content cut is only worth anything if it holds. Report the prose budget on every build —
+# a screen that drifts back over shows up here rather than at the next review.
+try:
+    from prose_budget import report as _prose_report
+    _prose_report(['org'])
+except Exception as _e:      # never let a reporting tool break a build
+    print("  prose budget unavailable:", _e)
+
 
 # A repair pass for a canvas that was rendered before normalise.py existed. It fixes the
 # spacer frames and the centred text in place, so a page does not have to be deleted and

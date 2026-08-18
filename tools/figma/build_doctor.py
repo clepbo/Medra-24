@@ -137,7 +137,7 @@ PANEL_REQ = panel("Inbox",
           + drow("message-square-text", "Access replies", value="1", name="Open patients P1", chevron=False)
           + drow("message-circle", "Messages", value="4", name="Open messages P5", chevron=False), p=14, gap=2)
     + alert_strip("clock", "Reply within a day",
-                  "Members are told you answer refills and requests within 24 hours. Two are close to that.", "warn"))
+                  "Members are told you answer within 24 hours. Two are close.", "warn"))
 
 PANEL_SCHED = panel("Schedule",
     dcard(eyerow("This week") + kpi_line("Booked", "24") + kpi_line("Open", "9")
@@ -224,7 +224,7 @@ G1_STEPS = dgroup("What is left", [
 ], footer="The first three are required to appear in search. The rest make you easier to choose.")
 
 G1_GATE = alert_strip("triangle-alert", "You are not bookable yet",
-    "MDCN verification is still running. Nothing you set up now is wasted — your profile goes live the moment a reviewer signs it off.",
+    "Verification is still running. Your profile goes live the moment a reviewer signs it off.",
     "warn", dbtn("Check status", "Open verify G2", None, "ghost", grow=False, size="sm"))
 
 G1_VALUE = dgroup("What happens once you are live", [
@@ -336,7 +336,7 @@ G3_MSG = dcard(
     eyerow("The message they get")
     + f'<Frame w="fill" flex="col" gap={{9}} p={{15}} rounded={{13}} bg="var:state/success-bg">'
     + T(13, "regular", "var:text/default",
-        "“Dr. Ngozi Okafor invited you to Medra. Patients in Abuja book verified doctors on it, pay before the visit, and carry their own records between clinics. Your first month is free. — medra.ng/i/ngozi-okafor”", w="fill")
+        "“Dr. Ngozi Okafor invited you to Medra. Book verified doctors in Abuja and carry your records between clinics. First month free — medra.ng/i/ngozi-okafor”", w="fill")
     + '</Frame>'
     + field("Add a personal line (optional)", "message-square-text", "You mentioned the no-show problem — this fixed it for me."))
 
@@ -545,7 +545,7 @@ K2_BOOKINGS = dgroup("Booking requests · 3", [
     request_row("calendar-clock", "Emeka Nwosu · MDR-4410-07",
                 "Sat 23 Aug, 10:00 · virtual · returning · “Follow-up on the knee.” · paid ₦15,000",
                 "3 hours ago", "Req Emeka", "warn", req_actions("Emeka")),
-], footer="Accepting confirms it instantly for the member. Declining refunds them in full, automatically, and we tell them why in your words.")
+], footer="Accepting confirms it instantly. Declining refunds them in full, in your words.")
 
 K2_RULES = dgroup("Save yourself this screen", [
     dtoggle("zap", "Auto-accept when the slot is open", sub="Anything inside your working hours is confirmed without asking you", on=False, name="Auto accept"),
@@ -651,12 +651,12 @@ K4_VITALS = (rows_of([kv("Height", "1.68 m", "ruler"), kv("Weight", "74 kg", "we
 K4_HEAD = dcard(K4_META + K4_WHO + K4_VITALS, p=18)
 
 K4_SAFETY = alert_strip("triangle-alert", "Allergic to penicillin",
-    "Rash and swelling, recorded June 2026. Medra blocks a penicillin prescription for this patient — overriding needs a written reason and is flagged to the clinic.", "err")
+    "Rash and swelling, June 2026. Medra blocks penicillin here — overriding needs a written reason.", "err")
 
 K4_REASON = dgroup("Why she is coming", [
     note_section("In her words", "“Hypertension follow-up. My home readings have been around 138/88 for two weeks and I get headaches in the afternoon.”", "message-square-text"),
     note_section("She flagged something", "“There is something in my history from 2019 I have kept off my record — I would rather explain it on the call.”", "notebook-pen"),
-], footer="Members choose what history to share. If something is missing, ask — and it is recorded that you asked.")
+], footer="If something is missing, ask — and it is recorded that you asked.")
 
 K4_SHARED = dgroup("What she has shared with you", [
     scope_line("Allergies and current medicines", True, "Always shared — clinical safety"),
@@ -664,7 +664,7 @@ K4_SHARED = dgroup("What she has shared with you", [
     scope_line("Lab results", True, "4 results · 1 outside the normal range"),
     scope_line("Prescription history", False, "Not shared — you can ask"),
     scope_line("Home vitals", False, "Not shared — you can ask"),
-], footer="Access ends when this visit is marked complete. Every record you open is logged and visible to her.")
+], footer="Access ends when the visit is complete. Everything you open is logged and visible to her.")
 
 K4_LAST = dgroup("Last time you saw her", [
     drow("stethoscope", "Hypertension review", value="12 Jun", sub="Partially controlled, no organ damage", name="Open note last"),
@@ -852,7 +852,7 @@ K7_LENGTH = dgroup("How long is one consultation?", [
     drow("calendar-days", "What a member sees", value="10:30 · 11:00 · 11:30",
          sub="The grid is your length repeated. Change it and tomorrow's open slots change with it",
          name="Slot preview", chevron=False, tone="ok"),
-], footer="Appointments already booked keep the length they were booked at. Changing this never moves somebody who has paid.")
+], footer="Bookings keep the length they were made at. This never moves somebody who has paid.")
 
 K7_RULES = dgroup("Booking rules", [
     drow("clock", "Default slot length", value="30 minutes", sub="Each consultation type can override this", name="Open fees S2"),
@@ -861,7 +861,7 @@ K7_RULES = dgroup("Booking rules", [
     drow("timer", "Latest same-day booking", value="2 hours before", name="Rule cutoff"),
     drow("users", "Maximum patients a day", value="12", sub="Medra stops offering slots once you reach it", name="Rule cap"),
     drow("credit-card", "Hold an unpaid slot for", value="30 minutes", sub="Then it is released to everyone else", name="Rule hold"),
-], footer="These rules are what makes real availability true on the member side. If a slot shows on Medra, it is genuinely open.")
+], footer="If a slot shows on Medra, it is genuinely open.")
 K7_BREAKS = dgroup("Breaks and buffers", [
     drow("coffee", "13:00 – 14:00", value="Every working day", sub="Nobody can book it", name="Break daily"),
     drow("car", "Travel buffer between sites", value="45 minutes", sub="Garki to Maitama on a Wednesday", name="Break travel"),
@@ -1043,7 +1043,7 @@ K10_ACK = dcard(
     f'<Frame flex="row" gap={{9}} items="center">{I("badge-check",17,A_IC)}'
     f'{T(15,"semibold","var:text/strong","Confirm you have this")}</Frame>'
     + T(12, "regular", "var:text/default",
-        "Your name and the time go on the record. Until somebody presses this the laboratory's call is unanswered and it climbs the escalation ladder on its own.", w="fill")
+        "Your name and the time go on the record. Until somebody presses this it keeps climbing the ladder.", w="fill")
     + dcta("I have seen it and I am acting now", "Ack critical K10", "badge-check")
     + dbtn("I cannot act — hand it to the on-call", "Hand critical K10", "user-round-check", "ghost", full=True)
     + T(11, "regular", "var:text/muted",
@@ -1055,14 +1055,14 @@ K10_DO = dgroup("What you do next goes on the record too", [
     drow("ambulance", "Send him to emergency", sub="With the value, the trend and your name on the referral", name="Crit emergency", tone="err"),
     drow("flask-conical", "Repeat it urgently before acting", sub="If you think it is spurious. The laboratory has already repeated it once", name="Crit repeat", tone="warn"),
     drow("phone-call", "Call him", sub="+234 803 555 0102 · he is not answering the app", name="Crit phone"),
-], footer="Whatever you choose is timestamped against your name. A critical value with an acknowledgement and no action is the failure that reaches a coroner.")
+], footer="Timestamped against your name. An acknowledgement with no action is the failure that reaches a coroner.")
 
 K10_CTX = dgroup("What you knew before this", [
     drow("trending-up", "Potassium", value="4.8 → 5.4 → 7.2", sub="April, June, today — it has been climbing all year", name="Crit trend", tone="err", chevron=False),
     drow("trending-down", "Kidney function", value="91 → 78 → 24", sub="This is not a laboratory error looking for an explanation", name="Crit egfr", tone="err", chevron=False),
     drow("pill", "On a potassium-sparing diuretic", sub="Spironolactone 25 mg, started by Dr. Eze in June", name="Crit drug", tone="warn"),
     drow("clipboard-list", "Open his record", sub="Everything, in one place", name="Open record P2"),
-], footer="Three facts he already had in Medra, which is the whole argument for a record that follows the member rather than the clinic.")
+], footer="Three facts already in Medra — the argument for a record that follows the member.")
 
 addx("Today", "K10-critical",
     dr_desk("Doctor · Today — K10 Critical Result", ["Requests", "Critical"],
@@ -1121,21 +1121,39 @@ def c_chips(active):
     return [(l, n, i == active) for i, (l, n) in enumerate(labels)]
 
 
-# PRD §7 Module 6 names these fields exactly. Keep them.
+# PRD §7 Module 6 names these fields, and the third review added the one it was missing:
+# a structured examination rather than a paragraph. See `docs/Clinical_Templates.md` for where
+# each field comes from — it is published convention, and it still wants a clinician's eye.
+C_EXAM = vitals_grid([
+    [vital("BP · 1st", "136/86", "mmHg", "bp1", "warn"),
+     vital("BP · 2nd", "134/84", "mmHg", "bp2", "warn", ref="The one that counts"),
+     vital("Pulse", "78", "bpm", "pulse", "ok", ref="60–100, regular")],
+    [vital("Temperature", "36.8", "°C", "temp", "ok"),
+     vital("Resp. rate", "", "/min", "resp"),
+     vital("SpO₂", "98", "%", "spo2", "ok")],
+    [vital("Weight", "74", "kg", "weight"),
+     vital("Height", "1.62", "m", "height"),
+     vital("BMI", "28.2", "kg/m²", "bmi", "warn", ref="Overweight", computed=True)],
+], action=f'<Frame name="Btn Template exam" flex="row" gap={{5}} items="center" px={{9}} py={{4}} '
+          f'rounded={{7}} bg="var:bg/muted">{I("files",11,M_IC)}'
+          f'{T(10,"medium","var:text/muted","Hypertension review")}</Frame>',
+   foot="Respiratory rate is empty and stays visibly empty. Blood pressure is taken twice because that is what the diagnosis is made on.")
+
 C_NOTE = dgroup("Consultation note", [
     note_field("Presenting complaint", "message-square-text",
         "Hypertension follow-up. Home readings 138/88 for two weeks, afternoon headaches. No chest pain, no breathlessness, no ankle swelling.", "complaint", lines=2),
-    note_field("Examination", "stethoscope",
-        "BP 136/86 seated, repeated 134/84. Pulse 78 regular. Weight 74 kg, unchanged. Heart sounds normal, chest clear, no oedema.", "exam", lines=2),
+    C_EXAM,
+    note_field("Anything else you examined", "clipboard-list",
+        "Heart sounds normal, chest clear, no ankle oedema. Fundoscopy not done today.", "exam", lines=2),
     note_field("Diagnosis", "clipboard-check",
-        "Hypertension, partially controlled. No evidence of end-organ damage. Headaches likely tension-type rather than hypertensive.", "diagnosis", lines=2),
+        "Hypertension, partially controlled. No evidence of end-organ damage. Headaches likely tension-type.", "diagnosis", lines=2),
     note_field("Treatment plan", "list-checks",
         "Continue Amlodipine 5 mg mane. Reduce added salt. 30 minutes walking, five days a week. Fasting blood sugar and HbA1c before next review.", "plan", lines=3),
     note_field("Doctor's comment for the patient", "message-circle",
-        "Your readings are better than June. Keep taking the Amlodipine every morning — it works best at a steady level.", "comment", lines=2),
-    note_field("Private notes", "eye-off",
+        "Your readings are better than June. Keep taking the Amlodipine every morning.", "comment", lines=2),
+    note_field("Clinical note", "eye-off",
         "Mother died of stroke at 61. Anxious about it — worth watching, do not raise unprompted.", "private", lines=2, template=False, private=True),
-], footer="Private notes never appear on the member's phone. They stay in the clinical record for you and the clinic. The member is told a private note exists, not what it says.")
+], footer="Amara sees all of this by default. Withholding one item is possible on the next screen, and it needs a reason.")
 
 C_AI = alert_strip("sparkles", "Transcribe this consultation",
     "Phase 2 — Medra drafts the note as you talk, you edit and sign. Nothing is recorded without the member agreeing first.",
@@ -1145,7 +1163,7 @@ C_HISTORY = dcard(
     f'<Frame flex="row" gap={{9}} items="center">{I("notebook-pen",16,A_IC)}'
     f'{T(14,"semibold","var:text/strong","She said something is missing from her record")}</Frame>'
     + T(12, "regular", "var:text/default",
-        "“There is something in my history from 2019 I have kept off my record.” Ask about it, and record what you were told — or that you were told nothing.", w="fill")
+        "“Something from 2019 I have kept off my record.” Record what you were told, or that you were told nothing.", w="fill")
     + note_field("What she told you", "message-circle",
         "Treated for a thyroid condition in 2019 at a private clinic in Enugu. No records available. Says it resolved; takes nothing for it now.",
         "undisclosed", lines=2, template=False)
@@ -1264,7 +1282,7 @@ C3_SEARCH = dcard(
     + '</Frame>')
 
 C3_BLOCK = alert_strip("triangle-alert", "Amoxicillin is blocked for this patient",
-    "Amara is allergic to penicillin — rash and swelling, June 2026. Prescribing it needs a written reason and is flagged to the clinic's medical director.",
+    "Allergic to penicillin — rash and swelling, June 2026. Prescribing it needs a written reason.",
     "err", dbtn("Override", "Override allergy", "unlock", "danger", grow=False, size="sm"))
 
 C3_BUILDER = dgroup("Amlodipine", [
@@ -1469,17 +1487,30 @@ addx("Consult", "C6-refer",
     tab=MTAB["Consult"])
 
 # ---------------- C7 review & sign
+# The third review reversed the default. Godwin: "everything is supposed to be between the both
+# of you… except psychiatry, psychology." What was built was the opposite — a blanket private
+# note, off by default. What is built now is the published model rather than either extreme:
+# the member sees everything, and a single item can be withheld on one of three named grounds.
+# `docs/Clinical_Templates.md` has the sources. **A clinician still has to agree the grounds.**
 C7_SHARE = dgroup("What Amara sees", [
     share_toggle("Presenting complaint, in her words", "Share complaint"),
-    share_toggle("Examination findings", "Share exam"),
+    share_toggle("Examination and vital signs", "Share exam"),
     share_toggle("Diagnosis", "Share diagnosis"),
     share_toggle("Treatment plan and advice", "Share plan"),
     share_toggle("Your comment for her", "Share comment"),
-    share_toggle("Prescription", "Share rx"),
-    share_toggle("Tests ordered", "Share tests"),
-    share_toggle("Referral to Dr. Bello", "Share referral"),
-    share_toggle("Private notes", "Share private", on=False, sub="Always off by default — she is told a private note exists, not what it says"),
-], footer="Anything switched off stays in the clinical record for you and the clinic, and never appears on her phone.")
+    share_toggle("Prescription, tests and referral", "Share rx"),
+    share_toggle("Clinical note", "Share private", on=False,
+                 sub="Withheld · somebody else’s information"),
+], footer="She sees all of it unless you withhold an item and say why. Anything withheld stays in the record for the next clinician.")
+
+C7_WHY = dgroup("Why this one is withheld", [
+    outcome_choice("shield-alert", "Serious harm",
+        "Likely to harm her or somebody else seriously. Not the same as upsetting her.", "Hold harm", tone="err"),
+    outcome_choice("users", "Somebody else’s information",
+        "From or about somebody else who has not agreed. A colleague is never a third party.", "Hold third", sel=True),
+    outcome_choice("brain", "Psychotherapy note",
+        "Psychiatry and psychology only, kept apart from the record.", "Hold psych", tone="warn"),
+], footer="Three grounds and no fourth. Amara is told which one — never just that a note exists.")
 
 C7_PREVIEW = dcard(
     f'<Frame w="fill" flex="row" justify="between" items="center">'
@@ -1488,8 +1519,8 @@ C7_PREVIEW = dcard(
     f'{T(10,"regular","var:text/muted","How it looks on her phone")}</Frame>'
     + T(17, "bold", "var:text/strong", "Hypertension review")
     + note_section("Diagnosis", "Hypertension, partially controlled. No sign of organ damage.", "clipboard-check")
-    + note_section("Treatment plan", "Continue Amlodipine 5 mg every morning. Less added salt. Walk 30 minutes, five days a week. Fasting blood sugar before your next visit. Review in three months.", "list-checks")
-    + note_section("From Dr. Okafor", "Your readings are better than June. Keep taking the Amlodipine every morning — it works best at a steady level.", "message-circle")
+    + note_section("Treatment plan", "Continue Amlodipine 5 mg every morning. Less salt, walk 30 minutes five days a week. Review in three months.", "list-checks")
+    + note_section("From Dr. Okafor", "Better than June. Keep taking the Amlodipine every morning.", "message-circle")
     + hr() + provenance("Dr. Ngozi Okafor", "MDCN 71482", "21 Aug 2026, 11:04"))
 
 C7_ALSO = dgroup("Also going to her", [
@@ -1503,11 +1534,11 @@ C7_SIGN = dcard(
     f'<Frame flex="row" gap={{9}} items="center">{I("shield-check",17,A_IC)}'
     f'{T(14,"semibold","var:text/strong","Signing makes this permanent")}</Frame>'
     + T(12, "regular", "var:text/default",
-        "Once signed, this note cannot be edited — only amended with a new, dated entry. That is what makes it worth anything to the next doctor who reads it.", w="fill")
+        "Once signed this cannot be edited, only amended with a new dated entry. That is what makes it worth anything to the next doctor.", w="fill")
     + checkbox("I confirm this is an accurate record of the consultation.", "Confirm accurate")
     + dcta("Sign and send to Amara", "Sign C7", "badge-check")
     + dbtn("Save as a draft", "Save draft C7", "file-text", "ghost", full=True)
-    + T(11, "regular", "var:text/muted", "Drafts are kept for 30 days and shown in Unsigned notes. The patient sees nothing until you sign.", w="fill"),
+    + T(11, "regular", "var:text/muted", "Drafts last 30 days. She sees nothing until you sign.", w="fill"),
     bg="var:state/info-bg", stroke=None)
 
 addx("Consult", "C7-sign",
@@ -1517,14 +1548,14 @@ addx("Consult", "C7-sign",
         f'{C_STRIP}'
         f'{dhead([("Check it, then",False),("sign it",True)],26)}'
         f'<Frame w="fill" flex="row" gap={{16}} items="start">'
-        f'<Frame grow={{1}} flex="col" gap={{14}}>{C7_SHARE}{C7_ALSO}</Frame>'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{C7_SHARE}{C7_WHY}{C7_ALSO}</Frame>'
         f'<Frame w={{420}} flex="col" gap={{14}}>{eyerow("Preview")}{C7_PREVIEW}{C7_SIGN}</Frame></Frame>',
         NAV["Consults"], PANEL_CONSULT, urgent=0, badges=BADGES),
     dr_head("Review and sign", "Amara Okeke · 14 minutes",
-            stats=[("8", "Shared"), ("1", "Private"), ("4", "Attached")]),
+            stats=[("6", "Shared"), ("1", "Withheld"), ("4", "Attached")]),
     sections=[
-      ("share", "eye", "What Amara sees", "Eight sections shared, private notes withheld", "9", None,
-       C7_SHARE, [("8", "Shared"), ("1", "Withheld"), ("Her", "Phone")]),
+      ("share", "eye", "What Amara sees", "Six shared, one withheld with a reason", "7", None,
+       f'{C7_SHARE}{C7_WHY}', [("6", "Shared"), ("1", "Withheld"), ("Her", "Phone")]),
       ("also", "paperclip", "Also going to her", "Prescription, tests, referral, follow-up", "4", None,
        C7_ALSO, None),
       ("preview", "smartphone", "Preview on her phone", "Exactly what she will read", None, None,
@@ -1540,7 +1571,7 @@ C8_DONE = dcard(
     f'{T(22,"bold","var:text/strong","Signed and sent")}'
     f'{T(14,"regular","var:text/muted","Amara has the note, the prescription and the test request on her phone. The consultation took 14 minutes.",w="fill",align="center")}</Frame>')
 C8_WENT = dgroup("Where everything went", [
-    drow("file-text", "Consultation note", value="Shared", sub="Private notes withheld, as you set", name="Done note", tone="ok", chevron=False),
+    drow("file-text", "Consultation note", value="Shared", sub="One item withheld, with the ground stated", name="Done note", tone="ok", chevron=False),
     drow("pill", "Amlodipine 5 mg", value="Sent", sub="Garki pharmacy notified · reminder set for 08:00", name="Done rx", tone="ok", chevron=False),
     drow("flask-conical", "2 tests ordered", value="Sent", sub="Results return to your Needs-you list", name="Done tests", tone="ok", chevron=False),
     drow("share-2", "Referral to Dr. Bello", value="Awaiting her approval", sub="She decides what history he sees", name="Done referral", tone="warn", chevron=False),
@@ -1582,7 +1613,7 @@ C9_LIST = dgroup("Unsigned notes · 2", [
                 "2 days", "Draft Fatima", "warn",
                 [dbtn("Review and sign", "Open sign C7", "badge-check", "navy", size="sm"),
                  dbtn("Discard", "Discard draft", "trash-2", "danger", size="sm")]),
-], footer="A patient cannot see anything until you sign. An unsigned note two days after a visit is the most common complaint a clinic gets.")
+], footer="She sees nothing until you sign, and an unsigned note two days on is a clinic's commonest complaint.")
 C9_WHY = dgroup("Why this matters", [
     drow("eye-off", "The patient sees nothing", sub="No diagnosis, no prescription, no test request", name="Why nothing", chevron=False),
     drow("pill", "The pharmacy has nothing", sub="Chidi's mother cannot collect anything", name="Why pharmacy", tone="warn", chevron=False),
@@ -1711,7 +1742,7 @@ C11_CARRY = dgroup("What the laboratory will see", [
     scope_line("Her consultation notes", False, "Not needed to run a blood test"),
     scope_line("Her other conditions and medicines", False, "Not needed to run a blood test"),
     scope_line("Her phone number", False, "The lab reaches her through Medra, so a stranger never gets it"),
-], footer="A department sees what the job needs and nothing else. That is not a setting you have to remember — it is how the order is built.")
+], footer="A department sees what the job needs and nothing else. It is how the order is built, not a setting.")
 
 C11_NOTE = dgroup("Anything the laboratory should know", [
     note_field("For the laboratory", "file-text",
@@ -1719,7 +1750,7 @@ C11_NOTE = dgroup("Anything the laboratory should know", [
         "lab note", lines=3, template=False),
     field_chips("How soon?", ["Routine — 48 hours", "Soon — same day", "Urgent — 2 hours"], 0, "Ord urgency"),
     checkbox("Tell me the moment the result is verified", "Ord notify"),
-], footer="Urgency costs the laboratory something. Mark it urgent when it is, and they will believe you when it matters.")
+], footer="Mark it urgent when it is, and they will believe you when it matters.")
 
 addx("Consult", "C11-route",
     dr_desk("Doctor · Consult — C11 Send the Order", ["Consults", "Amara Okeke", "Tests"],
@@ -1756,20 +1787,20 @@ C12_TRACK = dgroup("Fasting blood sugar · HbA1c", [
                sub="Both tests on the same sample"),
     track_step("A scientist verifies it", "Not yet", sub="No result leaves a laboratory unverified"),
     track_step("It comes back to you", "Not yet", sub="You release it to her, or hold it until you have spoken"),
-], footer="You do not have to chase this. If it stops moving for longer than the laboratory promised, it appears in your Needs-you list on its own.")
+], footer="If it stalls it appears in Needs you, on its own.")
 
 C12_STUCK = dgroup("If it stalls", [
     drow("phone-call", "Call the laboratory", sub="Garki Medical Centre laboratory · extension 214", name="Ord call", tone="info"),
     drow("message-square-text", "Message the department", sub="Goes to whoever is on shift, not to one person", name="Ord message"),
     drow("repeat", "Send it somewhere else", sub="Cancels this order and takes you back to routing", name="Open route C11", tone="warn"),
     drow("x", "Cancel the order", sub="She is told, and is not charged", name="Ord cancel", tone="err"),
-], footer="An order that has been sitting for two days is the single most common reason a member loses faith in a clinic. Chase it before they have to.")
+], footer="Two days sitting is the commonest reason a member loses faith.")
 
 C12_HER = dgroup("What Amara sees right now", [
     drow("smartphone", "“Your tests are being analysed”", sub="With where to go, what it costs, and whether to fast", name="Ord hers", chevron=False),
     drow("bell", "She is told when you release it", sub="Not when it arrives — when you have looked at it", name="Ord told", chevron=False, tone="ok"),
     drow("eye-off", "She cannot see the values yet", sub="A number out of range with nobody to explain it does harm", name="Ord hidden", chevron=False),
-], footer="The gap between a result arriving and a doctor reading it is the most dangerous hour in the whole system. Medra keeps her out of it.")
+], footer="The gap between a result arriving and being read is the dangerous hour.")
 
 C12_OTHER = dgroup("Your other open orders · 4", [
     request_row("flask-conical", "Musa Ibrahim · troponin", "Ketu Medical Laboratory · verified · waiting on you", "2h", "Ord musa", "warn",
@@ -1778,7 +1809,7 @@ C12_OTHER = dgroup("Your other open orders · 4", [
                 [dbtn("Chase it", "Open links C15", "link", "ghost", size="sm")]),
     request_row("flask-conical", "Grace Okeke · HbA1c", "Garki laboratory · sample not given yet", "3d", "Ord grace", "err",
                 [dbtn("Remind her", "Ord remind", "bell", "ghost", size="sm")]),
-], footer="Sorted by what is closest to going wrong, not by when you sent it.")
+], footer="Sorted by what is closest to going wrong.")
 
 addx("Consult", "C12-order",
     dr_desk("Doctor · Consult — C12 Order Status", ["Consults", "Amara Okeke", "Order"],
@@ -1809,7 +1840,7 @@ C13_WHO = dgroup("Who is this for?", [
     field("Organisation or person", "building-2", "Lifebridge Diagnostics", ph=False,
           helper="The name goes on the page they open, so they know it is not a phishing link."),
     field("Their phone number", "phone", "805 441 2290", ph=False, prefix="+234",
-          helper="The link is sent here and nowhere else. It is not emailed, and it is not guessable from anything else you have typed."),
+          helper="Sent here and nowhere else."),
     field_chips("What do you need from them?", ["Run a test", "Read an image", "Send a report", "Give an opinion"], 0, "Link job"),
     drow("history", "You have sent to Lifebridge before", sub="Four times · they have always returned the report inside a day", name="Link history", chevron=False, tone="ok"),
 ])
@@ -1822,7 +1853,7 @@ C13_SCOPE = dgroup("What the link will carry", [
     consent_row("flask-conical", "Her last blood results", "Full blood count, 12 June", "Lk labs", on=False),
     consent_row("stethoscope", "Your full consultation note", "Everything you wrote today", "Lk note", on=False),
     consent_row("phone", "Her phone number", "So they can call her directly", "Lk phone", on=False),
-], footer="Two lines always travel and cannot be switched off: who she is, and what she is allergic to. Everything else starts off. A radiographer does not need her medicine list to take a picture of her spine.")
+], footer="Two lines always travel and cannot be switched off: who she is, and what she is allergic to. Everything else starts off.")
 
 C13_LIFE = dgroup("How long it lives", [
     field_chips("It dies when", ["They finish the job", "24 hours", "48 hours", "7 days"], 0, "Lk expiry"),
@@ -1835,7 +1866,7 @@ C13_RULES = dcard(
     f'<Frame flex="row" gap={{9}} items="center">{I("shield-check",16,A_IC)}'
     f'{T(14,"semibold","var:text/strong","What a link is, and is not")}</Frame>'
     + T(12, "regular", "var:text/default",
-        "It is a page for one job, for one recipient, that closes behind them. It is not an account, not a login, and not a copy of her record. They cannot browse from it, cannot download the rest, and cannot come back tomorrow to look again.", w="fill")
+        "One page, one job, one recipient, and it closes behind them. Not an account, not a login, not a copy of her record.", w="fill")
     + T(11, "regular", "var:text/muted",
         "The address is a random token, not her Medra ID — nobody can guess a link by counting, and one link tells you nothing about any other.", w="fill"),
     bg="var:state/info-bg", stroke=None)
@@ -1846,7 +1877,7 @@ addx("Consult", "C13-link",
         f'{T(13,"semibold","var:text/default","Where the order goes")}</Frame>'
         f'{C_STRIP}'
         f'{dhead([("A link for",False),("Lifebridge Diagnostics",True)],26)}'
-        f'{T(14,"regular","var:text/muted","They have no Medra account and will not open one to read a single scan. This gives them exactly what the job needs.",w="fill")}'
+        f'{T(14,"regular","var:text/muted","No Medra account, and they will not open one for a single scan.",w="fill")}'
         f'<Frame w="fill" flex="row" gap={{16}} items="start">'
         f'<Frame grow={{1}} flex="col" gap={{14}}>{C13_WHO}{C13_SCOPE}</Frame>'
         f'<Frame w={{360}} flex="col" gap={{14}}>{C13_RULES}{C13_LIFE}'
@@ -1871,7 +1902,7 @@ C14_WAIT = dcard(
     f'<Frame w="fill" flex="col" gap={{13}} items="center">'
     f'{big_icon("user-check","warn",84)}'
     f'{T(22,"bold","var:text/strong","Waiting for Amara")}'
-    f'{T(14,"regular","var:text/muted","She has the request on her phone. Nothing exists until she says yes — there is no link to send, and Lifebridge has been told nothing.",w="fill",align="center")}'
+    f'{T(14,"regular","var:text/muted","Nothing exists until she says yes. No link, and Lifebridge has been told nothing.",w="fill",align="center")}'
     f'<Frame flex="row" gap={{8}} items="center" px={{13}} py={{8}} rounded={{10}} bg="var:state/warning-bg">'
     f'{I("clock",14,WARN_IC)}{T(12,"semibold","var:state/warning","Asked 2 minutes ago · she usually replies within the hour")}</Frame></Frame>')
 
@@ -1883,17 +1914,17 @@ C14_SEES = dgroup("What she was asked", [
 ], footer="She is shown exactly what you ticked. Not a summary of it — the same list, in the same words.")
 
 C14_IF = dgroup("If she says no", [
-    outcome_choice("printer", "Print it and give it to her", "She carries the request to Lifebridge herself. Slower, and the report comes back on paper — but it is still her choice to make.", "Cn print", tone="info"),
+    outcome_choice("printer", "Print it and give it to her", "She carries it herself. Slower, on paper, and still her choice.", "Cn print", tone="info"),
     outcome_choice("building-2", "Use a laboratory on Medra instead", "Ketu Medical Laboratory can do this scan. Nothing leaves the platform, so nothing needs a link.", "Cn partner", tone="ok"),
     outcome_choice("message-circle", "Ask her why", "Sometimes it is one item on the list, not the whole idea. You can send a narrower request.", "Cn ask", tone="info"),
     outcome_choice("x", "Do not do the scan", "Record that it was offered and declined. That belongs in the note.", "Cn none", tone="warn"),
-], footer="Do not send it anyway on paper without telling her. That is the same share with the audit trail removed.")
+], footer="Sending it on paper anyway is the same share with the audit trail removed.")
 
 C14_TRAIL = dgroup("What is being recorded", [
     audit_row("You", "Asked to share 4 items with Lifebridge Diagnostics", "2 min ago"),
     audit_row("Amara", "Opened the request", "1 min ago"),
     audit_row("Medra", "Nothing sent — no link exists yet", "now"),
-], footer="This trail is hers. It is append-only, and neither you nor Medra can edit it — which is exactly why it is worth anything if she is ever asked what she agreed to.")
+], footer="Hers, and append-only. Neither you nor Medra can edit it, which is why it is worth anything in a dispute.")
 
 addx("Consult", "C14-consent",
     dr_desk("Doctor · Consult — C14 Waiting on Consent", ["Consults", "Amara Okeke", "Consent"],
@@ -1943,20 +1974,20 @@ C15_THEY = dgroup("What Lifebridge will see", [
     prep_step(2, "The job, and only the job", "Amara Okeke, 34, MDR-8842-19 · penicillin allergy · MRI lumbar spine · your clinical reason"),
     prep_step(3, "A way to send the report back", "Photograph it or attach a file. It arrives in your list as a structured result, not an email"),
     prep_step(4, "The page closing behind them", "The moment they mark it done, the link is dead. Opening it again shows an expired page"),
-], footer="Four screens, no account, no training, no way back in. Somebody who has never heard of Medra can finish this on a phone in a waiting room.")
+], footer="Four screens, no account, no training. Somebody who has never heard of Medra can finish it in a waiting room.")
 
 C15_ALL = dgroup("Your open links · 3", [
     link_row_dr("Lifebridge Diagnostics", "Amara Okeke · MRI lumbar spine", "open", "Just created", "Link lifebridge"),
     link_row_dr("Zenith Imaging", "Emeka Nwosu · knee X-ray", "open", "Not opened · 1 day", "Link zenith"),
     link_row_dr("Ketu Medical Laboratory", "Musa Ibrahim · troponin", "used", "Report returned 09:40", "Open result P8"),
     link_row_dr("St. Mary's Clinic", "Fatima Bello · discharge summary", "expired", "4 Aug", "Link stmarys"),
-], footer="Anything still unopened after 24 hours is chased for you. Anything you no longer want open is revoked here in one tap, and the recipient sees an expired page immediately.")
+], footer="Unopened after 24 hours and it is chased for you. Revoke here and the recipient sees an expired page at once.")
 
 C15_AUDIT = dgroup("Amara's audit trail", [
     audit_row("You", "Created a link for Lifebridge Diagnostics", "11:29"),
     audit_row("Amara", "Approved 4 items · declined 3", "11:29"),
     audit_row("Lifebridge", "Has not opened it yet", "—"),
-], footer="She sees this list on her phone, in the same words, without asking you. She can revoke the link from there at any moment, and you are told when she does.")
+], footer="She sees this list on her phone in the same words, and can revoke from there at any moment.")
 
 addx("Consult", "C15-links",
     dr_desk("Doctor · Consult — C15 The Link Is Ready", ["Consults", "Amara Okeke", "Link"],
@@ -2069,18 +2100,18 @@ P2_TIMELINE = dgroup("Her history", [
     timeline_entry("28", "Apr", "stethoscope", "Malaria — treated", "Dr. Chuka Eze · Wuse Clinic", "Open other note", "info"),
     timeline_entry("28", "Apr", "syringe", "Yellow fever booster", "Wuse Clinic · certificate attached", "Open vaccine", "ok"),
     timeline_entry("02", "Aug", "file-plus", "Scan of an old NHIS card", "Added by the patient — not clinician-verified", "Open upload", "muted"),
-], footer="Records added by the patient are labelled. So are readings they took themselves — you can always tell what a record is worth.")
+], footer="Anything the patient added is labelled, so you can tell what a record is worth.")
 
 P2_LOCKED = dgroup("Not shared with you", [
     scope_line("Prescription history from other clinics", False, "She can turn this on from her phone"),
     scope_line("Home vitals", False, "Blood pressure readings she takes herself"),
     scope_line("Records she has marked private", False, "You are told they exist, not what they say"),
-], footer="Asking is a normal part of a consultation. Use “Ask for more history” — she can accept, part-accept or decline.")
+], footer="Use “Ask for more history”. She can accept, part-accept or decline.")
 
 P2_VITALS = dgroup("Blood pressure · clinic readings", [
     chart([("Mar", "142/92", 92, "bad"), ("Apr", "138/88", 82, "warn"), ("May", "136/86", 78, "warn"),
            ("Jun", "132/84", 70, "ok"), ("Jul", "130/82", 64, "ok"), ("Aug", "128/82", 60, "ok")], 118, "Systolic, mmHg"),
-], footer="Clinic readings only. Her home readings are not shared with you.")
+], footer="Clinic readings only — her home readings are not shared.")
 
 P2_ACTIONS = dgroup("Do something", [
     drow("stethoscope", "Start a consultation", sub="Even without a booking — a walk-in counts", name="Start consult"),
@@ -2335,7 +2366,7 @@ P7_LIST = dgroup("Results waiting on you · 4", [
     request_row("flask-conical", "Amara Okeke · Full blood count",
                 "Haemoglobin 11.2 low · arrived 13 Jun · everything else normal",
                 "Old", "Res Amara", "warn", result_actions("Amara")),
-], footer="Nothing reaches a member until a doctor has looked at it. A number with no explanation is how people end up in an emergency room at midnight.")
+], footer="Nothing reaches a member until a doctor has read it. A number with no explanation sends people to A&E at midnight.")
 
 P7_WHY = dgroup("Why a doctor releases results", [
     drow("eye-off", "No auto-release", sub="Not even normal results — “normal” still needs context", name="Why noauto", chevron=False),
@@ -2393,13 +2424,13 @@ P8_VALUES = dgroup("Troponin I · high sensitivity", [
     lab_line("Creatinine", "94 µmol/L", "62 – 106"),
     lab_line("Potassium", "5.4 mmol/L", "3.5 – 5.1", "High"),
     lab_line("eGFR", "78 mL/min", "> 90", "Low"),
-], footer="Five values, two outside range. The reference ranges came from the laboratory that ran it — not from Medra — because ranges differ by analyser and by population.")
+], footer="Ranges come from the laboratory, not from Medra — they differ by analyser.")
 
 P8_DELTA = dgroup("Against his own history", [
     drow("trending-up", "Potassium", value="4.8 → 5.4", sub="First time above range. Was 4.8 in April, 4.6 in January", name="Del k", tone="warn", chevron=False),
     drow("trending-down", "eGFR", value="91 → 78", sub="Falling over eight months. Worth a look even though today's story is the chest pain", name="Del egfr", tone="warn", chevron=False),
     drow("minus", "Troponin", value="Flat", sub="No rise between the two samples — that is the finding, not the number itself", name="Del trop", tone="ok", chevron=False),
-], footer="A single value is a number. Three of them across a year is the thing you actually treat. This is what a structured result buys you that a photograph of a page never can.")
+], footer="One value is a number. Three across a year is what you treat.")
 
 P8_PROV = dgroup("Where this came from", [
     drow("building-2", "Ketu Medical Laboratory", sub="On Medra · MLSCN 4471 · accredited to 2027", name="Prov lab", chevron=False, tone="ok"),
@@ -2407,7 +2438,7 @@ P8_PROV = dgroup("Where this came from", [
     drow("microscope", "Abbott Architect i2000SR", sub="Analyser and lot number are on the record. This is what makes the range meaningful", name="Prov machine", chevron=False),
     drow("clock", "Sample taken 06:20, verified 09:38", sub="Three hours eighteen minutes — inside their published turnaround", name="Prov when", chevron=False),
     drow("file-text", "The original report", sub="The laboratory's own PDF, unaltered, kept alongside the values", name="Prov pdf"),
-], footer="Every clinical fact on Medra carries who produced it and when. A number with no provenance is a rumour, and no doctor should have to act on one.")
+], footer="Every clinical fact carries who produced it and when. A number with no provenance is a rumour.")
 
 P8_ACT = dgroup("What happens next", [
     note_field("One line for Musa", "message-circle",
@@ -2417,15 +2448,15 @@ P8_ACT = dgroup("What happens next", [
     dtoggle("bell-ring", "Tell him it has arrived", sub="App, WhatsApp and SMS", on=True, name="P8 notify"),
     dtoggle("calendar-plus", "Book a follow-up", sub="Suggests your next three open slots", on=True, name="P8 followup"),
     dtoggle("flask-conical", "Order a repeat potassium", sub="Adds it to a new order you can route in one tap", on=False, name="P8 repeat"),
-], footer="A result out of range with no explanation frightens people. One sentence from you prevents a call at 22:00 — and in this case it is the sentence that stops him thinking he has had a heart attack.")
+], footer="A result out of range with no explanation frightens people. One sentence stops him fearing a heart attack.")
 
 P8_VS = dcard(
     f'<Frame flex="row" gap={{9}} items="center">{I("info",16,A_IC)}'
     f'{T(14,"semibold","var:text/strong","Why this is not the same as a photograph")}</Frame>'
     + T(12, "regular", "var:text/default",
-        "A photographed report is an image with a doctor's transcription attached. It cannot be trended, cannot be flagged against a range, and any typing error becomes part of the record silently. A structured result is the laboratory's own numbers, with its own ranges, its own analyser and its own verifier's name.", w="fill")
+        "A photograph is a picture of a page. A structured result is the laboratory's own numbers, ranges, analyser and verifier's name.", w="fill")
     + T(11, "regular", "var:text/muted",
-        "Both are supported, because most laboratories still hand over paper. But every result that arrives structured is one a future doctor can rely on without re-reading a photograph.", w="fill"),
+        "Both are supported — most laboratories still hand over paper.", w="fill"),
     bg="var:state/info-bg", stroke=None)
 
 addx("Patients", "P8-result",
@@ -2608,7 +2639,7 @@ S3_PROVIDER = dgroup("Which app do you use?", [
     radio_row("Microsoft Teams", name="Provider teams"),
     radio_row("WhatsApp video", sub="Common in Nigeria, but it shows the patient your personal number", name="Provider whatsapp"),
     radio_row("I paste a link myself each time", sub="Slowest, works with anything", name="Provider manual"),
-], footer="Medra does not host the call in the MVP. It creates the booking, takes the payment, delivers the link three ways, and keeps the note — the call itself is yours.")
+], footer="Medra books it, takes the payment, delivers the link and keeps the note. The call itself is yours.")
 
 S3_SETUP = dgroup("Your link", [
     field("Meeting link", "video", "meet.google.com/kfa-jrqz-nmo", ph=False, trailing=("copy", "Copy meet link"),
@@ -2762,7 +2793,7 @@ S6_TRIAL = dcard(
     f'{T(11,"semibold","var:brand/teal","FREE TRIAL")}{status_pill("pending","12 days left")}</Frame>'
     + T(26, "bold", "var:text/on-dark", "Your trial ends on 26 August")
     + T(14, "regular", "var:text/on-dark-muted",
-        "Everything is unlocked until then. Add a card before the 26th and nothing changes; do not, and your dashboard locks while your patients keep their records.", w="fill")
+        "Add a card before the 26th and nothing changes. Do not, and your dashboard locks — patients keep their records.", w="fill")
     + bar(60, "teal", 10)
     + f'<Frame w="fill" flex="row" gap={{9}}>'
     + dbtn("Add a card now", "Add card S6", "credit-card", "teal")
@@ -2903,7 +2934,7 @@ S8_DANGER = dcard(
     f'<Frame flex="row" gap={{9}} items="center">{I("triangle-alert",16,ERR_IC)}'
     f'{T(14,"semibold","var:state/error","Leaving Medra")}</Frame>'
     + T(12, "regular", "var:text/default",
-        "You can pause your listing and keep everything, or close the account. Notes you have signed stay with the patient and with the clinic — they are not yours to withdraw.", w="fill")
+        "Pause your listing or close the account. Notes you have signed stay with the patient and the clinic.", w="fill")
     + f'<Frame w="fill" flex="row" gap={{9}}>'
     + dbtn("Pause my listing", "Pause listing", "moon", "ghost")
     + dbtn("Close my account", "Close account", "trash-2", "danger") + '</Frame>',
@@ -3810,6 +3841,15 @@ linker = ("(async () => {\n"
  "  return { linked, navLinked, stayOnScreen: stay, framesFound: Object.keys(byName).length, missing };\n"
  "})();\n")
 open(os.path.join(OUT, "link-doctor.js"), "w").write(linker)
+
+# The content cut is only worth anything if it holds. Report the prose budget on every build —
+# a screen that drifts back over shows up here rather than at the next review.
+try:
+    from prose_budget import report as _prose_report
+    _prose_report(['doctor'])
+except Exception as _e:      # never let a reporting tool break a build
+    print("  prose budget unavailable:", _e)
+
 
 # A repair pass for a canvas that was rendered before normalise.py existed. It fixes the
 # spacer frames and the centred text in place, so a page does not have to be deleted and
