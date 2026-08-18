@@ -83,18 +83,17 @@ BADGES = {"Today": 7, "Bookings": 4, "Referrals": 3}
 TAB_ADMIN = [("layout-dashboard", "Today", "Nav Today"), ("calendar-check", "Bookings", "Nav Bookings"),
              ("users", "People", "Nav People"), ("share-2", "Referrals", "Nav Referrals"),
              ("ellipsis", "More", "Nav More")]
-TAB_STAFF = [("list-checks", "My queue", "Nav Queue"), ("users", "Members", "Nav Members"),
-             ("share-2", "Referrals", "Nav Referrals"), ("bell", "Alerts", "Notifications"),
-             ("ellipsis", "More", "Nav More")]
-TAB_DESK  = [("concierge-bell", "Front desk", "Nav Desk"), ("calendar-check", "Bookings", "Nav Bookings"),
-             ("user-plus", "Walk-in", "Nav Walkin"), ("users", "Members", "Nav Members"),
-             ("ellipsis", "More", "Nav More")]
+# TAB_STAFF and TAB_DESK are gone. A phone tab bar is now generated from the persona's own
+# rail by `o_tabs_for()` — first four destinations plus More — so a nurse's phone and a nurse's
+# desktop offer the same places. Two hand-written bars covering eight personas was the mobile
+# half of the same mistake the shared rail was making.
 
 ADMIN = ("Mrs. Adaeze Nwosu", "Organisation admin")
 NURSE = ("Sister Ifeoma Uche", "Nurse · Nursing")
 LAB   = ("Mr. Sola Adeniyi", "Lab technician · Laboratory")
 PHARM = ("Mr. Bayo Ogun", "Pharmacist · Pharmacy")
 DESK  = ("Miss Ngozi Peter", "Front desk")
+ORGDOC = ("Dr. Chuka Eze", "General practice · Garki")
 
 # =====================================================================================
 # 1. SETUP & VERIFICATION  (PRD v2.0 Module 10.1–10.2)
@@ -382,7 +381,19 @@ B1_NEEDS = dgroup("Needs a person, not a system", [
     drow("flask-conical", "7 samples not yet accepted", sub="Laboratory queue is the longest it has been this week", name="Open lab D5", tone="warn"),
 ])
 
-B1_ASIDE = (rail_section("Across the branches",
+# Godwin: the admin is "the one in charge of onboarding other department or staff". That was
+# true of the module already — C3 adds a department, C5 invites a person — but it was two rows
+# deep in People, which is not where you look when somebody starts on Monday. It belongs on the
+# admin's own first screen, and on nobody else's.
+B1_ONBOARD = dgroup("Onboarding", [
+    drow("user-plus", "Invite someone into a department", sub="They prove their own identity and registration; you never hold a password", name="Open invite C5"),
+    drow("building-2", "Add a department", sub="Physiotherapy, records, anything with its own queue and its own seats", name="Add dept C3"),
+    drow("badge-alert", "2 invited, never joined", value="7 days", sub="Laboratory has nobody in it. Resend or withdraw.", name="Open people C4", tone="warn"),
+    drow("lock", "Front desk has no spare seat", value="5 of 5", sub="The busiest department in the building, and it cannot take anyone", name="Open plan A4", tone="err"),
+], footer="Only you can do any of this. A department lead can ask for a seat; nobody but an administrator can create one.")
+
+B1_ASIDE = (rail_section("Onboarding", B1_ONBOARD, None)
+            + rail_section("Across the branches",
     dcard(kpi_line("Garki", "96 expected") + kpi_line("Maitama", "34 expected")
           + kpi_line("Wuse", "18 expected") + kpi_line("No-shows so far", "6", "warn"), p=14, gap=3), None)
     + rail_section("Now in the building",
@@ -400,7 +411,8 @@ addx("Today", "B1-today",
            stats=[("148", "Expected"), ("14m", "Wait"), ("4", "Unassigned")]),
     pinned=B1_NEEDS,
     sections=[
-      ("depts", "layers", "Departments", "Consulting, nursing, lab, pharmacy, desk", "5", None, B1_DEPTS, None),
+      ("onboard", "user-plus", "Onboarding", "Invite someone, add a department", "4", "warn", B1_ONBOARD, None),
+      ("depts", "layers", "Departments", "All seven, and what each is carrying", "7", None, B1_DEPTS, None),
       ("branches", "building-2", "Across the branches", "Garki 96 · Maitama 34 · Wuse 18", "3", None,
        dcard(kpi_line("Garki", "96 expected") + kpi_line("Maitama", "34 expected")
              + kpi_line("Wuse", "18 expected") + kpi_line("No-shows so far", "6", "warn"), p=14, gap=3), None),
@@ -938,7 +950,7 @@ addx("Chain", "D1-nursing",
         f'{dhead([("Five people",False),("waiting for you",True)],26)}'
         f'{rows_of([stat_tile("users","5","Waiting","Next in 6 minutes","teal","Stat waiting"),stat_tile("check-check","12","Done today","41 vitals recorded","ok","Stat done"),stat_tile("syringe","9","Injections","All signed","info","Stat inject"),stat_tile("triangle-alert","2","Escalated","Both seen inside 5 minutes","warn","Stat esc")],4,14)}'
         f'{D1_QUEUE}{D1_DONE}',
-        NAV["Departments"], dept="Nursing", urgent=1, aside=D1_ASIDE, who=NURSE, badges=BADGES),
+        "My queue", dept="Nursing", urgent=1, aside=D1_ASIDE, who=NURSE, badges=BADGES),
     o_head("My queue", "5 waiting · next in 6 min", back=False, ctx="Nursing · Garki",
            stats=[("5", "Waiting"), ("12", "Done"), ("2", "Escalated")]),
     pinned=D1_QUEUE,
@@ -950,7 +962,7 @@ addx("Chain", "D1-nursing",
              + drow("bandage", "Daily dressing", value="1 person", name="SO dressing", chevron=False), p=14, gap=2), None),
     ],
     foot=dbtn("Get a doctor to look at someone", "Open escalate D4", "triangle-alert", "warn", full=True),
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("nurse"), tab=0)
 
 # ---------------- D2 record vitals
 D2_WHO = dcard(
@@ -997,7 +1009,7 @@ addx("Chain", "D2-vitals",
         f'<Frame grow={{1}} flex="col" gap={{14}}>{D2_FORM}</Frame>'
         f'<Frame w={{344}} flex="col" gap={{14}}>{D2_RANGE}{D2_VERIFY}'
         f'{dcta("Save and hand to the doctor","Save vitals D2","check")}</Frame></Frame>',
-        NAV["Departments"], dept="Nursing", who=NURSE, badges=BADGES),
+        "Record vitals", dept="Nursing", who=NURSE, badges=BADGES),
     o_head("Vitals", "Amara Okeke · before 10:30", stats=[("136/86", "BP"), ("78", "Pulse"), ("74kg", "Weight")]),
     pinned=f'{D2_WHO}{D2_FORM}',
     sections=[
@@ -1005,7 +1017,7 @@ addx("Chain", "D2-vitals",
       ("self", "circle-help", "What she told us herself", "Blood group and genotype are unverified", "3", "warn", D2_VERIFY, None),
     ],
     foot=dcta("Save and hand to the doctor", "Save vitals D2", "check"),
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("nurse"), tab=1)
 
 # ---------------- D3 administer
 D3_ORDER = dcard(
@@ -1042,7 +1054,7 @@ addx("Chain", "D3-administer",
         f'{dgroup("The course", [drow("check-check","Day 1","","Given 13 Aug 09:40 · left gluteal","Course 1",tone="ok",chevron=False),drow("circle-dot","Day 2","Today","Now","Course 2",chevron=False),drow("circle","Day 3","15 Aug","Not yet due","Course 3",chevron=False),drow("circle","Day 5","17 Aug","Last dose","Course 5",chevron=False)])}'
         f'{dcta("Record as given","Save administer D3","check")}'
         f'{dbtn("Could not give it","Not given D3","x","danger",full=True)}</Frame></Frame>',
-        NAV["Departments"], dept="Nursing", who=NURSE, badges=BADGES),
+        "My queue", dept="Nursing", who=NURSE, badges=BADGES),
     o_head("Give an injection", "Musa Ibrahim · day 2 of 5", stats=[("1 g", "Dose"), ("IM", "Route"), ("2/5", "Day")]),
     pinned=D3_ORDER,
     sections=[
@@ -1053,7 +1065,7 @@ addx("Chain", "D3-administer",
     ],
     foot=f'{dcta("Record as given","Save administer D3","check")}'
          f'{dbtn("Could not give it","Not given D3","x","danger",full=True)}',
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("nurse"), tab=0)
 
 # ---------------- D4 escalate
 D4_PICK = dgroup("What did you find?", [
@@ -1082,7 +1094,7 @@ addx("Chain", "D4-escalate",
         f'<Frame grow={{1}} flex="col" gap={{14}}>{D4_PICK}{D4_FORM}</Frame>'
         f'<Frame w={{344}} flex="col" gap={{14}}>{D4_WHO}'
         f'{dcta("Escalate now","Send escalate D4","triangle-alert")}</Frame></Frame>',
-        NAV["Departments"], dept="Nursing", urgent=1, who=NURSE, badges=BADGES),
+        "My queue", dept="Nursing", urgent=1, who=NURSE, badges=BADGES),
     o_head("Escalate", "Grace Okeke · BP 178/104", stats=[("Now", "Urgency"), ("2 min", "Fallback"), ("2", "Doctors")]),
     pinned=D4_PICK,
     sections=[
@@ -1090,7 +1102,7 @@ addx("Chain", "D4-escalate",
       ("who", "stethoscope", "Who this goes to", "Her doctor, then the duty doctor", "2", None, D4_WHO, None),
     ],
     foot=dcta("Escalate now", "Send escalate D4", "triangle-alert"),
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("nurse"), tab=0)
 
 # ---------------- D5–D8 LABORATORY
 D5_CRIT = alert_strip("siren", "1 critical value waiting on a phone call",
@@ -1128,7 +1140,7 @@ addx("Chain", "D5-lab-queue",
         f'{dhead([("Four orders",False),("waiting",True)],26)}'
         f'{rows_of([stat_tile("inbox","4","Waiting","Oldest 41 minutes","warn","Stat lwaiting"),stat_tile("beaker","3","In progress","Two analysers","info","Stat lprog"),stat_tile("send","11","Entered today","All released by a doctor","ok","Stat ldone"),stat_tile("timer","2h 40m","Median turnaround","Target is 4 hours","teal","Stat lturn")],4,14)}'
         f'{D5_CRIT}{D5_QUEUE}{D5_PROGRESS}',
-        NAV["Departments"], dept="Laboratory", urgent=1, aside=D5_ASIDE, who=LAB, badges=BADGES),
+        "Order queue", dept="Laboratory", urgent=1, aside=D5_ASIDE, who=LAB, badges=BADGES),
     o_head("Order queue", "4 waiting · 1 urgent", back=False, ctx="Laboratory · Garki",
            stats=[("4", "Waiting"), ("3", "Running"), ("11", "Done")]),
     pinned=f'{D5_CRIT}{D5_QUEUE}',
@@ -1138,7 +1150,7 @@ addx("Chain", "D5-lab-queue",
        dcard(kpi_line("Accepted", "14") + kpi_line("Results entered", "11")
              + kpi_line("Median turnaround", "2h 40m") + kpi_line("Samples rejected", "1", "warn"), p=14, gap=3), None),
     ],
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("lab"), tab=0)
 
 # ---------------- D6 order detail
 D6_ORDER = dcard(
@@ -1179,7 +1191,7 @@ addx("Chain", "D6-lab-order",
         f'<Frame grow={{1}} flex="col" gap={{14}}>{D6_ORDER}{D6_PREV}</Frame>'
         f'<Frame w={{344}} flex="col" gap={{14}}>{D6_WHAT}'
         f'{dcta("Accept and start","Open result D7","arrow-right")}</Frame></Frame>',
-        NAV["Departments"], dept="Laboratory", who=LAB, badges=BADGES),
+        "Order queue", dept="Laboratory", who=LAB, badges=BADGES),
     o_head("Order", "Amara Okeke · 2 tests", stats=[("2", "Tests"), ("41m", "Waiting"), ("₦8,500", "She pays")]),
     pinned=D6_ORDER,
     sections=[
@@ -1188,7 +1200,7 @@ addx("Chain", "D6-lab-order",
     ],
     foot=f'{dcta("Accept and start","Open result D7","arrow-right")}'
          f'{dbtn("Sample problem","Open lab D8","triangle-alert","danger",full=True)}',
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("lab"), tab=0)
 
 # ---------------- D7 structured result entry
 def result_line(analyte, unit, ref, value="", flag=None, mobile=False):
@@ -1260,7 +1272,7 @@ addx("Chain", "D7-lab-result",
         f'<Frame grow={{1}} flex="col" gap={{14}}>{D7_CRIT}{D7_TEMPLATE}</Frame>'
         f'<Frame w={{344}} flex="col" gap={{14}}>{D7_WHY}{D7_NEXT}'
         f'{dcta("Send to the doctor","Save result D7","send")}</Frame></Frame>',
-        NAV["Departments"], dept="Laboratory", who=LAB, badges=BADGES),
+        "Enter result", dept="Laboratory", who=LAB, badges=BADGES),
     o_head("Enter result", "Amara Okeke · 2 tests", stats=[("2", "Tests"), ("2", "Out of range"), ("Dr. Okafor", "Goes to")]),
     pinned=f'{D7_CRIT}{D7_TEMPLATE_M}',
     sections=[
@@ -1268,7 +1280,7 @@ addx("Chain", "D7-lab-result",
       ("next", "list-checks", "What happens when you finish", "It goes to the doctor, not the member", "3", None, D7_NEXT, None),
     ],
     foot=dcta("Send to the doctor", "Save result D7", "send"),
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("lab"), tab=1)
 
 # ---------------- D8 sample problem
 D8_PICK = dgroup("What is wrong with it?", [
@@ -1303,7 +1315,7 @@ addx("Chain", "D8-lab-problem",
         f'<Frame w={{344}} flex="col" gap={{14}}>{D8_RULE}'
         f'{dcta("Reject and tell them","Save problem D8","send")}'
         f'{dbtn("Never mind","Open lab D5","x","ghost",full=True)}</Frame></Frame>',
-        NAV["Departments"], dept="Laboratory", who=LAB, badges=BADGES),
+        "Sample problems", dept="Laboratory", who=LAB, badges=BADGES),
     o_head("Sample problem", "Blessing Ade · FBC", stats=[("Haemolysed", "Reason"), ("2", "To tell"), ("Free", "Repeat")]),
     pinned=D8_PICK,
     sections=[
@@ -1312,7 +1324,7 @@ addx("Chain", "D8-lab-problem",
     ],
     foot=f'{dcta("Reject and tell them","Save problem D8","send")}'
          f'{dbtn("Never mind","Open lab D5","x","ghost",full=True)}',
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("lab"), tab=0)
 
 # ---------------- D15 a value that cannot wait in a queue
 # A potassium of 7.2 kills people while a result sits in an inbox. Every laboratory in the world
@@ -1366,7 +1378,7 @@ addx("Chain", "D15-critical",
         f'<Frame grow={{1}} flex="col" gap={{14}}>{D15_VALUE}{D15_WHO}</Frame>'
         f'<Frame w={{344}} flex="col" gap={{14}}>{D15_READBACK}{D15_NOT}'
         f'{dcta("Record the call and close it","Close critical D15","check")}</Frame></Frame>',
-        NAV["Departments"], dept="Laboratory", who=LAB, badges=BADGES, urgent=1),
+        "Critical", dept="Laboratory", who=LAB, badges=BADGES, urgent=1),
     o_head("Critical value", "Musa Ibrahim · potassium 7.2",
            stats=[("7.2", "Potassium"), ("6.5", "Critical at"), ("3 min", "Since verified")]),
     pinned=D15_VALUE,
@@ -1376,7 +1388,7 @@ addx("Chain", "D15-critical",
       ("not", "eye-off", "The member is not told yet", "She sees a result arrived, never the number", None, None, D15_NOT, None),
     ],
     foot=dcta("Record the call and close it", "Close critical D15", "check"),
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("lab"), tab=2)
 
 # ---------------- D9–D11 PHARMACY
 D9_QUEUE = dgroup("Prescriptions waiting · 4", [
@@ -1405,13 +1417,13 @@ addx("Chain", "D9-pharmacy",
         f'{dhead([("Four prescriptions",False),("waiting",True)],26)}'
         f'{rows_of([stat_tile("inbox","4","Waiting","1 at the counter","teal","Stat pwaiting"),stat_tile("check-check","23","Dispensed today","All recorded","ok","Stat pdone"),stat_tile("package-x","1","Out of stock","Salbutamol inhaler","err","Stat pstock"),stat_tile("repeat","3","Substitutions","This week","warn","Stat psub")],4,14)}'
         f'{D9_QUEUE}',
-        NAV["Departments"], dept="Pharmacy", urgent=1,
+        "Prescriptions", dept="Pharmacy", urgent=1,
         aside=rail_section("Watch the shelf", D9_STOCK, None), who=PHARM, badges=BADGES),
     o_head("Prescriptions", "4 waiting · 1 at the counter", back=False, ctx="Pharmacy · Garki",
            stats=[("4", "Waiting"), ("23", "Done"), ("1", "Out of stock")]),
     pinned=D9_QUEUE,
     sections=[("stock", "package", "Watch the shelf", "One out of stock, one low", "3", "warn", D9_STOCK, None)],
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("pharm"), tab=0)
 
 # ---------------- D10 dispense
 D10_RX = dcard(
@@ -1452,13 +1464,13 @@ addx("Chain", "D10-dispense",
         f'<Frame w={{344}} flex="col" gap={{14}}>{D10_COUNSEL}'
         f'{dcta("Record as dispensed","Save dispense D10","check")}'
         f'{dbtn("Cannot dispense this","Open sub D11","triangle-alert","warn",full=True)}</Frame></Frame>',
-        NAV["Departments"], dept="Pharmacy", who=PHARM, badges=BADGES),
+        "Prescriptions", dept="Pharmacy", who=PHARM, badges=BADGES),
     o_head("Dispense", "Amara Okeke · amlodipine", stats=[("30", "Tablets"), ("30d", "Supply"), ("1", "Repeat")]),
     pinned=f'{D10_RX}{D10_FORM}',
     sections=[("counsel", "message-circle", "Say this at the counter", "Written by the prescriber", "3", None, D10_COUNSEL, None)],
     foot=f'{dcta("Record as dispensed","Save dispense D10","check")}'
          f'{dbtn("Cannot dispense this","Open sub D11","triangle-alert","warn",full=True)}',
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("pharm"), tab=0)
 
 # ---------------- D11 substitution / stock-out
 D11_PICK = dgroup("Why can you not dispense it?", [
@@ -1491,7 +1503,7 @@ addx("Chain", "D11-substitute",
         f'<Frame grow={{1}} flex="col" gap={{14}}>{D11_PICK}{D11_OPTIONS}</Frame>'
         f'<Frame w={{344}} flex="col" gap={{14}}>{D11_MSG}'
         f'{dcta("Send to the prescriber","Send sub D11","send")}</Frame></Frame>',
-        NAV["Departments"], dept="Pharmacy", urgent=1, who=PHARM, badges=BADGES),
+        "Substitutions", dept="Pharmacy", urgent=1, who=PHARM, badges=BADGES),
     o_head("Cannot dispense", "Fatima Bello · out of stock", stats=[("2", "Alternatives"), ("Here", "She is"), ("Dr. Okafor", "Goes to")]),
     pinned=D11_PICK,
     sections=[
@@ -1499,7 +1511,7 @@ addx("Chain", "D11-substitute",
       ("msg", "message-circle", "What the doctor will see", "And anything you add", None, None, D11_MSG, None),
     ],
     foot=dcta("Send to the prescriber", "Send sub D11", "send"),
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("pharm"), tab=2)
 
 # ---------------- D12–D14 FRONT DESK
 D12_BOARD = (f'<Frame w="fill" flex="row" gap={{12}} items="start">'
@@ -1525,7 +1537,7 @@ addx("Chain", "D12-desk",
     o_desk("Org · Front Desk — D12 The Day", ("Front desk", "Thursday 14 August"),
         f'{dhead([("Twelve people",False),("in the waiting room",True)],26)}'
         f'{D12_NEEDS}{D12_BOARD}',
-        NAV["Today"], dept="Front desk", urgent=2, who=DESK, badges=BADGES),
+        "The day", dept="Front desk", urgent=2, who=DESK, badges=BADGES),
     o_head("Front desk", "12 waiting · longest 26 min", back=False, ctx="Garki Medical Centre",
            stats=[("12", "Waiting"), ("9", "With a clinician"), ("23", "Done")],
            chips=[("Waiting", "Filter waiting", True), ("Expected", "Filter expected", False), ("Done", "Filter done", False)]),
@@ -1546,7 +1558,7 @@ addx("Chain", "D12-desk",
              f'{sheet_pick("user-check","Check someone in","They have a booking","Open checkin D14")}'
              f'{sheet_pick("search","Find a member","Name, phone or Medra ID","Nav Members")}'
              f'{sheet_pick("share-2","A referral arrived with them","From another organisation","Open inbound E4","info")}', None)],
-    tab_items=TAB_DESK, tab=0)
+    tab_items=o_tabs_for("desk"), tab=0)
 
 # ---------------- D13 walk-in registration
 D13_FIND = dcard(
@@ -1585,12 +1597,12 @@ addx("Chain", "D13-walkin",
         f'<Frame grow={{1}} flex="col" gap={{14}}>{D13_FIND}{D13_FORM}</Frame>'
         f'<Frame w={{344}} flex="col" gap={{14}}>{D13_CONSENT}'
         f'{dcta("Register and add to the queue","Save walkin D13","check")}</Frame></Frame>',
-        NAV["Today"], dept="Front desk", who=DESK, badges=BADGES),
+        "Walk-in", dept="Front desk", who=DESK, badges=BADGES),
     o_head("Walk-in", "Register someone at the desk", stats=[("New", "Member"), ("1 min", "Takes"), ("SMS", "Their ID")]),
     pinned=f'{D13_FIND}{D13_FORM}',
     sections=[("consent", "shield-check", "What they are agreeing to", "Read it aloud, then tick", None, "info", D13_CONSENT, None)],
     foot=dcta("Register and add to the queue", "Save walkin D13", "check"),
-    tab_items=TAB_DESK, tab=2)
+    tab_items=o_tabs_for("desk"), tab=2)
 
 # ---------------- D14 check-in & payment
 D14_WHO = dcard(
@@ -1632,7 +1644,7 @@ addx("Chain", "D14-checkin",
         f'<Frame grow={{1}} flex="col" gap={{14}}>{D14_PAY}</Frame>'
         f'<Frame w={{344}} flex="col" gap={{14}}>{D14_INS}{D14_NEXT}'
         f'{dcta("Check in","Save checkin D14","check")}</Frame></Frame>',
-        NAV["Today"], dept="Front desk", urgent=2, who=DESK, badges=BADGES),
+        "Payments", dept="Front desk", urgent=2, who=DESK, badges=BADGES),
     o_head("Check in", "Blessing Ade · not paid", stats=[("₦15,000", "To collect"), ("10:30", "Booked"), ("NHIS", "Insurance")]),
     pinned=f'{D14_WHO}{D14_PAY}',
     sections=[
@@ -1640,7 +1652,7 @@ addx("Chain", "D14-checkin",
       ("next", "arrow-right", "Then what?", "Waiting room, nursing or laboratory", "3", None, D14_NEXT, None),
     ],
     foot=dcta("Check in", "Save checkin D14", "check"),
-    tab_items=TAB_DESK, tab=0)
+    tab_items=o_tabs_for("desk"), tab=0)
 
 def ref_row(ic, who, what, when, nm, tone="info", actions=None, tag=None):
     bg = {"info": "var:state/info-bg", "warn": "var:state/warning-bg", "err": "var:state/error-bg",
@@ -1705,7 +1717,7 @@ addx("Chain", "D16-imaging",
         f'{dhead([("Six studies",False),("today",True)],26)}'
         f'{rows_of([stat_tile("scan","6","Booked today","2 in the next hour","teal","Stat imgbook"),stat_tile("check-check","9","Acquired","3 not yet reported","ok","Stat imgdone"),stat_tile("file-image","3","Waiting on a report","1 urgent","err","Open report D18"),stat_tile("user-x","1","Did not attend","Grace, 12 Aug","warn","Stat imgdna")],4,14)}'
         f'{D16_WORK}',
-        NAV["Departments"], dept="Imaging", urgent=1,
+        "Worklist", dept="Imaging", urgent=1,
         aside=rail_section("Rooms and machines", D16_ROOMS, None) + rail_section("Waiting for a radiologist", D16_UNREAD, None),
         who=IMAGING, badges=BADGES, persona="imaging"),
     o_head("Imaging", "6 booked · 2 in the next hour", back=False, ctx="Imaging · Garki",
@@ -1715,7 +1727,7 @@ addx("Chain", "D16-imaging",
       ("rooms", "scan", "Rooms and machines", "One in use, three free", "5", None, D16_ROOMS, None),
       ("unread", "file-image", "Waiting for a radiologist", "3 studies, 1 urgent", "2", "err", D16_UNREAD, None),
     ],
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("imaging"), tab=0)
 
 # ---------------- D17 the safety stop
 D17_ORDER = dcard(
@@ -1760,7 +1772,7 @@ addx("Chain", "D17-prepare",
         f'<Frame grow={{1}} flex="col" gap={{14}}>{D17_SAFETY}</Frame>'
         f'<Frame w={{344}} flex="col" gap={{14}}>{D17_STOP}{D17_DOSE}'
         f'{dbtn("Start the study","Start study D17","play","ghost",full=True)}</Frame></Frame>',
-        NAV["Departments"], dept="Imaging", who=IMAGING, badges=BADGES, persona="imaging"),
+        "Worklist", dept="Imaging", who=IMAGING, badges=BADGES, persona="imaging"),
     o_head("Safety check", "Halima Sani · MRI lumbar spine",
            stats=[("3/5", "Answered"), ("45 min", "In the scanner"), ("0", "Radiation")]),
     pinned=f'{D17_ORDER}{D17_STOP}',
@@ -1769,7 +1781,7 @@ addx("Chain", "D17-prepare",
       ("dose", "clipboard-list", "What gets recorded", "Every study, not only the abnormal ones", "3", None, D17_DOSE, None),
     ],
     foot=dbtn("Start the study", "Start study D17", "play", "ghost", full=True),
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("imaging"), tab=0)
 
 # ---------------- D18 the radiologist's report
 D18_STUDY = dcard(
@@ -1821,7 +1833,7 @@ addx("Chain", "D18-report",
         f'<Frame grow={{1}} flex="col" gap={{14}}>{D18_STUDY}{D18_REPORT}</Frame>'
         f'<Frame w={{344}} flex="col" gap={{14}}>{D18_CRIT}{D18_SIGN}'
         f'{dcta("Sign and send to Dr. Eze","Sign report D18","pen-line")}</Frame></Frame>',
-        NAV["Departments"], dept="Imaging", who=RADIOL, badges=BADGES, persona="imaging", urgent=1),
+        "Reporting", dept="Imaging", who=RADIOL, badges=BADGES, persona="imaging", urgent=1),
     o_head("Report a study", "Musa Ibrahim · chest X-ray",
            stats=[("2 h", "Since acquired"), ("Urgent", "Priority"), ("2", "Views")]),
     pinned=f'{D18_STUDY}{D18_REPORT}',
@@ -1830,7 +1842,7 @@ addx("Chain", "D18-report",
       ("sign", "shield-check", "Signing it", "Your name, and it stays", None, "ok", D18_SIGN, None),
     ],
     foot=dcta("Sign and send to Dr. Eze", "Sign report D18", "pen-line"),
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("imaging"), tab=1)
 
 # =====================================================================================
 # D19–D21  BILLING / CASHIER
@@ -1875,7 +1887,7 @@ addx("Chain", "D19-billing",
         f'<Frame w="fill" flex="row" gap={{16}} items="start">'
         f'<Frame grow={{1}} flex="col" gap={{14}}>{D19_OWED}</Frame>'
         f'<Frame w={{344}} flex="col" gap={{14}}>{D19_METHOD}{D19_SHIFT}</Frame></Frame>',
-        NAV["Departments"], dept="Billing", who=BILLING, badges=BADGES, persona="billing", urgent=3),
+        "The money", dept="Billing", who=BILLING, badges=BADGES, persona="billing", urgent=3),
     o_head("The money today", "₦412,000 in · ₦1.4m outstanding", back=False, ctx="Billing · Garki",
            stats=[("₦412k", "Taken"), ("₦186k", "Owed"), ("₦1.24m", "HMOs")]),
     # The four tiles are a desktop row. On a phone the header already carries the same three
@@ -1885,7 +1897,7 @@ addx("Chain", "D19-billing",
       ("method", "chart-column", "How it came in", "Cash is 23% of it", "4", None, D19_METHOD, None),
       ("shift", "lock", "Closing the till", "Two people, never one", "3", "err", D19_SHIFT, None),
     ],
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("billing"), tab=0)
 
 # ---------------- D20 take a payment
 D20_BILL = dcard(
@@ -1927,14 +1939,14 @@ addx("Chain", "D20-payment",
         f'<Frame w={{344}} flex="col" gap={{14}}>{D20_AFTER}'
         f'{dcta("Record ₦30,000","Save payment D20","check")}'
         f'{dbtn("She cannot pay today","Open plan D20","message-square-text","ghost",full=True)}</Frame></Frame>',
-        NAV["Departments"], dept="Billing", who=BILLING, badges=BADGES, persona="billing"),
+        "Owing", dept="Billing", who=BILLING, badges=BADGES, persona="billing"),
     o_head("Take a payment", "Halima Sani · ₦65,000 owing",
            stats=[("₦85k", "Bill"), ("₦20k", "Paid"), ("₦65k", "Balance")]),
     pinned=f'{D20_BILL}{D20_TAKE}',
     sections=[("after", "arrow-right", "What this changes", "Three things, one of them permanent", "3", None, D20_AFTER, None)],
     foot=f'{dcta("Record ₦30,000","Save payment D20","check")}'
          f'{dbtn("She cannot pay today","Open plan D20","message-square-text","ghost",full=True)}',
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("billing"), tab=1)
 
 # ---------------- D21 claims
 D21_CLAIMS = dgroup("Claims with HMOs and NHIS · 14", [
@@ -1974,7 +1986,7 @@ addx("Chain", "D21-claims",
         f'<Frame w="fill" flex="row" gap={{16}} items="start">'
         f'<Frame grow={{1}} flex="col" gap={{14}}>{D21_CLAIMS}</Frame>'
         f'<Frame w={{344}} flex="col" gap={{14}}>{D21_AGE}{D21_WHY}</Frame></Frame>',
-        NAV["Departments"], dept="Billing", who=BILLING, badges=BADGES, persona="billing", urgent=3),
+        "Claims", dept="Billing", who=BILLING, badges=BADGES, persona="billing", urgent=3),
     o_head("Claims", "14 open · 3 queried", back=False, ctx="Billing · Garki",
            stats=[("₦1.24m", "Outstanding"), ("3", "Queried"), ("1", "Rejected")],
            chips=[("All", "Filter claims all", True), ("Queried", "Filter claims q", False), ("Paid", "Filter claims paid", False)]),
@@ -1984,7 +1996,280 @@ addx("Chain", "D21-claims",
       ("why", "circle-help", "Why claims get queried", "Three of the four are fixable at the desk", "4", "err", D21_WHY, None),
     ],
     foot=dbtn("Submit a claim", "New claim D21", "plus", "navy", full=True),
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("billing"), tab=2)
+
+# =====================================================================================
+# H1–H12  ONE DESTINATION PER RAIL ITEM
+#
+# Giving each persona its own navigation is only half the change: a rail item that leads
+# nowhere is worse than a missing one. These are the screens the new rails need and the module
+# did not have — a messages screen for every department rather than only the doctor's, the two
+# places an organisation doctor goes that an administrator never does, and the one screen each
+# for nursing, pharmacy and imaging that their job is half made of.
+# =====================================================================================
+def msg_screen(fid, title, persona, who, dept, threads, contacts, note_txt, tab_key=None):
+    """Every department gets the same shape and a different address book. Godwin asked how
+    staff talk to each other; the answer the module gives is that you message a *department*
+    and whoever is on shift picks it up, so the address book is the thing that differs."""
+    lst = dgroup("Your messages", threads,
+                 footer="A message goes to a department and whoever is on shift picks it up.")
+    new = dgroup("Start a conversation", contacts, footer=note_txt)
+    addx("Chain", fid,
+        o_desk(title, (dept, "Messages"),
+            f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+            f'<Frame grow={{1}} flex="col" gap={{14}}>{lst}</Frame>'
+            f'<Frame w={{344}} flex="col" gap={{14}}>{new}</Frame></Frame>',
+            "Messages", dept=dept, who=who, badges=BADGES, persona=persona),
+        o_head("Messages", f"{dept} · 2 unread", back=False,
+               stats=[("2", "Unread"), ("3 min", "Nursing"), ("8 min", "Lab")]),
+        pinned=lst,
+        sections=[("new", "message-circle-plus", "Start a conversation", "A department, not a person",
+                   str(len(contacts)), None, new, None)],
+        tab_items=o_tabs_for(persona), tab=o_tab_index(persona, "Messages"))
+
+
+DEPT_CONTACTS = {
+    "nursing":  drow("heart-pulse", "Nursing", sub="Two on duty · usually answers in 3 minutes", name="Msg to nursing", tone="ok"),
+    "lab":      drow("flask-conical", "Laboratory", sub="Three on duty · usually answers in 8 minutes", name="Msg to lab", tone="ok"),
+    "pharm":    drow("pill", "Pharmacy", sub="One on duty · usually answers in 20 minutes", name="Msg to pharm", tone="warn"),
+    "desk":     drow("concierge-bell", "Front desk", sub="Four on duty", name="Msg to desk"),
+    "imaging":  drow("scan", "Imaging", sub="Two on duty · MRI list is full until 14:00", name="Msg to imaging"),
+    "billing":  drow("receipt", "Billing", sub="Two on duty", name="Msg to billing"),
+    "doctors":  drow("stethoscope", "Doctors on duty", sub="Six in clinic · Dr. Eze is in room 3", name="Msg to doctors"),
+    "admin":    drow("building-2", "Mrs. Nwosu — the admin", sub="A named person, deliberately", name="Msg to admin"),
+}
+C = DEPT_CONTACTS
+
+msg_screen("H1-desk-messages", "Org · Front Desk — H1 Messages", "desk", DESK, "Front desk", [
+    msg_row("avatar-4.jpg", "Doctors on duty", "Dr. Eze: send Halima Sani up as soon as she arrives, I will fit her in.", "6 min", "Desk thread dr", unread=True),
+    msg_row("avatar-3.jpg", "Nursing · Outpatient", "Ifeoma: room 3 is free now if you want to move anyone forward.", "22 min", "Desk thread nursing", unread=True),
+    msg_row("avatar-5.jpg", "Billing", "Kunle: Halima Sani has a ₦65,000 balance — take something at check-in if you can.", "1 h", "Desk thread billing"),
+], [C["doctors"], C["nursing"], C["lab"], C["billing"], C["admin"]],
+   "You cannot see anything clinical, and nothing here changes that. A message is a sentence, not a way round a permission.", tab_key=0)
+
+msg_screen("H2-nurse-messages", "Org · Nursing — H2 Messages", "nurse", NURSE, "Nursing", [
+    msg_row("avatar-4.jpg", "Doctors on duty", "Dr. Eze: repeat Musa Ibrahim's BP in ten minutes and tell me either way.", "4 min", "Nurse thread dr", unread=True),
+    msg_row("avatar-5.jpg", "Laboratory", "Sola: the potassium on Musa Ibrahim is critical — has anyone reached Dr. Eze?", "18 min", "Nurse thread lab", unread=True, channel="call"),
+    msg_row("avatar-6.jpg", "Front desk", "Blessing Ade has arrived early and is asking about her dressing.", "40 min", "Nurse thread desk"),
+], [C["doctors"], C["lab"], C["pharm"], C["desk"], C["admin"]],
+   "An escalation is never a message. If a reading is outside the range you were given, use Escalate — it reaches a doctor in two minutes and this does not.", tab_key=0)
+
+msg_screen("H3-lab-messages", "Org · Laboratory — H3 Messages", "lab", LAB, "Laboratory", [
+    msg_row("avatar-4.jpg", "Dr. Chuka Eze", "Acknowledged the potassium at 09:52. Repeat it on a fresh sample please.", "3 min", "Lab thread dr", unread=True),
+    msg_row("avatar-3.jpg", "Nursing · Outpatient", "Ifeoma: the second tube for Amara Okeke is on its way down.", "15 min", "Lab thread nursing", unread=True),
+    msg_row("avatar-6.jpg", "Front desk", "Grace Okeke says she was not told to fast. Shall we rebook her?", "2 h", "Lab thread desk"),
+], [C["doctors"], C["nursing"], C["desk"], C["imaging"], C["admin"]],
+   "A critical value is never delivered here. It goes by voice with a read-back, and this is only for the sentence that follows it.", tab_key=0)
+
+msg_screen("H4-pharm-messages", "Org · Pharmacy — H4 Messages", "pharm", PHARM, "Pharmacy", [
+    msg_row("avatar-4.jpg", "Dr. Ngozi Okafor", "Generic salbutamol is fine for Fatima. Go ahead and dispense it.", "8 min", "Pharm thread dr", unread=True),
+    msg_row("avatar-6.jpg", "Front desk", "Fatima Bello is still at the counter — any idea how long?", "12 min", "Pharm thread desk", unread=True),
+    msg_row("avatar-5.jpg", "Billing", "Amlodipine price changed on the 12th. Updated on your screen already.", "Yesterday", "Pharm thread billing"),
+], [C["doctors"], C["desk"], C["nursing"], C["billing"], C["admin"]],
+   "A substitution is not agreed in a message. Use Cannot dispense — it goes to the prescriber with the alternatives and their prices, and it is recorded.", tab_key=0)
+
+msg_screen("H5-img-messages", "Org · Imaging — H5 Messages", "imaging", IMAGING, "Imaging", [
+    msg_row("avatar-4.jpg", "Dr. Chuka Eze", "Any chance of squeezing Musa Ibrahim's chest film in before eleven?", "9 min", "Img thread dr", unread=True),
+    msg_row("avatar-2.jpg", "Dr. Ifeanyi Nwachukwu", "Three studies waiting on me — I am in until 16:00, send them through.", "25 min", "Img thread rad", unread=True),
+    msg_row("avatar-3.jpg", "Nursing · Outpatient", "Halima Sani has a metal plate in her left wrist from 2019.", "1 h", "Img thread nursing"),
+], [C["doctors"], C["nursing"], C["desk"], C["lab"], C["admin"]],
+   "A safety question is not settled in a message. If somebody is unsure about metal or pregnancy, the study does not start.", tab_key=0)
+
+msg_screen("H6-bill-messages", "Org · Billing — H6 Messages", "billing", BILLING, "Billing", [
+    msg_row("avatar-6.jpg", "Front desk", "Ngozi: Halima Sani paid ₦30,000 at the desk just now, reference PSK-0091.", "5 min", "Bill thread desk", unread=True),
+    msg_row("avatar-2.jpg", "Mrs. Adaeze Nwosu", "Hygeia have queried the CT again. Can you answer it today?", "40 min", "Bill thread admin", unread=True),
+    msg_row("avatar-5.jpg", "Pharmacy", "Bayo: the generic is ₦1,900, not ₦4,200 — worth telling Fatima before she pays.", "3 h", "Bill thread pharm"),
+], [C["desk"], C["admin"], C["pharm"], C["doctors"], C["lab"]],
+   "Nobody on Medra is refused care over a balance. Chasing a bill and withholding treatment are different decisions.", tab_key=0)
+
+# ---------------- H7 the organisation doctor's own patient list
+H7_LIST = dgroup("Allocated to you this week · 24", [
+    patient_row("avatar-2.jpg", "Amara Okeke", "MDR-8842-19", "Seen today 10:30 · hypertension review · note signed", "Today", "H7 amara", tag="completed"),
+    patient_row("avatar-1.jpg", "Musa Ibrahim", "MDR-7714-02", "In clinic now · chest pain · potassium 7.2 unacknowledged", "Now", "Open critical D15", tag="new"),
+    patient_row("avatar-6.jpg", "Halima Sani", "MDR-9012-44", "11:20 · referred in from Wuse Clinic · MRI booked", "Waiting", "H7 halima"),
+    patient_row("avatar-3.jpg", "Grace Okeke", "MDR-8842-21", "11:40 · diabetes review · HbA1c back this morning", "Waiting", "H7 grace"),
+    patient_row("avatar-4.jpg", "Fatima Bello", "MDR-2201-13", "Tuesday · asthma · inhaler dispensed", "2 days", "H7 fatima", tag="completed"),
+], footer="Only people the hospital allocated to you, and only while they are in your care. Access closes when the visit is marked complete.")
+
+H7_MINE = dgroup("Where they came from", [
+    drow("concierge-bell", "Booked by the front desk", value="18", sub="The normal route here", name="H7 src desk", chevron=False),
+    drow("share-2", "Referred in from another organisation", value="4", sub="Two still to be answered", name="Nav Referrals", tone="warn"),
+    drow("user-plus", "Walked in", value="2", sub="Registered at the desk this morning", name="H7 src walk", chevron=False),
+], footer="You did not book any of these. In your own practice the same screen is people who chose you.")
+
+H7_OPEN = dgroup("Still open on you", [
+    drow("notebook-pen", "2 notes unsigned", sub="Tuesday's clinic · a member sees nothing until you sign", name="H7 unsigned", tone="err"),
+    drow("flask-conical", "3 results waiting", sub="One critical and unacknowledged", name="Nav Dr Results", tone="err"),
+    drow("calendar-plus", "4 follow-ups to arrange", sub="The desk books them once you say when", name="H7 followups", tone="warn"),
+])
+
+addx("Clinic", "H7-dr-patients",
+    o_desk("Org · Doctor — H7 My Patients", ("Clinic", "Patients"),
+        f'{rows_of([stat_tile("users","24","Allocated this week","18 seen","teal","Stat h7 alloc"),stat_tile("notebook-pen","2","Notes unsigned","Tuesday","err","H7 unsigned"),stat_tile("flask-conical","3","Results waiting","1 critical","err","Nav Dr Results"),stat_tile("share-2","4","Referred in","2 unanswered","warn","Nav Referrals")],4,14)}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{H7_LIST}</Frame>'
+        f'<Frame w={{344}} flex="col" gap={{14}}>{H7_OPEN}{H7_MINE}</Frame></Frame>',
+        "Patients", dept="General practice", who=ORGDOC, badges=BADGES, persona="orgdoc"),
+    o_head("My patients", "24 allocated this week", back=False,
+           stats=[("24", "Allocated"), ("2", "Unsigned"), ("3", "Results")]),
+    pinned=H7_LIST,
+    sections=[
+      ("open", "inbox", "Still open on you", "Two unsigned notes, three results", "3", "err", H7_OPEN, None),
+      ("src", "route", "Where they came from", "The desk booked eighteen of them", "3", None, H7_MINE, None),
+    ],
+    tab_items=o_tabs_for("orgdoc"), tab=1)
+
+# ---------------- H8 results waiting on the organisation doctor
+H8_WAIT = dgroup("Waiting for you to release · 3", [
+    drow("siren", "Musa Ibrahim · potassium 7.2", value="CRITICAL", sub="Verified 09:38 · the laboratory rang at 09:44 · unacknowledged", name="Open critical D15", tone="err"),
+    drow("flask-conical", "Grace Okeke · HbA1c 6.8%", value="High", sub="Verified 08:12 · she is in clinic at 11:40", name="H8 grace", tone="warn"),
+    drow("scan", "Halima Sani · MRI lumbar spine", value="Reported", sub="Dr. Nwachukwu signed it 14 minutes ago", name="H8 halima", tone="ok"),
+], footer="Nothing reaches a member until you release it. A number with no explanation sends people to A&E at midnight.")
+
+H8_DONE = dgroup("Released this week · 11", [
+    drow("check-check", "Fatima Bello · spirometry", value="Released", sub="With your one-line explanation · she read it", name="H8 fatima", tone="ok", chevron=False),
+    drow("check-check", "Emeka Nwosu · full blood count", value="Released", sub="Normal · no comment needed", name="H8 emeka", tone="ok", chevron=False),
+])
+
+H8_HOW = dgroup("Where these come from", [
+    drow("building-2", "Garki's own laboratory", value="8", sub="Structured, straight into the record", name="H8 src lab", chevron=False),
+    drow("scan", "Garki imaging", value="2", sub="A radiologist's report, not just the pictures", name="H8 src img", chevron=False),
+    drow("link", "An outside laboratory on a single-use link", value="1", sub="Lifebridge Diagnostics · returned this morning", name="H8 src link", chevron=False),
+], footer="In your private practice this list looks the same. The difference is that here the hospital pays for the tests and you never see the price.")
+
+addx("Clinic", "H8-dr-results",
+    o_desk("Org · Doctor — H8 Results", ("Clinic", "Results"),
+        f'{alert_strip("siren","Musa Ibrahim, potassium 7.2, unacknowledged","The laboratory rang you at 09:44. It is climbing the escalation ladder and will reach Dr. Ade at 30 minutes.","err",dbtn("Open it","Open critical D15","arrow-right","danger",grow=False,size="sm"))}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{H8_WAIT}{H8_DONE}</Frame>'
+        f'<Frame w={{344}} flex="col" gap={{14}}>{H8_HOW}</Frame></Frame>',
+        "Results", dept="General practice", who=ORGDOC, badges=BADGES, persona="orgdoc", urgent=1),
+    o_head("Results", "3 waiting · 1 critical", back=False,
+           stats=[("3", "Waiting"), ("1", "Critical"), ("11", "Released")]),
+    pinned=H8_WAIT,
+    sections=[
+      ("done", "check-check", "Released this week", "Eleven, all read", "11", "ok", H8_DONE, None),
+      ("how", "route", "Where these come from", "Two laboratories and a link", "3", None, H8_HOW, None),
+    ],
+    tab_items=o_tabs_for("orgdoc"), tab=2)
+
+# ---------------- H9 nursing standing orders
+H9_LIST = dgroup("Standing orders running now", [
+    task_row_big("Daily", "Musa Ibrahim · MDR-7714-02", "Dr. Okafor · day 2 of 5 · 09:12",
+                 "Ceftriaxone 1 g IM once daily", "SO musa", action="Record", avatar="avatar-1.jpg",
+                 flags=[("syringe", "Injection")], tone="warn"),
+    task_row_big("Daily", "Blessing Ade · MDR-3310-08", "Dr. Eze · day 4 of 7 · until 21 Aug",
+                 "Dressing change, left leg ulcer", "SO blessing", action="Record", avatar="avatar-5.jpg",
+                 flags=[("bandage", "Dressing")]),
+    task_row_big("Before clinic", "Grace Okeke · MDR-8842-21", "Dr. Okafor · every review",
+                 "Fasting glucose before she is seen", "SO grace", action="Record", avatar="avatar-3.jpg",
+                 flags=[("droplet", "Fasting")], tone="ok"),
+], footer="A standing order is a doctor's instruction that repeats. You record each time you carry it out, and the count runs down on its own.")
+
+H9_RULES = dgroup("What you may do without asking", [
+    drow("thermometer", "Record any vital sign", sub="Always. It is the reading, not a decision", name="H9 vitals", chevron=False, tone="ok"),
+    drow("syringe", "Give a drug on a standing order", sub="Within the dates the doctor set, and you sign each dose", name="H9 give", chevron=False, tone="ok"),
+    drow("triangle-alert", "Escalate anything out of range", sub="Two minutes to the first doctor, then the duty doctor automatically", name="Open escalate D4", tone="warn"),
+    drow("ban", "Change a dose or start something new", sub="Never. Ask the prescriber — it takes a minute and it is recorded", name="H9 no", chevron=False, tone="err"),
+], footer="These four are the nursing scope in this organisation. They are set by the department and cannot be widened for one person.")
+
+H9_ENDING = dgroup("Ending soon", [
+    drow("calendar-x", "Musa Ibrahim · ceftriaxone", value="3 days left", sub="Ends 20 August unless Dr. Okafor extends it", name="H9 end musa", tone="warn", chevron=False),
+    drow("calendar-x", "Blessing Ade · dressing", value="3 days left", sub="Ends 21 August", name="H9 end blessing", chevron=False),
+])
+
+addx("Chain", "H9-nurse-orders",
+    o_desk("Org · Nursing — H9 Standing Orders", ("Nursing", "Standing orders"),
+        f'{dhead([("What the doctors",False),("have left running",True)],26)}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{H9_LIST}</Frame>'
+        f'<Frame w={{344}} flex="col" gap={{14}}>{H9_RULES}{H9_ENDING}</Frame></Frame>',
+        "Standing orders", dept="Nursing", who=NURSE, badges=BADGES, persona="nurse"),
+    o_head("Standing orders", "3 running · 2 ending soon", back=False,
+           stats=[("3", "Running"), ("2", "Ending"), ("6", "Doses today")]),
+    pinned=H9_LIST,
+    sections=[
+      ("rules", "shield-check", "What you may do without asking", "Four lines, set by the department", "4", None, H9_RULES, None),
+      ("end", "calendar-x", "Ending soon", "Two, both this week", "2", "warn", H9_ENDING, None),
+    ],
+    tab_items=o_tabs_for("nurse"), tab=2)
+
+# ---------------- H10 pharmacy stock
+H10_SHELF = data_table(
+    ["Medicine", "On the shelf", "Needed today", "Status"],
+    [["Amlodipine 5 mg", "240", "30", "Comfortable"],
+     ["Metformin 500 mg", "18", "60", "Short"],
+     ["Salbutamol inhaler", "0", "2", "Out"],
+     ["Ceftriaxone 1 g", "34", "5", "Comfortable"],
+     ["Paracetamol 500 mg", "1,200", "80", "Comfortable"],
+     ["Insulin glargine", "6", "2", "Watch"]],
+    title="What is on the shelf", name="Stock row",
+    note="A count you keep here, not a warehouse system — so you can tell a member before they queue.")
+
+H10_ACT = dgroup("Two need a decision today", [
+    outcome_choice("package-x", "Salbutamol inhaler is out", "Two people are prescribed it today. Propose the generic or send them elsewhere.", "Open sub D11", sel=True, tone="err"),
+    outcome_choice("package", "Metformin will not last the day", "Eighteen left against sixty needed. Tell the admin now rather than at four o'clock.", "H10 metformin", tone="warn"),
+], footer="Telling somebody early is the whole value of counting. A member who is told at the door can go elsewhere; one told at the counter has already queued.")
+
+H10_ASK = dcard(
+    eyerow("Tell the admin what you need")
+    + field("What is short", "package", "Metformin 500 mg · 200 tablets", ph=False)
+    + field_chips("How urgent?", ["Today", "This week", "Next order"], 0, "Stock urgency")
+    + dtoggle("bell", "Warn the doctors it is short", sub="They see it when they prescribe, so nobody promises what we cannot give", on=True, name="Stock warn"))
+
+addx("Chain", "H10-pharm-stock",
+    o_desk("Org · Pharmacy — H10 Stock", ("Pharmacy", "Stock"),
+        f'{rows_of([stat_tile("package","6","Medicines counted","Updated 08:40","teal","Stat h10 count"),stat_tile("package-x","1","Out of stock","Salbutamol inhaler","err","Open sub D11"),stat_tile("triangle-alert","2","Short today","Metformin, insulin","warn","H10 metformin"),stat_tile("repeat","3","Substitutions","This week","info","Nav Pharm Sub")],4,14)}'
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{H10_SHELF}</Frame>'
+        f'<Frame w={{344}} flex="col" gap={{14}}>{H10_ACT}{H10_ASK}</Frame></Frame>',
+        "Stock", dept="Pharmacy", who=PHARM, badges=BADGES, persona="pharm", urgent=1),
+    o_head("Stock", "1 out · 2 short today", back=False,
+           stats=[("6", "Counted"), ("1", "Out"), ("2", "Short")]),
+    pinned=H10_SHELF,
+    sections=[
+      ("act", "triangle-alert", "Two need a decision today", "Salbutamol out, metformin short", "2", "err", H10_ACT, None),
+      ("ask", "send", "Tell the admin what you need", "It goes to Mrs. Nwosu", None, None, H10_ASK, None),
+    ],
+    tab_items=o_tabs_for("pharm"), tab=1)
+
+# ---------------- H11 imaging rooms
+H11_ROOMS = dgroup("Rooms and machines", [
+    drow("scan", "MRI suite", value="In use", sub="Halima Sani · until 10:45 · Tunde running it", name="H11 mri", tone="warn"),
+    drow("scan-line", "CT", value="Free", sub="Next booked 11:45 · contrast, so creatinine needed first", name="H11 ct", tone="ok"),
+    drow("radiation", "X-ray room 1", value="Free", sub="Musa Ibrahim can go now", name="H11 xr1", tone="ok"),
+    drow("radiation", "X-ray room 2", value="Out of service", sub="Tube fault reported 12 Aug · engineer due Friday", name="H11 xr2", tone="err"),
+    drow("monitor", "Ultrasound", value="Free", sub="Sonographer in at 10:30", name="H11 us", tone="ok"),
+    drow("activity", "ECG trolley", value="On ward 2", sub="Bring it back before 10:15", name="H11 ecg", tone="warn"),
+], footer="A free machine, a free room and somebody to run it are three different facts. All three have to be true before a study is really bookable.")
+
+H11_DAY = heat_grid(["08", "09", "10", "11", "12", "13"], [
+    ("MRI", [1, 1, 1, 1, 0, 1]), ("CT", [0, 1, 0, 1, 1, 0]),
+    ("X-ray", [2, 3, 2, 1, 1, 0]), ("US", [0, 1, 2, 2, 1, 0]),
+], title="Today, room by room", unit="Studies booked",
+   note="Two X-ray rooms are drawn as one line because one of them is out of service. Friday looks like this every week.")
+
+H11_FIX = dgroup("Out of service", [
+    drow("wrench", "X-ray room 2 · tube fault", value="5 days", sub="Reported 12 Aug by Tunde · engineer due Friday · admin told", name="H11 fault", tone="err"),
+    drow("calendar-x", "14 studies moved", sub="All rebooked into room 1, which is why today is tight", name="H11 moved", tone="warn", chevron=False),
+], footer="A machine out of service is an organisation problem, not a departmental one. The admin sees this on Today and it is what a capital request is argued from.")
+
+addx("Chain", "H11-img-rooms",
+    o_desk("Org · Imaging — H11 Rooms", ("Imaging", "Rooms"),
+        f'<Frame w="fill" flex="row" gap={{16}} items="start">'
+        f'<Frame grow={{1}} flex="col" gap={{14}}>{H11_ROOMS}{H11_DAY}</Frame>'
+        f'<Frame w={{344}} flex="col" gap={{14}}>{H11_FIX}'
+        f'{dbtn("Report a fault","H11 report","wrench","warn",full=True)}</Frame></Frame>',
+        "Rooms", dept="Imaging", who=IMAGING, badges=BADGES, persona="imaging", urgent=1),
+    o_head("Rooms", "5 working · 1 out of service", back=False,
+           stats=[("5", "Working"), ("1", "Out"), ("6", "Booked")]),
+    pinned=H11_ROOMS,
+    sections=[
+      ("day", "calendar-clock", "Today, room by room", "Room 1 is carrying both lists", None, "warn", H11_DAY, None),
+      ("fix", "wrench", "Out of service", "X-ray 2, five days", "2", "err", H11_FIX, None),
+    ],
+    foot=dbtn("Report a fault", "H11 report", "wrench", "warn", full=True),
+    tab_items=o_tabs_for("imaging"), tab=2)
 
 # =====================================================================================
 # 5. REFERRALS & EXTERNAL ACCESS  (Module 12)
@@ -2931,8 +3216,6 @@ addx("Govern", "F7-critical",
 # clinician. The consultation is identical to his private one; what differs is who fills his
 # day, whose roster he is on, who he answers to, and that the money is not his to see.
 # =====================================================================================
-ORGDOC = ("Dr. Chuka Eze", "General practice · Garki")
-
 G1_TILES = rows_of([
     stat_tile("users", "11", "Allocated to you today", "Front desk filled your list", "teal", "Stat allocated"),
     stat_tile("clock", "20 min", "Slot length here", "The department sets it, not you", "slate", "Stat length"),
@@ -2963,7 +3246,7 @@ addx("Clinic", "G1-orgdoc",
         f'{dcta("Start with Amara","Start consult","stethoscope")}'
         f'{dbtn("See my roster","Open roster G2","calendar-days","ghost",full=True)}'
         f'{dbtn("Messages","Open messages G3","message-square-text","ghost",full=True)}</Frame></Frame>',
-        NAV["Today"], dept="General practice", who=ORGDOC, badges=BADGES, persona="orgdoc"),
+        "My day", dept="General practice", who=ORGDOC, badges=BADGES, persona="orgdoc"),
     o_head("My day", "Garki Medical Centre · 11 allocated", back=False,
            stats=[("11", "Allocated"), ("20 min", "Each"), ("3", "Results")]),
     pinned=G1_QUEUE,
@@ -2973,7 +3256,7 @@ addx("Clinic", "G1-orgdoc",
     foot=f'{dcta("Start with Amara","Start consult","stethoscope")}'
          f'{dbtn("See my roster","Open roster G2","calendar-days","ghost",full=True)}'
          f'{dbtn("Messages","Open messages G3","message-square-text","ghost",full=True)}',
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("orgdoc"), tab=0)
 
 # ---------------- G2 the roster he is on, rather than the hours he sets
 G2_WEEK = dgroup("Your sessions this week", [
@@ -2996,7 +3279,7 @@ addx("Clinic", "G2-roster",
         f'<Frame w={{344}} flex="col" gap={{14}}>'
         f'{dcard(eyerow("Days you will not be here") + range_cal(ranges=[("22","26","22–26 Aug · leave")], booked=("23","25"), name="G off"))}'
         f'{dcta("Send the request","Send roster ask G2","send")}</Frame></Frame>',
-        NAV["Today"], dept="General practice", who=ORGDOC, badges=BADGES, persona="orgdoc"),
+        "Roster", dept="General practice", who=ORGDOC, badges=BADGES, persona="orgdoc"),
     o_head("My roster", "Garki Medical Centre · 4 sessions",
            stats=[("4", "Sessions"), ("1", "Overbooked"), ("1", "On call")]),
     pinned=G2_WEEK,
@@ -3004,7 +3287,7 @@ addx("Clinic", "G2-roster",
       ("ask", "message-square-text", "Ask for a change", "Three ways, all answered by a person", "3", "warn", G2_ASK, None),
     ],
     foot=dcta("Send the request", "Send roster ask G2", "send"),
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("orgdoc"), tab=0)
 
 # =====================================================================================
 # TALKING TO EACH OTHER
@@ -3032,14 +3315,14 @@ addx("Clinic", "G3-messages",
         f'<Frame w="fill" flex="row" gap={{16}} items="start">'
         f'<Frame grow={{1}} flex="col" gap={{14}}>{G3_LIST}</Frame>'
         f'<Frame w={{344}} flex="col" gap={{14}}>{G3_NEW}</Frame></Frame>',
-        NAV["Today"], dept="General practice", who=ORGDOC, badges=BADGES, persona="orgdoc"),
+        "Messages", dept="General practice", who=ORGDOC, badges=BADGES, persona="orgdoc"),
     o_head("Messages", "4 conversations · 2 unread", back=False,
            stats=[("2", "Unread"), ("3 min", "Nursing"), ("8 min", "Lab")]),
     pinned=G3_LIST,
     sections=[
       ("new", "message-circle-plus", "Start a conversation", "A department, not a person", "5", None, G3_NEW, None),
     ],
-    tab_items=TAB_STAFF, tab=0)
+    tab_items=o_tabs_for("orgdoc"), tab=3)
 
 G4_THREAD = dcard(
     f'<Frame w="fill" flex="row" gap={{12}} items="center" pb={{4}}>'
@@ -3067,10 +3350,10 @@ add("Clinic", "G4-thread",
         f'<Frame w="fill" flex="row" gap={{16}} items="start">'
         f'<Frame grow={{1}} flex="col" gap={{14}}>{G4_THREAD}</Frame>'
         f'<Frame w={{344}} flex="col" gap={{14}}>{G4_ABOUT}</Frame></Frame>',
-        NAV["Today"], dept="General practice", who=ORGDOC, badges=BADGES, persona="orgdoc"),
+        "Messages", dept="General practice", who=ORGDOC, badges=BADGES, persona="orgdoc"),
     o_mob("Org · Doctor — G4 A Conversation · Mobile",
         o_head("Nursing", "Ifeoma Uche · on shift"),
-        f'{G4_THREAD}{G4_ABOUT}', TAB_STAFF, 0))
+        f'{G4_THREAD}{G4_ABOUT}', o_tabs_for("orgdoc"), 3))
 # =====================================================================================
 # 7. STATES & EDGE CASES
 # =====================================================================================
@@ -3230,7 +3513,7 @@ addx("States", "X5-offline",
       ("works", "circle-check", "What still works", "Check-in, vitals, results", "3", "ok", X5_WORKS, None),
       ("waits", "clock", "What waits", "Payment, referrals, links", "3", "warn", X5_WAITS, None),
     ],
-    tab_items=TAB_DESK, tab=0)
+    tab_items=o_tabs_for("desk"), tab=0)
 
 X6_MAIN = empty_state("triangle-alert", "Something went wrong on our side",
     "This is not your device and it is not your data — a Medra service failed to answer. Nothing anyone has entered is affected.",
@@ -3358,7 +3641,48 @@ NAVMAP = {
   "Btn Nav Walkin":      NAMES["D13-walkin"],
   "Btn Switch branch":   NAMES["A3-branches"],
   "Btn Switch dept":     NAMES["C1-departments"],
+  # ---- one entry per rail item per persona. The sweep is global by hotspot name, so these
+  # names have to be unique per destination — see the note above NAV_BY_PERSONA in org_kit.
+  "Btn Nav Desk Day":      NAMES["D12-desk"],
+  "Btn Nav Desk Bookings": NAMES["B2-bookings"],
+  "Btn Nav Desk Walkin":   NAMES["D13-walkin"],
+  "Btn Nav Desk Members":  NAMES["B3-find"],
+  "Btn Nav Desk Payments": NAMES["D14-checkin"],
+  "Btn Nav Desk Messages": NAMES["H1-desk-messages"],
+  "Btn Nav Dr Day":        NAMES["G1-orgdoc"],
+  "Btn Nav Dr Patients":   NAMES["H7-dr-patients"],
+  "Btn Nav Dr Results":    NAMES["H8-dr-results"],
+  "Btn Nav Dr Roster":     NAMES["G2-roster"],
+  "Btn Nav Dr Messages":   NAMES["G3-messages"],
+  "Btn Nav Nurse Queue":   NAMES["D1-nursing"],
+  "Btn Nav Nurse Vitals":  NAMES["D2-vitals"],
+  "Btn Nav Nurse Orders":  NAMES["H9-nurse-orders"],
+  "Btn Nav Nurse Members": NAMES["B3-find"],
+  "Btn Nav Nurse Messages":NAMES["H2-nurse-messages"],
+  "Btn Nav Lab Queue":     NAMES["D5-lab-queue"],
+  "Btn Nav Lab Result":    NAMES["D7-lab-result"],
+  "Btn Nav Lab Critical":  NAMES["D15-critical"],
+  "Btn Nav Lab Problem":   NAMES["D8-lab-problem"],
+  "Btn Nav Lab Messages":  NAMES["H3-lab-messages"],
+  "Btn Nav Pharm Queue":   NAMES["D9-pharmacy"],
+  "Btn Nav Pharm Stock":   NAMES["H10-pharm-stock"],
+  "Btn Nav Pharm Sub":     NAMES["D11-substitute"],
+  "Btn Nav Pharm Messages":NAMES["H4-pharm-messages"],
+  "Btn Nav Img Worklist":  NAMES["D16-imaging"],
+  "Btn Nav Img Report":    NAMES["D18-report"],
+  "Btn Nav Img Rooms":     NAMES["H11-img-rooms"],
+  "Btn Nav Img Messages":  NAMES["H5-img-messages"],
+  "Btn Nav Bill Money":    NAMES["D19-billing"],
+  "Btn Nav Bill Owing":    NAMES["D20-payment"],
+  "Btn Nav Bill Claims":   NAMES["D21-claims"],
+  "Btn Nav Bill Messages": NAMES["H6-bill-messages"],
 }
+
+# A rail item that leads nowhere is worse than a missing one, so prove every one of them
+# resolves before the build is allowed to finish.
+for _p, _rail in NAV_BY_PERSONA.items():
+    for _ic, _label, _hot in _rail:
+        assert ("Btn " + _hot) in NAVMAP, f"{_p} rail item '{_label}' has no destination"
 
 TRN = [
  # ---- setup
@@ -3528,6 +3852,32 @@ TRN = [
  ("F8-patients","Btn Back","F4-reports"),
  ("F9-clinicians","Btn Back","F4-reports"),("F9-clinicians","Btn Open critical F7","F7-critical"),
  ("F10-departments","Btn Back","F4-reports"),("F10-departments","Btn Person emeka","C6-person"),
+ # ---- the admin's onboarding entry points, and the new per-persona destinations
+ ("B1-today","Btn Open people C4","C4-people"),("B1-today","Btn Open plan A4","A4-plan"),
+ ("H1-desk-messages","Btn Desk thread dr","G4-thread"),("H1-desk-messages","Btn Desk thread nursing","G4-thread"),
+ ("H1-desk-messages","Btn Desk thread billing","G4-thread"),
+ ("H2-nurse-messages","Btn Nurse thread dr","G4-thread"),("H2-nurse-messages","Btn Nurse thread lab","G4-thread"),
+ ("H2-nurse-messages","Btn Nurse thread desk","G4-thread"),
+ ("H3-lab-messages","Btn Lab thread dr","G4-thread"),("H3-lab-messages","Btn Lab thread nursing","G4-thread"),
+ ("H3-lab-messages","Btn Lab thread desk","G4-thread"),
+ ("H4-pharm-messages","Btn Pharm thread dr","G4-thread"),("H4-pharm-messages","Btn Pharm thread desk","G4-thread"),
+ ("H4-pharm-messages","Btn Pharm thread billing","G4-thread"),
+ ("H5-img-messages","Btn Img thread dr","G4-thread"),("H5-img-messages","Btn Img thread rad","G4-thread"),
+ ("H5-img-messages","Btn Img thread nursing","G4-thread"),
+ ("H6-bill-messages","Btn Bill thread desk","G4-thread"),("H6-bill-messages","Btn Bill thread admin","G4-thread"),
+ ("H6-bill-messages","Btn Bill thread pharm","G4-thread"),
+ ("H7-dr-patients","Btn H7 amara","B3-find"),("H7-dr-patients","Btn H7 halima","B3-find"),
+ ("H7-dr-patients","Btn H7 grace","B3-find"),("H7-dr-patients","Btn H7 fatima","B3-find"),
+ ("H7-dr-patients","Btn Open critical D15","D15-critical"),("H7-dr-patients","~Btn H7 unsigned","G1-orgdoc"),
+ ("H7-dr-patients","~Btn H7 followups","G1-orgdoc"),
+ ("H8-dr-results","Btn Open critical D15","D15-critical"),("H8-dr-results","Btn H8 grace","D7-lab-result"),
+ ("H8-dr-results","Btn H8 halima","D18-report"),
+ ("H9-nurse-orders","Btn Record SO musa","D3-administer"),("H9-nurse-orders","Btn SO musa","D3-administer"),
+ ("H9-nurse-orders","Btn Record SO blessing","D3-administer"),("H9-nurse-orders","Btn SO blessing","D3-administer"),
+ ("H9-nurse-orders","Btn Record SO grace","D2-vitals"),("H9-nurse-orders","Btn SO grace","D2-vitals"),
+ ("H9-nurse-orders","Btn Open escalate D4","D4-escalate"),
+ ("H10-pharm-stock","Btn Open sub D11","D11-substitute"),("H10-pharm-stock","~Btn H10 metformin","H10-pharm-stock"),
+ ("H11-img-rooms","~Btn H11 report","H11-img-rooms"),
  # ---- states
  ("X1-seats","Btn Open plan A4","A4-plan"),("X1-seats","Btn Person emeka","C6-person"),
  ("X2-unverified","Btn Open verify A2","A2-verify"),("X2-unverified","Btn Open invite C5","C5-invite"),

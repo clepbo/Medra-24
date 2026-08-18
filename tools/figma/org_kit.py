@@ -32,14 +32,100 @@ from doctor_kit import (dcard, dgroup, drow, dtoggle, dbtn, dcta, eyerow, dhead,
 
 AMBER_IC = "#B8801F"; GRAPH_IC = "#2A313A"; DIM_IC = "#8A94A0"
 
-RAIL = [("layout-dashboard", "Today",       "Nav Today"),
-        ("calendar-check",   "Bookings",    "Nav Bookings"),
-        ("users",            "People",      "Nav People"),
-        ("building-2",       "Departments", "Nav Departments"),
-        ("share-2",          "Referrals",   "Nav Referrals"),
-        ("shield-check",     "Access",      "Nav Access"),
-        ("chart-column",     "Reports",     "Nav Reports"),
-        ("settings",         "Settings",    "Nav Settings")]
+# =====================================================================================
+# NAVIGATION IS PER PERSONA
+#
+# Godwin: "these personas are different entities but they are just contained under the
+# organisation module and of course they won't be seeing the same things… the items on each
+# of their navigation bar has to be different."
+#
+# He is right, and the first version was wrong in a specific way: every screen in this module
+# wore the *administrator's* eight destinations, so a pharmacist logging in was offered
+# Referrals, Access and Reports — none of which they can open — and was not offered stock,
+# which is half their job. A navigation bar is the clearest statement a product makes about
+# whose screen this is, and it was making the same statement to eight different people.
+#
+# So there are eight rails. Each one is short, because a rail is a list of the places that
+# person actually goes; the admin's is the only long one, because the admin is the only
+# persona whose job is the whole building.
+#
+# Two rules hold across all of them:
+#   · **Every destination is a real screen.** A rail item that leads nowhere is worse than a
+#     missing one, so the builder asserts this at build time rather than trusting the table.
+#   · **Hotspot names are unique per destination**, never per position — "Nav Lab Queue" and
+#     "Nav Desk Day" rather than two different "Nav Today"s. The prototype's navigation sweep
+#     is global by hotspot name, and two personas sharing a name would send one of them to
+#     the other's screen.
+RAIL_ADMIN = [
+    ("layout-dashboard", "Today",       "Nav Today"),
+    ("calendar-check",   "Bookings",    "Nav Bookings"),
+    ("users",            "People",      "Nav People"),
+    ("building-2",       "Departments", "Nav Departments"),
+    ("share-2",          "Referrals",   "Nav Referrals"),
+    ("shield-check",     "Access",      "Nav Access"),
+    ("chart-column",     "Reports",     "Nav Reports"),
+    ("settings",         "Settings",    "Nav Settings")]
+
+RAIL_DESK = [
+    ("concierge-bell",  "The day",   "Nav Desk Day"),
+    ("calendar-check",  "Bookings",  "Nav Desk Bookings"),
+    ("user-plus",       "Walk-in",   "Nav Desk Walkin"),
+    ("users",           "Members",   "Nav Desk Members"),
+    ("banknote",        "Payments",  "Nav Desk Payments"),
+    ("message-square-text", "Messages", "Nav Desk Messages")]
+
+RAIL_ORGDOC = [
+    ("layout-dashboard", "My day",   "Nav Dr Day"),
+    ("users",            "Patients", "Nav Dr Patients"),
+    ("flask-conical",    "Results",  "Nav Dr Results"),
+    ("calendar-days",    "Roster",   "Nav Dr Roster"),
+    ("message-square-text", "Messages", "Nav Dr Messages")]
+
+RAIL_NURSE = [
+    ("list-checks",      "My queue",       "Nav Nurse Queue"),
+    ("heart-pulse",      "Record vitals",  "Nav Nurse Vitals"),
+    ("clipboard-list",   "Standing orders", "Nav Nurse Orders"),
+    ("users",            "Members",        "Nav Nurse Members"),
+    ("message-square-text", "Messages",    "Nav Nurse Messages")]
+
+RAIL_LAB = [
+    ("inbox",            "Order queue",  "Nav Lab Queue"),
+    ("clipboard-check",  "Enter result", "Nav Lab Result"),
+    ("siren",            "Critical",     "Nav Lab Critical"),
+    ("triangle-alert",   "Sample problems", "Nav Lab Problem"),
+    ("message-square-text", "Messages",  "Nav Lab Messages")]
+
+RAIL_PHARM = [
+    ("inbox",            "Prescriptions", "Nav Pharm Queue"),
+    ("package",          "Stock",         "Nav Pharm Stock"),
+    ("repeat",           "Substitutions", "Nav Pharm Sub"),
+    ("message-square-text", "Messages",   "Nav Pharm Messages")]
+
+RAIL_IMAGING = [
+    ("scan",             "Worklist",  "Nav Img Worklist"),
+    ("file-image",       "Reporting", "Nav Img Report"),
+    ("monitor",          "Rooms",     "Nav Img Rooms"),
+    ("message-square-text", "Messages", "Nav Img Messages")]
+
+RAIL_BILLING = [
+    ("hand-coins",       "The money", "Nav Bill Money"),
+    ("receipt",          "Owing",     "Nav Bill Owing"),
+    ("landmark",         "Claims",    "Nav Bill Claims"),
+    ("message-square-text", "Messages", "Nav Bill Messages")]
+
+NAV_BY_PERSONA = {
+    "admin":   RAIL_ADMIN,
+    "desk":    RAIL_DESK,
+    "orgdoc":  RAIL_ORGDOC,
+    "nurse":   RAIL_NURSE,
+    "lab":     RAIL_LAB,
+    "pharm":   RAIL_PHARM,
+    "imaging": RAIL_IMAGING,
+    "billing": RAIL_BILLING,
+}
+
+# The old name, kept because the mobile tab bars and a few helpers still read it.
+RAIL = RAIL_ADMIN
 
 
 def icon_rail(active=0, badges=None):
@@ -122,16 +208,47 @@ def persona_of(name):
 def o_desk(name, crumbs, children, active=0, branch="Garki Medical Centre", dept="All departments",
            urgent=0, aside=None, who=("Mrs. Adaeze Nwosu", "Organisation admin"), badges=None,
            persona=None):
-    """Delegates to the one shell. The branch x department context that used to need its own
-    bar is now the subtitle — it is context, not navigation, and it was taking a whole band of
-    the screen to say so."""
-    nav = [(ic, nm, label) for ic, label, nm in RAIL]
+    """Delegates to the one shell, with the rail belonging to whoever is signed in.
+
+    `active` may be an integer (the admin's rail, which is how ~60 call sites already write it)
+    or the label of a rail item — "My queue", "Stock" — which is how every other persona has
+    to write it, because their rails are different lengths and an index would mean a different
+    place on each one."""
+    who_p = persona or persona_of(name)
+    rail = NAV_BY_PERSONA.get(who_p, RAIL_ADMIN)
+    nav = [(ic, nm, label) for ic, label, nm in rail]
+    if isinstance(active, str):
+        labels = [label for _ic, label, _nm in rail]
+        active = labels.index(active) if active in labels else 0
+    elif who_p != "admin":
+        active = 0          # an admin index means nothing on a five-item pharmacy rail
     bad = {("Nav " + k) for k in (badges or {}) if (badges or {}).get(k)}
     title = crumbs[-1] if crumbs else title_from(name)
-    return app_desk(name, persona or persona_of(name), title,
+    return app_desk(name, who_p, title,
                     f'<Frame w="fill" flex="col" gap={{16}}>{children}</Frame>',
                     nav, active, sub=f"{branch} · {dept}", side=aside, badges=bad, who=who,
                     search="Btn Search member")
+
+
+def o_tabs_for(persona, active=0):
+    """The phone tab bar, generated from the persona's own rail — so a nurse's phone and a
+    nurse's desktop offer the same places, which is the whole point of doing this per persona.
+
+    Four slots and More. The first three come off the rail in order, and the fourth is
+    **Messages** whenever the persona has one: on a phone, being reachable by the rest of the
+    building beats a second list you can open from More. Anything displaced lives under More."""
+    rail = NAV_BY_PERSONA.get(persona, RAIL_ADMIN)
+    msg = [r for r in rail if r[1] == "Messages"]
+    head = [r for r in rail if r[1] != "Messages"][:3] if msg else rail[:4]
+    items = [(ic, label, nm) for ic, label, nm in head + msg]
+    items.append(("ellipsis", "More", "Nav More"))
+    return items
+
+
+def o_tab_index(persona, label):
+    """Which slot a label ended up in, so a screen never has to guess."""
+    labels = [l for _ic, l, _nm in o_tabs_for(persona)]
+    return labels.index(label) if label in labels else 0
 
 def o_tabs(items, active=0):
     cells = ""

@@ -57,7 +57,7 @@ while capturing enough record to be clinically useful.
 
 ## 3. Where the design is now
 
-Five rendered bundles, **800 frames**, all validated clean and fully offline.
+Five rendered bundles, **839 frames**, all validated clean and fully offline.
 
 | Bundle | Frames | Pages | Status |
 |---|---:|---:|---|
@@ -65,7 +65,7 @@ Five rendered bundles, **800 frames**, all validated clean and fully offline.
 | `figma/medra-auth` — authentication, 4 roles + staff joining an organisation | 90 | 5 | Done · **v2.0 retrofit applied** · **prototype complete** |
 | `figma/medra-member` — the whole member app | 158 | 8 | Done · **prototype complete** |
 | `figma/medra-doctor` — full doctor module | 275 | 8 | Done · **prototype complete** |
-| `figma/medra-org` — organisation, every department, clinical chain, external | 277 | 9 | Done · **prototype complete** · **not yet rendered into Figma** |
+| `figma/medra-org` — organisation: eight personas, each with its own navigation | 316 | 9 | Done · **prototype complete** · **not yet rendered into Figma** |
 
 `medra-member` was two bundles until the merge (`medra-member` for find & book,
 `medra-member-2` for everything the bottom nav led to). The split existed because batch 1 was
@@ -526,6 +526,57 @@ note** (psychiatry and psychology only, kept apart from the record). The member 
 ground* — not the old "a private note exists", which tells somebody that something is being kept
 from them and nothing else. This lands where Godwin did while keeping the two grounds a
 clinician genuinely needs and that a transcript line would have removed.
+
+### B6. Eight personas, eight navigations — **DONE (17 Aug)**
+
+> **Godwin:** "these personas are different entities but they are just contained under the
+> organisation module and of course they won't be seeing the same things… the items on each of
+> their navigation bar has to be different."
+
+He was right, and the module was wrong in one specific way: **every screen wore the
+administrator's eight destinations.** A pharmacist logging in was offered Referrals, Access and
+Reports — none of which they can open — and was not offered stock, which is half their job. A
+navigation bar is the clearest statement a product makes about whose screen this is, and it was
+making the same statement to eight different people.
+
+There are now eight rails in `NAV_BY_PERSONA`. The admin's is the only long one, because the
+admin is the only persona whose job is the whole building.
+
+| Persona | Their rail |
+|---|---|
+| **Admin** | Today · Bookings · People · Departments · Referrals · Access · Reports · Settings |
+| **Front desk** | The day · Bookings · Walk-in · Members · Payments · Messages |
+| **Doctor** | My day · Patients · Results · Roster · Messages |
+| **Nursing** | My queue · Record vitals · Standing orders · Members · Messages |
+| **Laboratory** | Order queue · Enter result · Critical · Sample problems · Messages |
+| **Pharmacy** | Prescriptions · Stock · Substitutions · Messages |
+| **Imaging** | Worklist · Reporting · Rooms · Messages |
+| **Billing** | The money · Owing · Claims · Messages |
+
+Two rules hold across all of them, both enforced rather than trusted:
+
+- **Every destination is a real screen.** `build_org.py` asserts every rail item resolves before
+  the build finishes — a rail item that leads nowhere is worse than a missing one.
+- **Hotspot names are unique per destination**, never per position: `Nav Lab Queue`, not a second
+  `Nav Today`. The prototype's navigation sweep is global by name, so two personas sharing one
+  would send a nurse to the pharmacist's screen.
+
+**Twelve new screens**, because seven rails needed destinations the module did not have:
+a **Messages screen for every department** rather than only the doctor's (H1–H6, each with its
+own address book — you message a department and whoever is on shift picks it up); the doctor's
+own **Patients** (H7) and **Results** (H8), which an administrator never sees; nursing's
+**Standing orders** (H9); pharmacy's **Stock** (H10); and imaging's **Rooms** (H11), where a
+machine out of service is visible as an organisation problem rather than a departmental one.
+
+**The phone matches the desktop.** `TAB_STAFF` and `TAB_DESK` are gone — two hand-written bars
+covering eight personas was the mobile half of the same mistake. `o_tabs_for()` generates the
+tab bar from the persona's own rail: three destinations, then **Messages**, then More. On a
+phone, being reachable by the rest of the building beats a second list you can open from More.
+
+**The admin got what the admin is for.** Onboarding — invite someone, add a department, chase
+the two people invited who never joined, see that the front desk has no spare seat — is now a
+block on the administrator's own Today rather than two rows deep in People. It appears on
+nobody else's screen, because only an administrator can create a seat.
 
 ### C. Member mobile hub → section conversion
 

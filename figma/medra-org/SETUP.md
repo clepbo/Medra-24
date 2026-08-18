@@ -1,18 +1,21 @@
 # Medra — Organisation module
 
-**277 frames · 9 Figma pages · Desktop 1440 + mobile 390 · organisation-module only**
+**316 frames · 9 Figma pages · Desktop 1440 + mobile 390 · organisation-module only**
 
-69 desktop screens covering PRD v2.0 Modules 10–13. On mobile each is a hub with its own sections
+81 desktop screens covering PRD v2.0 Modules 10–13. On mobile each is a hub with its own sections
 and sheets, plus 19 component-state frames.
 
 Offline validation
-- `node validate.js` → **ALL 277 CLEAN, FULLY OFFLINE ✓** (242 icons, 41 tokens, 0 warnings)
+- `node validate.js` → **ALL 316 CLEAN, FULLY OFFLINE ✓** (242 icons, 41 tokens, 0 warnings)
 - headless measurement → **0 horizontal overflow** at 390 and 1440
 - `python3 tools/figma/proto_check.py figma/medra-org link-org.js` → **PROTOTYPE COMPLETE ✓**,
-  258/258 screens reachable, 916 explicit links, no broken hotspots
+  296/296 screens reachable, 1,038 explicit links, no broken hotspots
 
-Every department in the organisation now has its own dashboard — what that person sees when they
-log in, with their own navigation, their own tab bar on a phone and their own persona pill.
+**Eight personas, eight navigations.** Admin, front desk, doctor, nursing, laboratory, pharmacy,
+imaging and billing each have their own rail, their own phone tab bar generated from it, and
+their own persona pill. The admin's is the only long one, because the admin is the only persona
+whose job is the whole building — and onboarding a department or a member of staff appears on
+their Today and on nobody else's.
 
 ## 1. It is a third product, not a re-skin
 
