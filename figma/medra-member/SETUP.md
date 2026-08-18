@@ -20,6 +20,13 @@ now **one bundle, one builder, one prototype, one render script**.
 | `Medra Member — 7 System States` | X1–X3 (3) | 6 |
 | `Medra Member — 8 Components` | 14 component sets | 44 |
 
+**The calm register.** All 57 mobile screens share one visual language: the icon's meaning owns
+its colour (a pill is always mint, a record always blue, money always sand, sharing always
+lilac — six soft tints, none of them a state colour), cards are strokeless on a baked frosted
+panel, the primary action is a deep ocean-into-navy fill rather than a bright teal gradient, and
+function tiles carry the destinations. Built in `member2_kit.py` as overrides of the shared kit,
+so the doctor and organisation consoles are untouched.
+
 Offline validation: **ALL 158 CLEAN, FULLY OFFLINE ✓** (`node validate.js`)
 Prototype audit: **PROTOTYPE COMPLETE ✓ — 114/114 screens reachable, 0 broken hotspots**
 (`python3 tools/figma/proto_check.py figma/medra-member link-member.js`)

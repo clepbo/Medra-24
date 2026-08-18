@@ -126,6 +126,31 @@ HEALTH_CARD=card(section_head("Your health","Records","Nav Records")
 # in a soft tinted square — rather than with a strip of specialties and a doctor card, which is
 # a list to scroll before you have decided anything. The next visit stays above them, because
 # on the one day it exists it is the only thing that matters.
+# ---------------------------------------------------------------------------------------
+# The empty states, in the calm register. Each one keeps its explanation and gains a short
+# grid of what you can do from here — the screen a member reaches by having nothing is the
+# screen most worth teaching on.
+EMPTY_MEDS_TILES = func_grid([
+    func_tile("plus", "Add one", "Something you take", "Add med M1", 2),
+    func_tile("search", "Find care", "Get a prescription", "See doctors", 0),
+    func_tile("bell-ring", "Reminders", "Set them up first", "Open reminders M4", 4),
+], 3)
+EMPTY_REC_TILES = func_grid([
+    func_tile("camera", "Photograph", "An old lab slip", "Open upload R7", 1),
+    func_tile("search", "Find care", "Notes land here", "See doctors", 0),
+    func_tile("share-2", "Share", "Once you have some", "Open share R5", 5),
+], 3)
+EMPTY_VISIT_TILES = func_grid([
+    func_tile("search", "Find care", "Verified doctors", "Find doctor V3", 0),
+    func_tile("video", "Video visit", "From anywhere", "Find doctor V3", 2),
+    func_tile("users-round", "For family", "Book for a child", "Nav Profile", 4),
+], 3)
+EMPTY_NOTIF_TILES = func_grid([
+    func_tile("bell-ring", "What we send", "Choose it yourself", "Choose notifs N2", 4),
+    func_tile("calendar-check", "Visit reminders", "Never miss one", "Nav Visits", 0),
+    func_tile("pill", "Medicine alerts", "When to take them", "Nav Meds", 2),
+], 3)
+
 HOME_FUNCS = func_grid([
     func_tile("search", "Find care", "Verified doctors", "See doctors", 0),
     func_tile("calendar-plus", "Book", "In person or video", "Nav Visits", 1),
@@ -209,7 +234,7 @@ add("Member","H2-home-empty",
 # ============================================================ S1 SEARCH RESULTS
 def filter_chips(per_row=4):
     cells=[
-      f'<Frame name="Btn Filter Today" grow={{1}} flex="row" gap={{7}} justify="center" items="center" px={{14}} py={{10}} rounded={{999}} image="assets/img/btn-navy.jpg" overflow="hidden">{I("clock",14,W_IC)}{T(13,"semibold","var:text/on-dark","Today")}</Frame>',
+      f'<Frame name="Btn Filter Today" grow={{1}} flex="row" gap={{7}} justify="center" items="center" px={{14}} py={{10}} rounded={{999}} image="assets/img/soft-teal.jpg" overflow="hidden" stroke="#BBD6E4" strokeWidth={{1}}>{I("clock",14,"#2F6E8C")}{T(13,"semibold","var:text/strong","Today")}</Frame>',
       f'<Frame name="Btn Filter Week" grow={{1}} flex="row" justify="center" px={{14}} py={{10}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>{T(13,"medium","var:text/default","This week")}</Frame>',
       f'<Frame name="Btn Filter Virtual" grow={{1}} flex="row" gap={{7}} justify="center" items="center" px={{14}} py={{10}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>{I("video",14,N_IC)}{T(13,"medium","var:text/default","Virtual")}</Frame>',
       f'<Frame name="Btn Filter Near" grow={{1}} flex="row" gap={{7}} justify="center" items="center" px={{14}} py={{10}} rounded={{999}} bg="var:bg/base" stroke="var:border/default" strokeWidth={{1}}>{I("map-pin",14,N_IC)}{T(13,"medium","var:text/default","Near me")}</Frame>',
@@ -642,7 +667,7 @@ add("Visits", "V3-visits-empty",
     mob("Member · Visits — V3 No Visits · Mobile",
         appbar("My visits", back=False)
         + f'<Frame grow={{1}} w="fill" flex="col" gap={{14}} px={{20}} pt={{4}} pb={{8}}>'
-          f'{V_TABS}{V3_EMPTY}</Frame>',
+          f'{V_TABS}{V3_EMPTY}{EMPTY_VISIT_TILES}</Frame>',
         nav=bottom_nav(1)))
 
 # ---------------- V4 visit detail
@@ -1289,7 +1314,7 @@ def access_row(avatar, who, meta, what, expires, name, checked=False):
             f'<Frame flex="col" gap={{4}} items="end">'
             f'<Frame flex="row" gap={{5}} items="center">{I("clock",11,WARN_IC)}'
             f'{T(11,"medium","var:state/warning",expires)}</Frame>'
-            f'{mini_btn("Revoke","Revoke "+name,"circle-slash","danger",grow=False)}</Frame></Frame>')
+            f'{mini_btn("Revoke","Revoke "+name,"circle-slash","ghost",grow=False)}</Frame></Frame>')
 
 R6_SELECT_BAR = (f'<Frame w="fill" flex="row" justify="between" items="center" p={{14}} rounded={{18}} bg="var:bg/muted">'
                  f'<Frame name="Btn Select all access" flex="row" gap={{11}} items="center">'
@@ -1297,7 +1322,7 @@ R6_SELECT_BAR = (f'<Frame w="fill" flex="row" justify="between" items="center" p
                  f'{T(13,"medium","var:text/default","Select all")}</Frame>'
                  f'{T(12,"regular","var:text/muted","1 of 3 selected")}</Frame>')
 R6_ACTIONS = (f'<Frame w="fill" flex="row" gap={{11}}>'
-              f'{mini_btn("Revoke selected (1)","Revoke selected","circle-slash","danger")}'
+              f'{mini_btn("Revoke selected (1)","Revoke selected","circle-slash","ghost")}'
               f'{mini_btn("Revoke everything","Revoke all","shield-off","ghost")}</Frame>')
 R6_ACTIVE = group_card("Can see your records now", [
     R6_SELECT_BAR,
@@ -1427,7 +1452,8 @@ add("Records", "R9-records-empty",
     mob("Member · Records — R9 No Records · Mobile",
         appbar("My records", back=False)
         + f'<Frame grow={{1}} w="fill" flex="col" gap={{14}} px={{20}} pt={{4}} pb={{8}}>'
-          f'{R9_EMPTY}{group_card("How it fills up", [prep_step(1,"See a doctor on Medra","Their note lands here automatically."),prep_step(2,"Photograph old results","Lab slips, prescriptions, letters.")], p=16)}</Frame>',
+          f'{R9_EMPTY}{EMPTY_REC_TILES}'
+          f'{group_card("How it fills up", [prep_step(1,"See a doctor on Medra","Their note lands here automatically."),prep_step(2,"Photograph old results","Lab slips, prescriptions, letters.")], p=16)}</Frame>',
         nav=bottom_nav(2)))
 
 # =====================================================================================
@@ -1630,8 +1656,11 @@ add("Medicines", "M5-meds-empty",
         SIDE["Meds"]),
     mob("Member · Medicines — M5 No Medicines · Mobile",
         appbar("My medicines", back=False)
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{14}} px={{20}} pt={{4}} pb={{8}}>{M5_EMPTY}</Frame>',
+        + f'<Frame grow={{1}} w="fill" flex="col" gap={{14}} px={{20}} pt={{4}} pb={{8}}>{M5_EMPTY}'
+        f'{EMPTY_MEDS_TILES}</Frame>',
         nav=bottom_nav(3)))
+
+
 
 # =====================================================================================
 # PROFILE & SETTINGS
@@ -2096,7 +2125,8 @@ add("Alerts", "N2-notifs-empty",
         SIDE["Home"]),
     mob("Member · Alerts — N2 No Notifications · Mobile",
         appbar("Notifications", back=False)
-        + f'<Frame grow={{1}} w="fill" flex="col" gap={{14}} px={{20}} pt={{20}} pb={{8}}>{N2_EMPTY}</Frame>',
+        + f'<Frame grow={{1}} w="fill" flex="col" gap={{14}} px={{20}} pt={{20}} pb={{8}}>{N2_EMPTY}'
+          f'{EMPTY_NOTIF_TILES}</Frame>',
         nav=bottom_nav(0)))
 
 # =====================================================================================

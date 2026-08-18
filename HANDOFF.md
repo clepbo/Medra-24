@@ -578,33 +578,37 @@ the two people invited who never joined, see that the front desk has no spare se
 block on the administrator's own Today rather than two rows deep in People. It appears on
 nobody else's screen, because only an administrator can create a seat.
 
-### B7. The member mobile calm register — **STARTED (17 Aug)**
+### B7. The member mobile calm register — **DONE (17 Aug)**
 
 > "Look at how subtle and calm the interface looks, the use of cards and icons to illustrate
 > functions, and also the glass effects… not too much colours/gradients, just subtle, calm and
 > minimal."
 
-Three things carry it, and they are deliberately small changes made in the kit so they land on
-every member screen at once rather than being hand-applied to fifty-seven:
+All fifty-seven member mobile screens are in the register. The work was done in the kit rather
+than screen by screen, so it lands everywhere at once and stays consistent as screens change.
 
-- **A calmer primary action.** The old one was a bright teal gradient and the most saturated
-  object on any member screen. `btn-calm.jpg` runs deep ocean into navy — still obviously the
-  action, without being the loudest thing in the room. `member2_kit.cta()` overrides
-  `medra_ui.cta()` for the member module only: the doctor and organisation consoles are
-  professional tools where a saturated primary is right, and they keep it.
-- **Function tiles.** `func_tile()` — an icon in a soft tinted square over a label and one quiet
-  line. This is the pattern he pointed at, and the member's home screen now leads with six of
-  them rather than with a specialty strip and a doctor card, which is a list to scroll before
-  you have decided anything.
-- **Soft cards.** `soft_card()` has no stroke and sits on `glass-card.jpg` — a baked frosted
-  panel, because the renderer has no blur. On a pale ground a hairline border is what makes an
-  interface feel busy before anything is on it.
+**The gap was not layout.** A contact sheet of all fifty-seven showed it plainly: nearly every
+icon in the app sat in the same pale blue-grey square. That is what makes a list of rows read
+as a list of rows rather than as a set of things you recognise.
 
-**What is not done.** The register is applied to `H1` and `H2`; the other fifty-five member
-mobile screens inherit the calmer button and the softer cards but have not been re-composed
-around function tiles. The hub → section conversion (`addx()` in `build_member.py`) is still
-unused — measured against the exported `.fig`, the member's mobile screens already fit one
-viewport, so it would add taps without removing scroll. Both remain open.
+| Change | Where | Effect |
+|---|---|---|
+| **The icon's meaning owns its colour** | `TONE_OF` + `soft_icon_box()` | A pill is always mint, a record always blue, money always sand, sharing always lilac — on every screen. Six soft tints, none of them a state colour, so green/amber/red still only mean good/warning/bad |
+| **Strokeless cards** | `card()`, `group_card()` override `medra_ui` | On a pale ground a hairline border is what makes an interface feel busy before anything is on it |
+| **A calmer primary** | `btn-calm.jpg`, `cta()` override | Deep ocean into navy instead of the bright teal gradient that was the most saturated object on every screen |
+| **Function tiles** | `func_tile()`, `func_grid()` | Icon in a soft tinted square over a short label — the CliniQ pattern. On `H1`, `H2`, `P0` and all four empty states |
+| **One chart, one colour** | `chart()` | The blood-pressure history painted bars amber and navy by value, which turns a trend into a verdict on a phone with nobody there to explain it. Now one quiet tone with the latest reading in the accent — emphasis, not a scale |
+| **Red only where it belongs** | `R6 Who has access` | Three red *Revoke* buttons made a member exercising a right look like a destructive act. Red is now on "revoke everything" and nowhere else |
+| **A quieter selected chip** | `S1`, `S2` | The filled navy pill was the heaviest object on a screen whose job is to narrow a list |
+
+**The empty states earn their keep now.** `M5`, `R9`, `V3` and `N2` each end in a three-tile
+grid of what you can do from here — the screen a member reaches by having nothing is the screen
+most worth teaching on.
+
+**Still not converted, and deliberately:** the hub → section machinery (`addx()` in
+`build_member.py`) is unused. Measured against the exported `.fig`, the member's mobile screens
+already fit one viewport, so splitting them adds taps without removing scroll. The doctor and
+organisation modules use it because their screens genuinely overflow; the member's do not.
 
 ### D. Not started
 

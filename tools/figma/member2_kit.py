@@ -638,3 +638,134 @@ def cta(label, name, icon="arrow-right", img="btn-calm.jpg"):
     return (f'<Frame name="Btn {name}" w="fill" flex="row" gap={{9}} justify="center" items="center" '
             f'px={{24}} py={{17}} rounded={{999}} image="assets/img/{img}" overflow="hidden">'
             f'{T(16,"semibold","var:text/on-dark",label)}{I(icon,18,W_IC) if icon else ""}</Frame>')
+
+
+# =====================================================================================
+# THE CALM REGISTER, PART TWO — colour that means something
+#
+# The contact sheet of all fifty-seven mobile screens showed the gap between what was built and
+# the CliniQ screens Godwin pointed at, and it was not layout: nearly every icon in the app sat
+# in the same pale blue-grey square. That is what makes a list of rows read as a list of rows
+# rather than as a set of things you recognise.
+#
+# So the icon's **meaning** owns its colour. A pill is always mint, a record is always blue,
+# money is always sand, anything about sharing or access is always lilac — across every screen,
+# so you learn the app by shape and colour rather than by reading every label. Six soft tints,
+# none of them saturated, and none of them the state colours: green, amber and red still mean
+# good, warning and bad, and a tile never borrows one to look pretty.
+TONE_OF = {
+    # care and medicines — mint
+    "pill": 2, "syringe": 2, "stethoscope": 2, "heart-pulse": 2, "activity": 2,
+    "thermometer": 2, "droplet": 2, "bandage": 2, "hospital": 2, "flask-conical": 2,
+    "microscope": 2, "scan": 2,
+    # records and documents — blue
+    "clipboard-list": 1, "clipboard-check": 1, "file-text": 1, "files": 1, "notebook-pen": 1,
+    "clipboard-plus": 1, "file-check": 1, "history": 1, "book-open": 1, "printer": 1,
+    "download": 1, "upload": 1, "camera": 1, "image": 1,
+    # time, booking and place — teal
+    "calendar-check": 0, "calendar-days": 0, "calendar-plus": 0, "calendar-clock": 0,
+    "clock": 0, "map-pin": 0, "search": 0, "video": 0, "timer": 0, "calendar-x": 0,
+    # money — sand
+    "banknote": 3, "credit-card": 3, "receipt": 3, "wallet": 3, "coins": 3, "hand-coins": 3,
+    # sharing, access and identity — lilac
+    "share-2": 4, "shield-check": 4, "lock": 4, "key-round": 4, "eye": 4, "eye-off": 4,
+    "link": 4, "user-round-check": 4, "id-card": 4, "badge-check": 4, "fingerprint": 4,
+    "smartphone": 4, "bell-ring": 4, "bell": 4, "languages": 4, "settings": 4,
+    "circle-user": 4, "users-round": 4, "user-plus": 4,
+}
+
+
+def soft_tone(ic, default=1):
+    """Which of the six soft tints an icon wears. Deterministic, so the same idea is the same
+    colour on every screen it appears on — that consistency is the whole value."""
+    return TONE_OF.get(ic, default)
+
+
+def soft_icon_box(ic, size=36, radius=12, tone=None):
+    t = soft_tone(ic) if tone is None else tone
+    return (f'<Frame w={{{size}}} h={{{size}}} rounded={{{radius}}} image="assets/img/{SOFT[t % 6]}" '
+            f'overflow="hidden" flex="col" justify="center" items="center">'
+            f'{I(ic, int(size * 0.47), SOFT_IC[t % 6])}</Frame>')
+
+
+def list_row(ic, label, value=None, name=None, sub=None, chevron=True, danger=False,
+             right=None, tint=None):
+    """The workhorse row. Same signature it always had — `tint` and `danger` still win, because
+    a warning must not be quietly repainted as decoration."""
+    col = "var:state/error" if danger else "var:text/strong"
+    tail = right if right is not None else (
+        f'<Frame flex="row" gap={{9}} items="center">'
+        f'{T(13,"regular","var:text/muted",value) if value else ""}'
+        f'{I("chevron-right",17,M_IC) if chevron else ""}</Frame>')
+    s = T(11, "regular", "var:text/muted", sub, w="fill") if sub else ""
+    if danger:
+        box = (f'<Frame w={{36}} h={{36}} rounded={{12}} bg="var:state/error-bg" flex="col" '
+               f'justify="center" items="center">{I(ic,17,ERR_IC)}</Frame>')
+    elif tint:
+        box = (f'<Frame w={{36}} h={{36}} rounded={{12}} bg="{tint}" flex="col" '
+               f'justify="center" items="center">{I(ic,17,A_IC)}</Frame>')
+    else:
+        box = soft_icon_box(ic, 36, 12)
+    return (f'<Frame name="Btn {name or label}" w="fill" flex="row" gap={{13}} items="center" py={{13}}>'
+            f'{box}<Frame grow={{1}} flex="col" gap={{1}}>{T(14,"medium",col,label)}{s}</Frame>{tail}</Frame>')
+
+
+def tile(ic, label, sub, name, tint=None):
+    """The two-up destination tile, in the calm register: no stroke, a soft card, and an icon
+    tinted by what it means rather than the one blue everything used to wear."""
+    return (f'<Frame name="Btn {name}" grow={{1}} flex="col" gap={{10}} p={{15}} rounded={{20}} '
+            f'image="assets/img/glass-card.jpg" overflow="hidden">'
+            f'{soft_icon_box(ic, 38, 13)}'
+            f'<Frame w="fill" flex="col" gap={{2}}>{T(13,"semibold","var:text/strong",label,w="fill")}'
+            f'{T(11,"regular","var:text/muted",sub,w="fill")}</Frame></Frame>')
+
+
+def card(children, p=22, gap=16, r=28, bg=None):
+    """The member module's card, overriding `medra_ui.card`.
+
+    Strokeless, on the baked frosted panel. On a pale ground a hairline border is the thing that
+    makes an interface feel busy before anything is on it — and with fifty-seven screens of
+    them, that is most of what "not calm" meant. A caller that passes an explicit `bg` still
+    gets it, because the coloured notice cards are saying something."""
+    if bg:
+        return (f'<Frame w="fill" flex="col" gap={{{gap}}} p={{{p}}} rounded={{{r}}} bg="{bg}">'
+                f'{children}</Frame>')
+    return (f'<Frame w="fill" flex="col" gap={{{gap}}} p={{{p}}} rounded={{{r}}} '
+            f'image="assets/img/glass-card.jpg" overflow="hidden">{children}</Frame>')
+
+
+def group_card(title, rows, footer=None, p=18):
+    body = hr().join(rows) if isinstance(rows, list) else rows
+    ft = (f'{hr()}<Frame name="Group footer" w="fill" flex="row" gap={{9}} items="start" pt={{4}}>'
+          f'{I("info",14,M_IC)}'
+          f'{T(11,"regular","var:text/muted",footer,w="fill")}</Frame>') if footer else ''
+    head = f'{eyebrow(title)}' if title else ''
+    return (f'<Frame w="fill" flex="col" gap={{6}} p={{{p}}} rounded={{24}} '
+            f'image="assets/img/glass-card.jpg" overflow="hidden">{head}{body}{ft}</Frame>')
+
+
+# A member's own blood-pressure history is the one chart in this module, and the first version
+# painted it three colours — amber for a middling reading, navy for a high one — which turns a
+# trend into a verdict on a phone screen with nobody there to explain it. It is now one soft
+# ramp, light to dark, so the shape says "coming down" and the colour says nothing at all.
+# The reading itself, and the doctor's sentence beside it, do the interpreting.
+BP_RAMP = ["#E3EEF4", "#BBD6E4", "#8FBBD1", "#5E9BBA"]
+
+
+def chart(series, h=150, unit=""):
+    """series: (label, value_text, bar_px, tone). `tone` is kept in the signature so no call
+    site had to move, and is deliberately ignored — the bar's height is the data."""
+    cols = ""
+    for i, (label, val, px, tone) in enumerate(series):
+        last = i == len(series) - 1
+        # Emphasis, not a scale: every bar the same quiet tone and the latest one in the accent.
+        # Shading by value would have said "lower is paler", which on a blood-pressure chart
+        # reads as a judgement — and the one on the right is the only one she came to see.
+        col = "#2F6E8C" if last else "#BBD6E4"
+        cols += (f'<Frame grow={{1}} h={{{h}}} flex="col" gap={{7}} justify="end" items="center">'
+                 f'{T(11,"semibold","var:text/strong" if last else "var:text/muted",val)}'
+                 f'<Frame w="fill" h={{{px}}} rounded={{8}} bg="{col}" />'
+                 f'{T(10,"regular","var:text/muted",label)}</Frame>')
+    u = T(11, "regular", "var:text/faint", unit) if unit else ""
+    return (f'<Frame w="fill" flex="col" gap={{8}}>'
+            f'<Frame w="fill" flex="row" gap={{8}} items="end">{cols}</Frame>{u}</Frame>')
