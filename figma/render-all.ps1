@@ -59,7 +59,15 @@ if (-not $KeepOld) {
 # whatever is in the file at the time they run, so the module that others point *at* goes first.
 foreach ($m in $order) {
   $dir = Join-Path $PSScriptRoot "medra-$m"
-  if (-not (Test-Path $dir)) { Write-Host "  skipped $m (no folder)" -ForegroundColor Yellow; continue }
+  # Work from a folder of zips as happily as from a checkout: if the bundle has not been
+  # expanded yet but its .zip is sitting here, expand it. This is the shape the bundles arrive
+  # in when they are handed over one at a time.
+  $zip = Join-Path $PSScriptRoot "medra-$m.zip"
+  if (-not (Test-Path $dir) -and (Test-Path $zip)) {
+    Write-Host "  expanding medra-$m.zip …" -ForegroundColor DarkGray
+    Expand-Archive -Path $zip -DestinationPath $dir -Force
+  }
+  if (-not (Test-Path $dir)) { Write-Host "  skipped $m (no folder and no zip)" -ForegroundColor Yellow; continue }
   Write-Host ""
   Write-Host "── $m ──────────────────────────────────────────" -ForegroundColor Cyan
   Push-Location $dir

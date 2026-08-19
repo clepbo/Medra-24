@@ -17,6 +17,10 @@ render script and the linker read it.
 
 ---
 
+> **Rendering runs on the machine with Figma Desktop open** — see `RENDER-LOCAL.md` for the
+> version to hand to yourself or to a local Claude session. `figcli` is a localhost bridge to
+> the running app, so no container can reach it.
+
 ## Rendering
 
 Figma Desktop open on the target file, `figma-cli` connected, then from this folder:
@@ -26,7 +30,8 @@ cd figma
 .\render-all.ps1
 ```
 
-That is the whole thing. It selects (or creates) the page, **deletes the frames it is about to
+That is the whole thing. It also works from a folder holding just the four `.zip` bundles and
+this script — it expands any bundle it does not find already unpacked. It selects (or creates) the page, **deletes the frames it is about to
 replace**, renders all four modules in dependency order, and runs the four linkers.
 
 **Why one script rather than four.** The per-module scripts each work, but none of them deletes,
