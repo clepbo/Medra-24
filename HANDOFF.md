@@ -610,6 +610,37 @@ most worth teaching on.
 already fit one viewport, so splitting them adds taps without removing scroll. The doctor and
 organisation modules use it because their screens genuinely overflow; the member's do not.
 
+### E2. The other index — by function, not by module — **(19 Aug)**
+
+The file has been organised by module since the first render, because that is how it was built.
+That is a producer's order: it answers *"where does this screen live"* and not the question
+anybody arrives with, which is *"show me how somebody books a visit"*.
+
+`tools/figma/functions.py` holds the map — **12 personas, 70 functions, 234 screens, every one
+placed, 27 appearing in two functions** because they genuinely do two jobs. It is the single
+source of truth for two generated artefacts, so they cannot drift:
+
+- **`docs/Functions.md`** — the readable inventory. Every function, the screens that carry it,
+  in the order a person meets them, with the copies marked.
+- **`figma/arrange-by-function.js`** — lays the Figma page out that way: a banner per persona, a
+  banner per function, screens beneath. Originals are moved; a screen doing two jobs is cloned
+  into the second one **with its reactions stripped**, because two frames answering the same
+  click is how a prototype quietly becomes untrustworthy.
+
+`figma/ARRANGE.md` is the instruction for whoever runs it, including the numbers a correct run
+produces and the report to write afterwards.
+
+**Order matters:** render → check the linker reports → arrange. Running a linker afterwards
+re-lays that module's band out and undoes the arrangement. The script is idempotent, so the fix
+is to run it again.
+
+**A dry run of the matching against the built bundles is clean** — 839 frames placed, 87 of them
+clones, 0 missing, 0 strays. It found one real bug on the way: two screens have mobile frames
+whose names do not derive from the desktop name (`H2 First Visit (empty state)` → `H2 First
+Visit · Mobile`, and `R3 Lab Results & Diagnostics` → `R3 Lab Result · Mobile`), so the script
+matches on an exact frame list rather than a name prefix. Worth tidying in the builders one day;
+not worth a re-render on its own.
+
 ### D. Not started
 
 Platform admin portal · insurance eligibility checks · in-app video · shift handover · duty
