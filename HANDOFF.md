@@ -634,6 +634,25 @@ the page declared **one** flow starting point and it was the desktop frame. Fixe
 
 **70/70 reachable, 0 broken hotspots.**
 
+### D0b. One command to render the lot — **(17 Aug)**
+
+`figma/render-all.ps1`. Selects the page, **deletes the frames it is about to replace**, renders
+all four modules in dependency order, runs the four linkers.
+
+The four per-module scripts each work, but none of them deletes and re-rendering **appends**.
+That is the one way an 870-frame render goes wrong: it stops half way, somebody re-runs it, and
+now there are two of everything with no way to tell which is which. `-Only org` re-does a single
+module after a failure, deleting only that module's frames.
+
+**The delete is scoped by frame name, not by page** — `Member · `, `Doctor · `, `Org · `,
+`Auth · ` and `cmp/`. Nothing else on the page is touched.
+
+**Rendering cannot be driven from a Claude session.** `figma-cli` is a local CLI that talks to
+Figma Desktop over a plugin bridge; there is no Figma Desktop in a container, and the Figma MCP
+server writes through the *Plugin API* rather than through this project's JSX dialect — porting
+870 frames and every image asset through it would mean rewriting a renderer that already works.
+Rendering is a thing somebody runs on the machine that has the file open.
+
 ### D0. Render it — **the blocker, now cleared (11 Aug)**
 
 Nothing built since the shell conversion has ever been through figma-ds-cli, and it could not

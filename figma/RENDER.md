@@ -17,28 +17,43 @@ render script and the linker read it.
 
 ---
 
-## Before you render anything
-
-**Your canvas is stale.** Every desktop screen changed when the three old shells were replaced
-with one, so what is in Figma now is the old design. Re-rendering **appends** rather than
-replaces, so rendering on top of it gives you two of everything.
-
-Delete the old frames first. On the page holding them:
-
-```powershell
-figma-cli eval "(async()=>{const p=figma.currentPage;const n=p.children.length;for(const f of [...p.children]) f.remove();return 'removed '+n;})()"
-```
-
-That empties the current page. Check you are on the right one first — it does not ask.
-
-**`fix-layout.js` is no longer needed for anything you re-render.** It repairs frames drawn
-before `normalise.py` existed; everything rendered from these bundles is already correct. Keep it
-only for frames you are not re-rendering.
-
 ## Rendering
 
-Figma Desktop open, the file open, `figma-cli` connected. From inside each bundle folder, in this
-order — the modules cross-link, and the linker resolves what is in the file at the time it runs:
+Figma Desktop open on the target file, `figma-cli` connected, then from this folder:
+
+```powershell
+cd figma
+.\render-all.ps1
+```
+
+That is the whole thing. It selects (or creates) the page, **deletes the frames it is about to
+replace**, renders all four modules in dependency order, and runs the four linkers.
+
+**Why one script rather than four.** The per-module scripts each work, but none of them deletes,
+and re-rendering **appends**. That is the one way an 870-frame render goes wrong: it stops half
+way, somebody re-runs it, and now there are two of everything with no way to tell which is
+which. `render-all.ps1` deletes first and says how many frames it removed.
+
+**The delete is scoped by frame name, not by page.** Every Medra frame is named for its module —
+`Member · …`, `Doctor · …`, `Org · …`, `Auth · …`, plus the component frames under `cmp/`.
+Nothing else on the page is touched, so a page you are also using for something else survives.
+
+### If it stops part way
+
+Re-run the module it stopped on. That deletes only that module's frames and redraws them:
+
+```powershell
+.\render-all.ps1 -Only org
+```
+
+Other flags: `-Page "Some other page"` to render somewhere else, `-KeepOld` to skip the delete
+(you will get duplicates — it exists for the case where you are deliberately rendering a second
+copy alongside the first).
+
+### Running the four by hand
+
+Still supported, and still in the same order — the modules cross-link, and each linker resolves
+what is in the file at the time it runs:
 
 ```powershell
 cd medra-auth   ; .\render-auth.ps1
@@ -48,11 +63,8 @@ cd ..\medra-org    ; .\render-org.ps1
 ```
 
 Each script primes the icon cache, imports the tokens, selects the one page, renders its frames
-in flow order, and then runs its linker. The linker wires the prototype, lays that module's band
-out, and sets its flow starting points.
-
-**839 frames is a lot to render in one sitting.** If a script stops part-way, re-run it — but
-delete that module's frames first, or you will get duplicates of everything it already drew.
+in flow order, and then runs its linker. **None of them deletes**, so clear the old frames first
+if you go this way.
 
 ## Afterwards
 
