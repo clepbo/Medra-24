@@ -695,10 +695,15 @@ Everything else is already in place:
 > Branch `claude/new-project-prd-stories-ss2qlr`, folder `/docs` → Save.**
 
 That publishes **`https://clepbo.github.io/Medra-24/`**, which redirects to the map
-(`docs/index.html` is a one-line redirect for exactly this reason). Until it is flipped, the repo
-is public so the page can be read through
-`https://htmlpreview.github.io/?https://raw.githubusercontent.com/clepbo/Medra-24/claude/new-project-prd-stories-ss2qlr/docs/site/index.html`
-— fine for a quick look, not a link to put in front of a client.
+(`docs/index.html` is a one-line redirect for exactly this reason).
+
+Until it is flipped the repo is public, so the file is readable at
+`https://raw.githubusercontent.com/clepbo/Medra-24/HEAD/docs/site/index.html` — that URL is
+confirmed live, but it serves as plain text rather than as a page. Wrapping it in
+`https://htmlpreview.github.io/?<that URL>` should render it; it could not be tested from the
+container that wrote this, so treat it as a stopgap for a quick look rather than the link you
+send a client. Downloading the file and opening it locally always works — it has no dependencies
+beyond a webfont.
 
 ### D. Not started
 
