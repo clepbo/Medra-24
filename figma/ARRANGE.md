@@ -13,6 +13,14 @@ somebody meets them.
 The full inventory is `docs/Functions.md`. Both it and the script are generated from
 `tools/figma/functions.py`, so they cannot drift apart.
 
+> **This has been run — 20 August 2026.** File `QCHjeHd3quYt5HXWUpCBFp`, page `64:49`. Read back
+> from the live file: **12 persona banners, 70 function banners, 839 screen frames** (767 unique
+> plus 72 marked `(copy)`), with the 87 `cmp/…` component frames on the design-system page
+> `15:2`. The banners were drawn `◆ Persona: …` and `◇ Function: …`.
+>
+> The instructions below stand for the next run. It is idempotent, so re-running after any
+> re-render is the normal thing to do, not a repair.
+
 ---
 
 ## Run it

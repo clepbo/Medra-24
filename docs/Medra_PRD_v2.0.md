@@ -371,9 +371,11 @@ force the member back to carrying paper. So a doctor (or an organisation admin) 
 - **They can upload the result** against the same structured template a Medra lab would use.
 - **The link expires the moment they mark it done** — single-use, not a standing door. It also
   expires on a timer if nothing happens.
-- **The address is short and human** — of the form `medra.ng/<Medra ID>` — so it can be read over
-  a phone or written on a referral slip. A link nobody can type is a link nobody uses, and the
-  whole point is that it must be easier than the paper route it replaces.
+- **The address is short and typable** — of the form `medra.ng/s/<random token>` — so it can be
+  read over a phone or written on a referral slip. A link nobody can type is a link nobody uses,
+  and the whole point is that it must be easier than the paper route it replaces. **The token is
+  random and never the member's Medra ID**; an earlier draft used the ID, which made every link
+  guessable by counting. See §15.1.
 
 This is also the acquisition path for the labs themselves: an organisation that keeps receiving
 these links can onboard properly and stop using them.

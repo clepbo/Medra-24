@@ -7,6 +7,11 @@ prompts, it does not conjure one.
 
 So the render is yours to run. This is everything it needs.
 
+> **Done once already — 19–20 August 2026**, into file `QCHjeHd3quYt5HXWUpCBFp`, followed by
+> `arrange-by-function.js`. All 839 frames are on page `64:49`. Everything below is for the next
+> time; note that a re-render undoes the function arrangement, so run `arrange-by-function.js`
+> again afterwards.
+
 ---
 
 ## The short version

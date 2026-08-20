@@ -6,11 +6,13 @@ what is left. Kept current — it is updated in the same commit as the work it d
 
 | | |
 |---|---|
-| **Document version** | **v1.5** |
-| **Last updated** | 11 August 2026 (one desktop shell · one doctor account, two workplaces · critical-value alerting) |
+| **Document version** | **v1.6** |
+| **Last updated** | 20 August 2026 (**rendered into Figma** · arranged by function · flow map published) |
 | **Repo** | `clepbo/Medra-24` |
-| **Working branch** | `claude/new-project-prd-stories-ss2qlr` |
+| **Working branch** | `claude/new-project-prd-stories-ss2qlr` (also the repo's default branch) |
 | **Current PRD** | `docs/Medra_PRD_v2.0.md` (v1.0 kept, marked superseded) |
+| **Figma file** | `QCHjeHd3quYt5HXWUpCBFp` — 839 screen frames on page `64:49`, 87 components on page `15:2` |
+| **Flow map** | `docs/site/index.html` — 70 functions, each a link into Figma playback |
 | **Owner** | Godwin Okwor (Product) · Israel Oni (UI/UX) |
 
 ---
@@ -50,22 +52,23 @@ while capturing enough record to be clinically useful.
 | **Department** | The unit an organisation onboards and buys **seats** in: laboratory, pharmacy, nursing, front desk, a clinical specialty. Permissions follow the department, not the person. |
 | **Order** | A unit of work a doctor raises for a department — a test, an injection, a dispense. |
 | **Not medically verified** | The state of any health fact a member entered themselves. Travels with the value into every view, including another hospital's. |
-| **External access grant** | A scoped, single-use, consent-gated link (`medra.ng/<Medra ID>`) letting a party not on Medra read what they need and return a result. |
+| **External access grant** | A scoped, single-use, consent-gated link (`medra.ng/s/<random token>` — **never** the member's Medra ID, which would be enumerable) letting a party not on Medra read what they need and return a result. |
 | **Episode of care** | The scope of access. Never per person, never permanent. |
 
 ---
 
 ## 3. Where the design is now
 
-Five rendered bundles, **839 frames**, all validated clean and fully offline.
+Five built bundles, **839 frames**, all validated clean and fully offline — **and all of them now
+in Figma**, arranged by function.
 
 | Bundle | Frames | Pages | Status |
 |---|---:|---:|---|
-| `figma/medra-ds` — design system + journeys | 27 | 1 | Done |
-| `figma/medra-auth` — authentication, 4 roles + staff joining an organisation | 90 | 5 | Done · **v2.0 retrofit applied** · **prototype complete** |
-| `figma/medra-member` — the whole member app | 158 | 8 | Done · **prototype complete** |
-| `figma/medra-doctor` — full doctor module | 275 | 8 | Done · **prototype complete** |
-| `figma/medra-org` — organisation: eight personas, each with its own navigation | 316 | 9 | Done · **prototype complete** · **not yet rendered into Figma** |
+| `figma/medra-ds` — design system + journeys | 27 | 1 | Done · **rendered** |
+| `figma/medra-auth` — authentication, 4 roles + staff joining an organisation | 90 | 5 | Done · **v2.0 retrofit applied** · **prototype complete** · **rendered** |
+| `figma/medra-member` — the whole member app | 158 | 8 | Done · **prototype complete** · **rendered** |
+| `figma/medra-doctor` — full doctor module | 275 | 8 | Done · **prototype complete** · **rendered** |
+| `figma/medra-org` — organisation: eight personas, each with its own navigation | 316 | 9 | Done · **prototype complete** · **rendered** |
 
 `medra-member` was two bundles until the merge (`medra-member` for find & book,
 `medra-member-2` for everything the bottom nav led to). The split existed because batch 1 was
@@ -77,6 +80,32 @@ before re-rendering**: the page names changed and re-rendering appends rather th
 
 Each bundle is a folder of `.jsx` frames plus `render-*.ps1`, `link-*.js`, `validate.js`,
 `DESIGN.md`, `pages.json`, `assets/`, and a `.zip` beside it in `figma/`.
+
+### The Figma file — what is actually on the canvas
+
+Rendered from a local machine on **19–20 August 2026** and then arranged by function. Verified
+against the live file, not assumed:
+
+| | |
+|---|---|
+| **File key** | `QCHjeHd3quYt5HXWUpCBFp` |
+| **Screens page** | `64:49` — every screen frame, laid out by persona and function |
+| **Design system page** | `15:2` — the 87 `cmp/…` component frames |
+| **Screen frames** | **839** — 767 unique, 72 marked `(copy)` |
+| **Persona banners** | **12** — drawn `◆ Persona: …` |
+| **Function banners** | **70** — drawn `◇ Function: …` |
+
+A frame links as
+`https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=<id>` — that
+is what every card on the flow map opens.
+
+Two things are outstanding on the canvas and neither blocks a review: **7 stray `unsplash:`
+rectangles** (placeholder rects that survived the render — safe to delete by name), and the two
+non-conforming mobile frame names recorded under E2 below.
+
+**Whoever renders next: it appends.** Use `figma/render-all.ps1`, which deletes the frames it is
+about to replace, scoped by module name prefix. And re-render before you re-arrange, never after
+— a linker re-lays its module's band out from scratch and undoes the function arrangement.
 
 ### Three products, three structures
 
@@ -266,7 +295,9 @@ Decisions that are expensive to reverse, with the reasoning, so nobody re-litiga
 | 1 Aug 2026 | Godwin, Abraham, Israel | Payment before booking; MDCN login; Medra ID search; doctor picks what the member sees; drug search not free text; doctor sets the meeting link; transcription is Phase 2 |
 | **9 Aug 2026** | **Godwin, Israel** | **The clinical chain; the organisation module; departments as the unit; RC + licence; unverified health data; single-use external links; structured results; NIN and mandatory DOB; NHIS and private insurance; data-privacy undertaking; "members" not "patients"** — recorded in PRD v2.0 §23 |
 | **14 Aug 2026** | **Godwin, Abraham Peter, Israel** | **Doctor module only.** Consultation length set by the practice not the patient · block dates on a month calendar · a structured examination template · lab results renamed to include instrumental diagnostics · earnings against the previous period · the clinic-progress donut belongs to the admin, not the doctor · **and a reversal: Godwin wants the member to see the consultation note, private notes included, except in psychiatry and psychology** — recorded in `docs/Review_14Aug2026.md` |
-| Next (planned) | Godwin, Abraham, Israel | **The organisation dashboards** — asked for directly |
+| **17 Aug 2026** | **Israel (direction from Godwin)** | **The organisation rebuilt as eight personas with eight navigations** — admin, front desk, org doctor, nurse, laboratory, pharmacy, imaging, billing · the admin's reports on patient and staff activity · staff onboarding · the content cut · the member mobile calm register |
+| **19–20 Aug 2026** | **Israel** | **Rendered into Figma** — all five bundles, 839 frames · **arranged by function** — 12 persona banners, 70 function banners · the flow map published for the client |
+| Next (planned) | Godwin, Abraham, Israel | **Walkthrough of the rendered prototype**, function by function, from the flow map. Bring answers to §9.8 (private notes) and the examination template in `docs/Clinical_Templates.md` — both need a clinician, not a designer |
 
 ---
 
@@ -610,7 +641,7 @@ most worth teaching on.
 already fit one viewport, so splitting them adds taps without removing scroll. The doctor and
 organisation modules use it because their screens genuinely overflow; the member's do not.
 
-### E2. The other index — by function, not by module — **(19 Aug)**
+### E2. The other index — by function, not by module — **DONE (19–20 Aug)**
 
 The file has been organised by module since the first render, because that is how it was built.
 That is a producer's order: it answers *"where does this screen live"* and not the question
@@ -634,12 +665,40 @@ produces and the report to write afterwards.
 re-lays that module's band out and undoes the arrangement. The script is idempotent, so the fix
 is to run it again.
 
-**A dry run of the matching against the built bundles is clean** — 839 frames placed, 87 of them
+**A dry run of the matching against the built bundles was clean** — 839 frames placed, 87 of them
 clones, 0 missing, 0 strays. It found one real bug on the way: two screens have mobile frames
 whose names do not derive from the desktop name (`H2 First Visit (empty state)` → `H2 First
 Visit · Mobile`, and `R3 Lab Results & Diagnostics` → `R3 Lab Result · Mobile`), so the script
 matches on an exact frame list rather than a name prefix. Worth tidying in the builders one day;
 not worth a re-render on its own.
+
+**The real run then landed on the canvas.** Page `64:49` carries **12 persona banners, 70
+function banners and 839 screen frames** — the dry run's numbers, confirmed by reading the live
+file. The banners are drawn `◆ Persona: …` and `◇ Function: …`; if you are searching for them
+by name, that is the glyph to search for.
+
+### E3. The flow map — the thing you send a client — **DONE (20 Aug)**
+
+`docs/site/index.html`. One self-contained page: 12 personas, 70 functions, and on every card a
+link straight into Figma presentation mode at that function's first screen. No build step and no
+dependency beyond a webfont, so it serves from the repo or opens from a downloaded file.
+
+It exists because neither of the other two indexes is something you can send. `docs/Functions.md`
+is a markdown file in a repo, and the banners on the canvas need the canvas open in front of you.
+A client wants a list of what the product does, with each item one click from watching it work.
+
+**Hosting it is one switch, and it has to be flipped by a human.** GitHub Pages cannot be turned
+on from a Claude session — the API path is blocked at the proxy, and there is no MCP tool for it.
+Everything else is already in place:
+
+> **Settings → Pages → Build and deployment → Source: Deploy from a branch →
+> Branch `claude/new-project-prd-stories-ss2qlr`, folder `/docs` → Save.**
+
+That publishes **`https://clepbo.github.io/Medra-24/`**, which redirects to the map
+(`docs/index.html` is a one-line redirect for exactly this reason). Until it is flipped, the repo
+is public so the page can be read through
+`https://htmlpreview.github.io/?https://raw.githubusercontent.com/clepbo/Medra-24/claude/new-project-prd-stories-ss2qlr/docs/site/index.html`
+— fine for a quick look, not a link to put in front of a client.
 
 ### D. Not started
 
@@ -665,7 +724,7 @@ the page declared **one** flow starting point and it was the desktop frame. Fixe
 
 **70/70 reachable, 0 broken hotspots.**
 
-### D0b. One command to render the lot — **(17 Aug)**
+### D0b. One command to render the lot — **DONE (17 Aug) · used for the real render (19–20 Aug)**
 
 `figma/render-all.ps1`. Selects the page, **deletes the frames it is about to replace**, renders
 all four modules in dependency order, runs the four linkers.
@@ -678,40 +737,38 @@ module after a failure, deleting only that module's frames.
 **The delete is scoped by frame name, not by page** — `Member · `, `Doctor · `, `Org · `,
 `Auth · ` and `cmp/`. Nothing else on the page is touched.
 
-**Rendering cannot be driven from a Claude session.** `figma-cli` is a local CLI that talks to
-Figma Desktop over a plugin bridge; there is no Figma Desktop in a container, and the Figma MCP
-server writes through the *Plugin API* rather than through this project's JSX dialect — porting
-870 frames and every image asset through it would mean rewriting a renderer that already works.
-Rendering is a thing somebody runs on the machine that has the file open.
+**Rendering cannot be driven from a Claude session** — see D0 for why, and
+`figma/RENDER-LOCAL.md` for the instruction to hand to whoever runs it.
 
-### D0. Render it — **the blocker, now cleared (11 Aug)**
+### D0. Render it — **DONE (19–20 Aug)**
 
-Nothing built since the shell conversion has ever been through figma-ds-cli, and it could not
-be: the render scripts created eight pages per module and the plan on this file allows three.
+For most of this project's life the canvas was stale and the render was the blocker. It is not
+any more: all five bundles are on the canvas, and the counts in §3 come from reading the live
+file rather than from what the bundles say they should produce.
 
-Every module now renders onto **one page**, `ONE_PAGE` in `tools/figma/shell.py`, with a per
-module y-offset (`BAND_Y0`) so four linkers running independently do not lay their frames on
-top of each other. `figma/RENDER.md` has the order and the delete-first warning.
+What made it possible was collapsing the render onto **one page** — `ONE_PAGE` in
+`tools/figma/shell.py`, with a per-module y-offset (`BAND_Y0`) so four linkers running
+independently do not lay their frames on top of each other. The Figma plan on this file caps it
+at three pages, and the old scripts wanted eight per module.
 
-**The canvas in Figma is stale.** Every desktop screen changed when the three shells became one.
-Re-rendering appends, so the old frames have to go first or there will be two of everything.
+**Rendering happens on a machine with Figma Desktop open, never from a Claude session.**
+`figma-cli` is a bridge to the running app over localhost; a container has no app to talk to, and
+`--dangerously-skip-permissions` removes permission prompts, it does not conjure one. The Figma
+MCP server writes through the *Plugin API* rather than through this project's JSX dialect, so
+using it would mean porting a working 839-frame renderer and every image asset through a
+50KB-per-call interface. `figma/RENDER-LOCAL.md` is the whole instruction, short enough to paste.
 
-### D2. Repair the canvas that is already in Figma — **script ready, not yet run**
+### D2. Repair the canvas — **superseded, no longer needed**
 
-`figma/FIXUP.md` and a per-bundle `fix-layout.js`. Run it once per module; it is idempotent.
-See §4 rules 11 and 12 for what it fixes and why.
+`figma/FIXUP.md` and the per-bundle `fix-layout.js` existed to repair frames rendered by the old
+multi-page scripts. The canvas was rebuilt from scratch by `render-all.ps1`, which deletes before
+it draws, so there is nothing left to repair. Kept in the repo only in case an old export turns
+up; do not run them against the current file.
 
-**It is scoped by frame name, not by page.** The Figma plan on this project caps the file at
-three pages, so modules share pages rather than sitting on the ones `render-*.ps1` names. Any
-script in this repo that filters by page name will find nothing here — scope by frame name
-instead, and report `framesRepaired` against `framesExpected` so an empty result cannot be
-mistaken for a clean one.
+### E. Render the organisation module — **DONE (19–20 Aug)**
 
-### E. Render the organisation module into Figma
-
-`figma/medra-org` is built, validated, audited and prototype-complete — 262 frames, 243 screens,
-all reachable — but it has never been rendered. It lays out in the `120,000` band on the one
-shared page; see `figma/RENDER.md` for the order and the delete-first warning.
+Folded into D0. `figma/medra-org` — 316 frames, every screen reachable — is on the canvas with
+the other four.
 
 ---
 
@@ -779,3 +836,7 @@ exported `.fig` when you need a real height.
 
 Read `docs/Medra_PRD_v2.0.md` first, then this file, then the `SETUP.md` of whichever bundle you
 are touching. If a designer sends an exported `.fig`, `tools/figma/figkiwi.py` will read it.
+
+**To see the product rather than the source**, open `docs/site/index.html` — 70 functions, each
+one a link into the rendered prototype in Figma file `QCHjeHd3quYt5HXWUpCBFp`. That is the
+fastest way to understand what has been designed, and it is the same page the client gets.
