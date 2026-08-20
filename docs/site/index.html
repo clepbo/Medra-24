@@ -1,0 +1,1000 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Medra — Flow Map</title>
+<meta name="description" content="Every function in the Medra prototype, one click from playback in Figma.">
+<meta property="og:title" content="Medra — Flow Map">
+<meta property="og:description" content="12 personas, 70 functions, 261 screen references. Each card opens Figma presentation mode at that function's first screen.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩺</text></svg>">
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #16232E;
+    --ink-soft: #57697A;
+    --ink-faint: #8A99A3;
+    --paper: #F3F6F7;
+    --surface: #FFFFFF;
+    --line: #DCE4E7;
+    --accent: #0E7C86;
+    --accent-deep: #0A5960;
+    --accent-soft: #E1F1F1;
+    --shadow: 0 1px 2px rgba(22,35,46,0.04), 0 6px 16px rgba(22,35,46,0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #E8EEF0;
+      --ink-soft: #9FB0B8;
+      --ink-faint: #6C7C86;
+      --paper: #0D1417;
+      --surface: #141D22;
+      --line: #24333B;
+      --accent: #35C4CC;
+      --accent-deep: #7CE0E6;
+      --accent-soft: #16323480;
+      --shadow: 0 1px 2px rgba(0,0,0,0.2), 0 8px 20px rgba(0,0,0,0.25);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #E8EEF0;
+    --ink-soft: #9FB0B8;
+    --ink-faint: #6C7C86;
+    --paper: #0D1417;
+    --surface: #141D22;
+    --line: #24333B;
+    --accent: #35C4CC;
+    --accent-deep: #7CE0E6;
+    --accent-soft: #16323480;
+    --shadow: 0 1px 2px rgba(0,0,0,0.2), 0 8px 20px rgba(0,0,0,0.25);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 64px 32px 120px; }
+
+  header.page {
+    margin-bottom: 56px;
+  }
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-optical-sizing: auto;
+    font-weight: 500;
+    font-size: clamp(34px, 5vw, 48px);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+  .lede {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 640px;
+    margin: 0 0 28px;
+  }
+  .stats {
+    display: flex;
+    gap: 28px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-faint);
+  }
+  .stats b { color: var(--ink); font-weight: 500; }
+
+  nav.toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 32px 0 0;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+  }
+  .toc-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--ink-soft);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 7px 13px 7px 9px;
+    border-radius: 100px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .toc-link:hover { border-color: var(--accent); color: var(--ink); }
+  .toc-count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+    border-radius: 100px;
+    padding: 2px 6px;
+    min-width: 18px;
+    text-align: center;
+  }
+
+  .persona { margin-top: 68px; scroll-margin-top: 24px; }
+  .persona-head { margin-bottom: 22px; max-width: 640px; }
+  .persona h2 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-optical-sizing: auto;
+    font-weight: 500;
+    font-size: 26px;
+    margin: 0 0 6px;
+    letter-spacing: -0.005em;
+  }
+  .persona-desc {
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  .fn-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 700px) {
+    .fn-grid { grid-template-columns: 1fr; }
+  }
+
+  .fn-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    text-decoration: none;
+    color: var(--ink);
+    box-shadow: var(--shadow);
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .fn-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .fn-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .fn-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .fn-card h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.35;
+  }
+  .fn-count {
+    flex-shrink: 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent-deep);
+    background: var(--accent-soft);
+    border-radius: 6px;
+    padding: 2px 7px;
+    display: flex;
+    align-items: baseline;
+    gap: 3px;
+  }
+  .fn-count-label { color: var(--ink-faint); font-size: 9.5px; }
+
+  .fn-desc {
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    margin: 0;
+    flex-grow: 1;
+  }
+
+  .fn-play {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent);
+    margin-top: 2px;
+  }
+  .fn-play svg { flex-shrink: 0; }
+
+  footer.page {
+    margin-top: 96px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+    color: var(--ink-faint);
+  }
+</style>
+
+<div class="wrap">
+  <header class="page">
+    <p class="eyebrow">Medra · prototype index</p>
+    <h1>Every function, one click from playback</h1>
+    <p class="lede">Each card is a real Figma flow starting point — open it and Figma launches presentation mode from that function's first screen, prototype fully wired.</p>
+    <div class="stats"><span><b>12</b> personas</span><span><b>70</b> functions</span><span><b>261</b> screen references</span></div>
+    <nav class="toc">
+      <a href="#member" class="toc-link"><span class="toc-count">12</span>Member</a>
+<a href="#doctor-own-practice" class="toc-link"><span class="toc-count">11</span>Doctor — own practice</a>
+<a href="#organisation-admin" class="toc-link"><span class="toc-count">8</span>Organisation admin</a>
+<a href="#front-desk" class="toc-link"><span class="toc-count">5</span>Front desk</a>
+<a href="#doctor-inside-an-organisation" class="toc-link"><span class="toc-count">5</span>Doctor — inside an organisation</a>
+<a href="#nurse" class="toc-link"><span class="toc-count">6</span>Nurse</a>
+<a href="#laboratory" class="toc-link"><span class="toc-count">5</span>Laboratory</a>
+<a href="#pharmacy" class="toc-link"><span class="toc-count">5</span>Pharmacy</a>
+<a href="#imaging" class="toc-link"><span class="toc-count">5</span>Imaging</a>
+<a href="#billing" class="toc-link"><span class="toc-count">4</span>Billing</a>
+<a href="#referrals" class="toc-link"><span class="toc-count">3</span>Referrals</a>
+<a href="#outside-party" class="toc-link"><span class="toc-count">1</span>Outside party</a>
+    </nav>
+  </header>
+
+  
+<section class="persona" id="member">
+  <div class="persona-head">
+    <h2>Member</h2>
+    <p class="persona-desc">A person using Medra for their own care, and their family's</p>
+  </div>
+  <div class="fn-grid">
+    
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=326-54726&starting-point-node-id=326-54726&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Join Medra</h3>
+        <span class="fn-count">14<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">From never having heard of it to a working account. Verify once; the device is trusted after that.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=325-22851&starting-point-node-id=325-22851&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Find a doctor</h3>
+        <span class="fn-count">6<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Search, narrow, and read a profile well enough to choose. The first-run home screen is here because an empty home is where finding starts.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=336-135405&starting-point-node-id=336-135405&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Book a visit</h3>
+        <span class="fn-count">6<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Pick a time, see the price before agreeing to it, pay, and get a confirmation you can show at a desk.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=326-47796&starting-point-node-id=326-47796&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Attend a visit</h3>
+        <span class="fn-count">11<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">What happens between booking and being seen — including the video path and the two ways a visit does not happen.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=326-48381&starting-point-node-id=326-48381&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>See what happened</h3>
+        <span class="fn-count">5<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Everything a visit produces, from the member's side: the note, the results, the trend.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=326-41586&starting-point-node-id=326-41586&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Keep my records</h3>
+        <span class="fn-count">5<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">The record is the member's, travels with them, and can be added to by hand — most Nigerian history is on paper.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=326-44857&starting-point-node-id=326-44857&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Share my records, and take it back</h3>
+        <span class="fn-count">4<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Consent, in both directions. Every screen here is one a member has to be able to act on under pressure.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=325-23297&starting-point-node-id=325-23297&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Take my medicines</h3>
+        <span class="fn-count">5<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">What to take, when, and how to get more without a trip to the clinic for a piece of paper.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=325-36013&starting-point-node-id=325-36013&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Care for my family</h3>
+        <span class="fn-count">3<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">A child's records until they are eighteen, and an adult's only with their say-so.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=325-32856&starting-point-node-id=325-32856&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Manage my account</h3>
+        <span class="fn-count">8<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Identity, devices, what Medra is allowed to send, and the two screens that end the relationship.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=325-20277&starting-point-node-id=325-20277&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Be told things</h3>
+        <span class="fn-count">4<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Notifications, and the preference screen that decides which of them ever arrive.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=326-51898&starting-point-node-id=326-51898&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>When something breaks</h3>
+        <span class="fn-count">3<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">The three states every screen can fall into. Kept together because they are reviewed together.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+  </div>
+</section>
+
+<section class="persona" id="doctor-own-practice">
+  <div class="persona-head">
+    <h2>Doctor — own practice</h2>
+    <p class="persona-desc">A clinician working for themselves, not inside an organisation</p>
+  </div>
+  <div class="fn-grid">
+    
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=326-53022&starting-point-node-id=326-53022&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Join and get verified</h3>
+        <span class="fn-count">12<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">MDCN is checked by a person, which is the slowest thing Medra does and the reason anybody trusts it.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=271-32444&starting-point-node-id=271-32444&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Run my day</h3>
+        <span class="fn-count">7<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">The queue, the person in front of you, and the four things that go wrong in a clinic day.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=271-36020&starting-point-node-id=271-36020&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>See a patient</h3>
+        <span class="fn-count">7<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Read the file, hold the consultation, and sign it. Nothing reaches the member until it is signed.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=271-45731&starting-point-node-id=271-45731&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Prescribe</h3>
+        <span class="fn-count">2<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Including the interaction check, which is the one place the software is allowed to stop a doctor.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=271-46793&starting-point-node-id=271-46793&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Order a test and get it back</h3>
+        <span class="fn-count">7<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">The longest chain in the product: order, route it, watch it, read it, release it.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=271-48714&starting-point-node-id=271-48714&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Send a member somewhere else</h3>
+        <span class="fn-count">4<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">A referral inside Medra, and the single-use link for the laboratory that is not on it.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=271-57420&starting-point-node-id=271-57420&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Look after my patients between visits</h3>
+        <span class="fn-count">6<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">The work that happens when nobody is in the room.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=271-38261&starting-point-node-id=271-38261&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Manage my schedule</h3>
+        <span class="fn-count">3<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Availability is a promise: if a slot shows on Medra it is genuinely open.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=271-65180&starting-point-node-id=271-65180&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Run my practice</h3>
+        <span class="fn-count">9<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Fees, channels, where I practise, what I am paid, and what I pay.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=271-72223&starting-point-node-id=271-72223&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Grow my practice</h3>
+        <span class="fn-count">4<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">The three screens that decide whether a doctor stays on the platform.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=271-79481&starting-point-node-id=271-79481&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>When something breaks</h3>
+        <span class="fn-count">4<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc"></p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+  </div>
+</section>
+
+<section class="persona" id="organisation-admin">
+  <div class="persona-head">
+    <h2>Organisation admin</h2>
+    <p class="persona-desc">The person who owns the whole building — and the only one who can create a seat</p>
+  </div>
+  <div class="fn-grid">
+    
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=326-55368&starting-point-node-id=326-55368&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Register the organisation</h3>
+        <span class="fn-count">11<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">RC number, practice licence, size, plan. Checked by a person before it can take a public booking.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=288-45368&starting-point-node-id=288-45368&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Set the organisation up</h3>
+        <span class="fn-count">6<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Branches, seats and the public profile — everything that has to be true before anybody works.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=289-51621&starting-point-node-id=289-51621&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Onboard a department or a member of staff</h3>
+        <span class="fn-count">8<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">The admin's defining job. A department is the unit; permissions follow it, never the person.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=318-2&starting-point-node-id=318-2&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Run the day across the organisation</h3>
+        <span class="fn-count">4<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Every department, every branch, and the four bookings nobody has been allocated to.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=289-78163&starting-point-node-id=289-78163&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Read the numbers</h3>
+        <span class="fn-count">4<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">The four questions an administrator actually arrives with, one screen each.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=289-76329&starting-point-node-id=289-76329&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Govern who sees what</h3>
+        <span class="fn-count">5<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Access is per episode of care. This is the group that makes a shared record safe to hand around a hospital.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=289-82220&starting-point-node-id=289-82220&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Settings and money</h3>
+        <span class="fn-count">3<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc"></p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=289-90410&starting-point-node-id=289-90410&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>When something breaks</h3>
+        <span class="fn-count">3<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc"></p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+  </div>
+</section>
+
+<section class="persona" id="front-desk">
+  <div class="persona-head">
+    <h2>Front desk</h2>
+    <p class="persona-desc">Registration, check-in and payment — the busiest seat in the building</p>
+  </div>
+  <div class="fn-grid">
+    
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=326-59454&starting-point-node-id=326-59454&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Join the organisation as staff</h3>
+        <span class="fn-count">10<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Shared by every organisation persona: the invitation an admin sent, through to a working seat.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=318-2470&starting-point-node-id=318-2470&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Run the front desk day</h3>
+        <span class="fn-count">3<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Who is here, who is late, who has not paid.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=318-3062&starting-point-node-id=318-3062&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Register somebody who just walked in</h3>
+        <span class="fn-count">2<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Most Nigerian clinic visits start this way, not with a booking.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=319-3569&starting-point-node-id=319-3569&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Check in and take payment</h3>
+        <span class="fn-count">1<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc"></p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=296-135&starting-point-node-id=296-135&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Talk to the rest of the building</h3>
+        <span class="fn-count">2<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc"></p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+  </div>
+</section>
+
+<section class="persona" id="doctor-inside-an-organisation">
+  <div class="persona-head">
+    <h2>Doctor — inside an organisation</h2>
+    <p class="persona-desc">The same clinician, in a workplace they do not own</p>
+  </div>
+  <div class="fn-grid">
+    
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=338-3092&starting-point-node-id=338-3092&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Add a workplace to my account</h3>
+        <span class="fn-count">3<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">One account, two workplaces. The MDCN number is the doctor's, so nothing is re-verified.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=319-15594&starting-point-node-id=319-15594&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>My day here</h3>
+        <span class="fn-count">2<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">A list the doctor did not build — reception booked it and the admin allocated it.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=298-7859&starting-point-node-id=298-7859&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Results waiting on me</h3>
+        <span class="fn-count">2<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc"></p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=319-16208&starting-point-node-id=319-16208&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>The roster I am on</h3>
+        <span class="fn-count">1<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">The hospital's roster, not the doctor's availability. They ask; a named person answers.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=319-16879&starting-point-node-id=319-16879&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Talk to the team</h3>
+        <span class="fn-count">2<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">A message goes to a department, and whoever is on shift picks it up.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+  </div>
+</section>
+
+<section class="persona" id="nurse">
+  <div class="persona-head">
+    <h2>Nurse</h2>
+    <p class="persona-desc">Vitals, injections, observations — and the escalation that must never wait</p>
+  </div>
+  <div class="fn-grid">
+    
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=318-489&starting-point-node-id=318-489&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Work my queue</h3>
+        <span class="fn-count">1<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Ordered by when the doctor needs them, not by when they arrived.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=319-7976&starting-point-node-id=319-7976&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Record vitals</h3>
+        <span class="fn-count">1<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc"></p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=319-10003&starting-point-node-id=319-10003&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Administer and record</h3>
+        <span class="fn-count">1<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Five rights, shortened to the four a queue actually gets wrong.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=319-10754&starting-point-node-id=319-10754&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Escalate something out of range</h3>
+        <span class="fn-count">1<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Two minutes to the first doctor, then the duty doctor automatically. Never a message that waits.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=298-8468&starting-point-node-id=298-8468&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Standing orders</h3>
+        <span class="fn-count">1<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">A doctor's instruction that repeats, and the four things nursing may do without asking.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=298-4514&starting-point-node-id=298-4514&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Talk to the team</h3>
+        <span class="fn-count">2<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc"></p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+  </div>
+</section>
+
+<section class="persona" id="laboratory">
+  <div class="persona-head">
+    <h2>Laboratory</h2>
+    <p class="persona-desc">Samples in, structured results out — and the value that has to be phoned</p>
+  </div>
+  <div class="fn-grid">
+    
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=319-11356&starting-point-node-id=319-11356&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Work the order queue</h3>
+        <span class="fn-count">2<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc"></p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=319-12729&starting-point-node-id=319-12729&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Enter a result</h3>
+        <span class="fn-count">1<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">A form rather than a paragraph, because prose cannot be trended or compared.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=319-13329&starting-point-node-id=319-13329&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Reject a bad sample</h3>
+        <span class="fn-count">1<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">In a paper laboratory this happens silently. Here it always tells somebody.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=338-4578&starting-point-node-id=338-4578&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Handle a critical value</h3>
+        <span class="fn-count">3<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">The one result that cannot be sent. It reaches a named human by voice, with a read-back.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=298-5034&starting-point-node-id=298-5034&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Talk to the team</h3>
+        <span class="fn-count">2<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc"></p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+  </div>
+</section>
+
+<section class="persona" id="pharmacy">
+  <div class="persona-head">
+    <h2>Pharmacy</h2>
+    <p class="persona-desc">Dispensing against a prescription, and what happens when you cannot</p>
+  </div>
+  <div class="fn-grid">
+    
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=319-13897&starting-point-node-id=319-13897&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Work the prescription queue</h3>
+        <span class="fn-count">1<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Somebody standing at the counter comes first, whatever order they arrived in.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=318-1344&starting-point-node-id=318-1344&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Dispense</h3>
+        <span class="fn-count">1<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc"></p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=318-1895&starting-point-node-id=318-1895&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>When you cannot dispense</h3>
+        <span class="fn-count">1<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">A substitution is a proposal, never a decision — it goes back to the prescriber.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=297-1905&starting-point-node-id=297-1905&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Watch the shelf</h3>
+        <span class="fn-count">1<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">A count you keep, not a warehouse system: so you can tell a member before they queue.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=298-5558&starting-point-node-id=298-5558&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Talk to the team</h3>
+        <span class="fn-count">2<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc"></p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+  </div>
+</section>
+
+<section class="persona" id="imaging">
+  <div class="persona-head">
+    <h2>Imaging</h2>
+    <p class="persona-desc">The department where the patient has to be present, prepared and safe</p>
+  </div>
+  <div class="fn-grid">
+    
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=319-4940&starting-point-node-id=319-4940&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Work the worklist</h3>
+        <span class="fn-count">1<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Ordered by appointment, because an image needs the person, the room and the machine at once.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=319-5912&starting-point-node-id=319-5912&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Check it is safe to scan</h3>
+        <span class="fn-count">1<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">The only screen in Medra that refuses to move.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=319-6542&starting-point-node-id=319-6542&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Report a study</h3>
+        <span class="fn-count">1<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">A radiologist's sentence, not a picture. Signed by name, amendable only by a second version.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=297-3650&starting-point-node-id=297-3650&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Rooms and machines</h3>
+        <span class="fn-count">1<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc"></p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=298-6064&starting-point-node-id=298-6064&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Talk to the team</h3>
+        <span class="fn-count">2<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc"></p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+  </div>
+</section>
+
+<section class="persona" id="billing">
+  <div class="persona-head">
+    <h2>Billing</h2>
+    <p class="persona-desc">Running the money, which is a different job from taking it at the desk</p>
+  </div>
+  <div class="fn-grid">
+    
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=319-7254&starting-point-node-id=319-7254&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>The money today</h3>
+        <span class="fn-count">1<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Cash is the only line Medra cannot verify itself, so it is the one counted against a drawer.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=319-8644&starting-point-node-id=319-8644&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Take a payment</h3>
+        <span class="fn-count">1<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Part payment is a first-class case. Entries are append-only.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=319-9223&starting-point-node-id=319-9223&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Chase an insurance claim</h3>
+        <span class="fn-count">1<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Where the revenue actually leaks: submitted, queried, never resubmitted.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=298-6575&starting-point-node-id=298-6575&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Talk to the team</h3>
+        <span class="fn-count">2<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc"></p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+  </div>
+</section>
+
+<section class="persona" id="referrals">
+  <div class="persona-head">
+    <h2>Referrals</h2>
+    <p class="persona-desc">Sending a member elsewhere and receiving one — it spans several personas, so it is its own group</p>
+  </div>
+  <div class="fn-grid">
+    
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=289-71409&starting-point-node-id=289-71409&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Refer a member out</h3>
+        <span class="fn-count">4<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc"></p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=289-73435&starting-point-node-id=289-73435&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Receive a referral</h3>
+        <span class="fn-count">2<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Accepting books it and tells them both. Declining tells them too — silence is not available.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=338-9329&starting-point-node-id=338-9329&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Send work to somebody not on Medra</h3>
+        <span class="fn-count">6<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">A scoped, single-use, consent-gated link. The address is a random token, never a Medra ID.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+  </div>
+</section>
+
+<section class="persona" id="outside-party">
+  <div class="persona-head">
+    <h2>Outside party</h2>
+    <p class="persona-desc">Somebody with no Medra account, doing one job from a link that dies after it</p>
+  </div>
+  <div class="fn-grid">
+    
+    <a class="fn-card" href="https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=289-75348&starting-point-node-id=289-75348&scaling=min-zoom" target="_blank" rel="noopener">
+      <div class="fn-top">
+        <h3>Do one job from a single-use link</h3>
+        <span class="fn-count">5<span class="fn-count-label">scr</span></span>
+      </div>
+      <p class="fn-desc">Four screens, no account, no training, no way back in. Finishable on a phone in a waiting room.</p>
+      <span class="fn-play">Play from here <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M2 1L9 5.5L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    </a>
+  </div>
+</section>
+
+  <footer class="page">Generated from the Medra Member — Find &amp; Book page's function arrangement. Screen counts include desktop, mobile, and mobile-section frames.</footer>
+</div>
+
+</body></html>
