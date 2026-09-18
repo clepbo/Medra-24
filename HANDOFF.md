@@ -6,8 +6,8 @@ what is left. Kept current — it is updated in the same commit as the work it d
 
 | | |
 |---|---|
-| **Document version** | **v1.6** |
-| **Last updated** | 20 August 2026 (**rendered into Figma** · arranged by function · flow map published) |
+| **Document version** | **v1.7** |
+| **Last updated** | 18 September 2026 (**platform admin persona built** · doctor booking/fee/calendar corrections · landing + waitlist · see `docs/Review_18Sep2026.md`) |
 | **Repo** | `clepbo/Medra-24` |
 | **Working branch** | `claude/new-project-prd-stories-ss2qlr` (also the repo's default branch) |
 | **Current PRD** | `docs/Medra_PRD_v2.0.md` (v1.0 kept, marked superseded) |
@@ -33,9 +33,11 @@ Medra is four layers:
 4. **A portable record** — owned by the member, carried between institutions, with every clinical
    fact marked as verified or self-reported.
 
-**Business model:** organisations and independent practitioners pay a subscription priced by
-practitioners, branches and seats. Members are never charged. *(Open: whether Medra also collects
-consultation fees — see §9.)*
+**Business model:** organisations pay a subscription priced by practitioners, branches and
+seats. **Independent practitioners pay no subscription: Medra keeps 1.5 % of each consultation
+fee at the moment the member pays**, and pays the rest out on the doctor's schedule; the bank
+transfer charge on each payout is the doctor's. Members are never charged by Medra. *(Decided
+18 Sep 2026 — closes §9.7.)*
 
 **The one-line thesis:** *can a member see whether a doctor is free and book before leaving home*,
 while capturing enough record to be clinically useful.
@@ -98,6 +100,15 @@ against the live file, not assumed:
 A frame links as
 `https://www.figma.com/proto/QCHjeHd3quYt5HXWUpCBFp/Medra-24?page-id=64-49&node-id=<id>` — that
 is what every card on the flow map opens.
+
+**Since 20 August the canvas has also gained (built directly in Figma, no JSX source):** the
+**Platform admin** persona — 80 `Platform · …` frames at `x = 24000`, arranged in rows by
+sidebar tab (Sign in, Control Center, Directory, Verification, Audit Log, Analytics, Plans,
+Content, Escalations, Compliance, Team, More, States), fully wired (963 interactions, 0 dead
+ends); two **Marketing** frames (W1 waitlist, P1 landing) below that block; and in-place edits to
+the doctor and auth modules (K2, K6 + two drawers, S6, X1, M4, D5). Every edited or new screen has
+a yellow **CHANGE NOTE** sticky beside it. Index and decisions: `docs/Review_18Sep2026.md`.
+**Re-rendering `medra-doctor` or `medra-auth` will undo those edits** — read §4 of that file first.
 
 Two things are outstanding on the canvas and neither blocks a review: **7 stray `unsplash:`
 rectangles** (placeholder rects that survived the render — safe to delete by name), and the two
@@ -297,6 +308,8 @@ Decisions that are expensive to reverse, with the reasoning, so nobody re-litiga
 | **14 Aug 2026** | **Godwin, Abraham Peter, Israel** | **Doctor module only.** Consultation length set by the practice not the patient · block dates on a month calendar · a structured examination template · lab results renamed to include instrumental diagnostics · earnings against the previous period · the clinic-progress donut belongs to the admin, not the doctor · **and a reversal: Godwin wants the member to see the consultation note, private notes included, except in psychiatry and psychology** — recorded in `docs/Review_14Aug2026.md` |
 | **17 Aug 2026** | **Israel (direction from Godwin)** | **The organisation rebuilt as eight personas with eight navigations** — admin, front desk, org doctor, nurse, laboratory, pharmacy, imaging, billing · the admin's reports on patient and staff activity · staff onboarding · the content cut · the member mobile calm register |
 | **19–20 Aug 2026** | **Israel** | **Rendered into Figma** — all five bundles, 839 frames · **arranged by function** — 12 persona banners, 70 function banners · the flow map published for the client |
+| **Sep 2026** | **Israel (direction from Godwin)** | **Platform admin persona** designed straight into Figma — control center, directory (orgs / practitioners / members), audit log, analytics, plans, content, escalations, compliance, team, auth with mandatory MFA, mobile counterparts, states |
+| **18 Sep 2026** | **Godwin → Israel** | **Nineteen corrections** — doctors no longer accept bookings (paid at booking; reschedule / cancel & refund only) · private practice on **1.5 % per consultation**, no subscription · Google-Calendar schedule with day and appointment drawers · addresses at onboarding · verification queue for orgs, doctors, nurses, pharmacists with manual register checks · privacy-incident detail · status tracking instead of an escalation ladder · payment history + admin retry · per-subscriber pricing · legal-document publishing · every table paginated · waitlist + landing page — recorded in `docs/Review_18Sep2026.md` |
 | Next (planned) | Godwin, Abraham, Israel | **Walkthrough of the rendered prototype**, function by function, from the flow map. Bring answers to §9.8 (private notes) and the examination template in `docs/Clinical_Templates.md` — both need a clinician, not a designer |
 
 ---
@@ -707,9 +720,23 @@ beyond a webfont.
 
 ### D. Not started
 
-Platform admin portal · insurance eligibility checks · in-app video · shift handover · duty
-roster as an admin tool · what happens to work in flight when a staff member is removed ·
-deceased/inactive record state.
+Insurance eligibility checks · in-app video · shift handover · duty roster as an admin tool ·
+what happens to work in flight when a staff member is removed · deceased/inactive record state ·
+porting the 18 Sep Figma-only edits back into the doctor/auth JSX bundles.
+
+### F. Platform admin portal — **DONE (Sep 2026, in Figma only)**
+
+Built with the figma-cli daemon directly on the canvas rather than as a JSX bundle. Desktop
+1440×900 floor with a 216 px sidebar, mobile 390×844 with hub → section → sheet. Sections:
+Control Center (H1), Directory (R1–R6), Verification (Q1–Q2), Audit Log (L1–L3), Analytics
+(N1–N3), Plans (G1–G3), Content (V1–V4), Escalations (E1–E3), Compliance (F2–F3), Team (T1–T3),
+More, States, and Auth (PA1–PA4 with enforced MFA). Conventions: lowercase magnitude suffixes
+(₦48.2m), no clinical data on admin screens, status colours only for status, every table
+paginated, change notes on every screen touched after the first pass.
+
+### G. 18 September corrections — **DONE (18 Sep)**
+
+See `docs/Review_18Sep2026.md` for the full list, decisions D1–D9 and the re-render warning.
 
 ### A3. The auth prototype — **DONE (11 Aug)**
 
@@ -793,10 +820,11 @@ These block design or build. Numbers 1–7 are from PRD v2.0 §23.2; 8 and 9 are
 6. **Does the front desk take payment inside Medra, or record one taken elsewhere?** Assumed
    **record only** — the current design captures method and reference; Medra never touches the
    money at the counter.
-7. **Subscription vs payment-before-booking.** §4 says practitioners pay a subscription and
-   members pay providers directly; the 1 Aug review added payment before booking, which means
-   Medra collects and pays out. Both are designed. **"Both" means two charges on one relationship
-   and doctors will ask why.**
+7. ~~**Subscription vs payment-before-booking.**~~ **Closed 18 Sep 2026:** independent
+   practitioners pay **no subscription**. Medra collects the consultation fee at booking, keeps
+   **1.5 %**, and pays the rest out on the doctor's schedule; the payout's bank charge is the
+   doctor's. Organisations remain on plans. Doctors never accept or decline a booking — they
+   reschedule or cancel with a full refund.
 8. **Do private notes stay private?** The design says never patient-visible; the 14 Aug review
    asked for the opposite — the member sees everything except in psychiatry and psychology. This
    is clinical governance, not a design preference, and it needs a doctor. **Do not apply it from
