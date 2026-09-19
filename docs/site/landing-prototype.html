@@ -34,7 +34,9 @@
   /* stacked sheets */
   .panel{position:sticky;top:0;min-height:100svh;display:flex;flex-direction:column;justify-content:center;padding-block:clamp(56px,8vh,96px)}
   .panel.sheet{background:var(--sheet);color:var(--sheet-ink);border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;box-shadow:0 -24px 60px rgba(15,34,51,.22)}
-  .panel.grad{color:var(--on-grad)}
+  .panel.grad{color:var(--on-grad);background:linear-gradient(160deg,var(--grad-a) 0%,var(--grad-b) 55%,var(--grad-c) 100%)}
+  .panel.grad:not(.hero){border-radius:var(--radius-sheet) var(--radius-sheet) 0 0;box-shadow:0 -24px 60px rgba(15,34,51,.28)}
+  .hero{background:transparent}
   .panel.grad .eyebrow{color:var(--mint)}
   .panel.sheet .eyebrow{color:var(--teal)}
   .panel:last-child{min-height:auto}
@@ -71,11 +73,11 @@
   .stat small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
 
   /* illustration placeholders */
-  .illo{position:relative;border-radius:24px;border:1.5px dashed rgba(255,255,255,.55);background:rgba(255,255,255,.08);aspect-ratio:4/3;max-width:100%;display:grid;place-items:center;overflow:hidden}
-  .sheet .illo{border-color:var(--line);background:var(--cream-2)}
-  .illo svg{width:58%;height:auto;opacity:.9}
-  .illo .cap{position:absolute;left:14px;bottom:12px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;opacity:.75}
-  .sheet .illo .cap{color:var(--muted)}
+  .illo{position:relative;margin:0;border-radius:28px;aspect-ratio:16/10;max-width:100%;overflow:hidden;background:var(--cream-2);box-shadow:0 24px 60px rgba(15,34,51,.28);transform:translateZ(0)}
+  .illo img{display:block;width:100%;height:100%;object-fit:cover;transition:transform 1.2s cubic-bezier(.2,.8,.2,1)}
+  .illo:hover img{transform:scale(1.04)}
+  .hero .illo{aspect-ratio:16/11;box-shadow:0 30px 80px rgba(15,34,51,.4)}
+  .hero .illo::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
 
   /* how it works */
   .how{display:grid;grid-template-columns:1fr 1.1fr;gap:56px;align-items:center}
@@ -96,7 +98,7 @@
   .card .eyebrow{color:var(--teal)}
   .card h3{font-size:22px;line-height:1.15;font-weight:600}
   .card p{color:var(--sheet-body)}
-  .card .illo{aspect-ratio:16/10;margin-top:auto;border-color:var(--line);background:rgba(47,139,172,.08)}
+  .card .illo{aspect-ratio:16/10;margin-top:auto;border-radius:18px;box-shadow:0 10px 24px rgba(15,34,51,.16)}
   .card .more{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14px;color:var(--teal);text-decoration:none}
   .card .more::after{content:"→";transition:transform .2s}
   .card:hover .more::after{transform:translateX(4px)}
@@ -140,6 +142,7 @@
   .rv.in{transform:none;opacity:1}
   .rv.d1{transition-delay:.08s}.rv.d2{transition-delay:.18s}.rv.d3{transition-delay:.28s}.rv.d4{transition-delay:.38s}
   .hero .rv{transform:translateY(18px)}
+  .card.rv.in:hover{transform:translateY(-8px)}
 
   @media (max-width: 900px){
     .hero-grid,.how,.ask{grid-template-columns:1fr;gap:32px}
@@ -183,14 +186,7 @@
             <a class="btn btn-ghost" href="#how">See how it works</a>
           </div>
         </div>
-        <div class="illo rv d2" title="Illustration — hero">
-          <svg viewBox="0 0 320 240" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <rect x="110" y="20" width="100" height="200" rx="18"/><rect x="124" y="44" width="72" height="44" rx="8"/><path d="M134 108h52M134 124h40M134 140h52M134 156h30"/><circle cx="160" cy="196" r="6"/>
-            <path d="M40 200c10-40 40-60 70-60" /><circle cx="42" cy="120" r="14"/><path d="M28 150c0-12 8-20 14-20s14 8 14 20"/>
-            <path d="M280 200c-10-40-40-60-70-60"/><circle cx="278" cy="120" r="14"/><path d="M264 150c0-12 8-20 14-20s14 8 14 20"/><path d="M270 130l-6 10 6 10"/>
-          </svg>
-          <span class="cap">Illustration · hero</span>
-        </div>
+        <figure class="illo rv d2"><img src="img/hero.jpg" alt="A member at a reception desk holding up a phone showing their Medra ID and results" loading="eager" decoding="async"></figure>
       </div>
       <div class="trust rv d3" aria-label="Facilities using Medra">
         <span>Garki Medical Centre</span><span>Lagos Family Clinic</span><span>Enugu Central</span><span>Kano Diagnostics</span><span>Reliance HMO</span>
@@ -206,12 +202,7 @@
   <!-- 2 · HOW IT WORKS (cream sheet slides over the hero) -->
   <section class="panel sheet" id="how">
     <div class="wrap how">
-      <div class="illo rv" title="Illustration — how it works">
-        <svg viewBox="0 0 320 240" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="30" y="60" width="150" height="110" rx="14"/><path d="M50 90h80M50 110h110M50 130h60"/><circle cx="240" cy="70" r="20"/><path d="M212 120c0-16 12-28 28-28s28 12 28 28"/><path d="M200 130c-20 40 0 70 40 80" stroke-dasharray="4 6"/><path d="M180 100l30-10" stroke-dasharray="4 6"/>
-        </svg>
-        <span class="cap">Illustration · how it works</span>
-      </div>
+      <figure class="illo rv"><img src="img/how-it-works.jpg" alt="A doctor at a laptop; a dotted path links search, a paid calendar booking and the record" loading="lazy" decoding="async"></figure>
       <div>
         <p class="eyebrow rv">How Medra works</p>
         <h2 class="rv d1">Find a doctor, pay once, keep the record.</h2>
@@ -237,21 +228,21 @@
           <p class="eyebrow">For members</p>
           <h3>One record for you and your family</h3>
           <p>Book, pay, see results and share — from your phone.</p>
-          <div class="illo" title="Illustration — member with a phone"><svg viewBox="0 0 160 100" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="60" y="10" width="40" height="80" rx="8"/><path d="M70 30h20M70 42h14M70 54h20"/><circle cx="30" cy="40" r="10"/><path d="M14 80c0-14 8-24 16-24s16 10 16 24"/></svg><span class="cap">Illustration</span></div>
+          <figure class="illo"><img src="img/for-members.jpg" alt="A parent and child on a sofa, the phone showing two family record cards" loading="lazy" decoding="async"></figure>
           <a class="more" href="#questions">Learn more</a>
         </article>
         <article class="card tint rv d2" id="doctors">
           <p class="eyebrow">For doctors</p>
           <h3>Run your practice, not your paperwork</h3>
           <p>Templates, e-prescriptions and a diary that fills itself — 1.5% per consultation, no subscription.</p>
-          <div class="illo" title="Illustration — doctor at a desk"><svg viewBox="0 0 160 100" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="20" y="60" width="120" height="8" rx="3"/><rect x="60" y="30" width="50" height="30" rx="4"/><circle cx="36" cy="30" r="10"/><path d="M24 60c0-12 6-20 12-20s12 8 12 20"/><path d="M40 44c0 8 6 12 12 12"/></svg><span class="cap">Illustration</span></div>
+          <figure class="illo"><img src="img/for-doctors.jpg" alt="A doctor at a desk with a calendar that fills itself" loading="lazy" decoding="async"></figure>
           <a class="more" href="#questions">Learn more</a>
         </article>
         <article class="card rv d3" id="hospitals">
           <p class="eyebrow">For hospitals &amp; labs</p>
           <h3>Every department, one shared file</h3>
           <p>Front desk to pharmacy to billing, on the same episode of care.</p>
-          <div class="illo" title="Illustration — reception and lab"><svg viewBox="0 0 160 100" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="16" y="40" width="60" height="44" rx="6"/><path d="M16 58h60"/><rect x="96" y="24" width="48" height="60" rx="6"/><path d="M110 40v24M120 34v30M130 46v18"/><circle cx="46" cy="28" r="8"/></svg><span class="cap">Illustration</span></div>
+          <figure class="illo"><img src="img/for-hospitals-labs.jpg" alt="Front desk, laboratory bench and pharmacy shelf joined by one glowing record line" loading="lazy" decoding="async"></figure>
           <a class="more" href="#questions">Learn more</a>
         </article>
       </div>
@@ -288,10 +279,7 @@
         <p class="form-note rv d4">We reply within one working day. No newsletters unless you ask.</p>
         <p class="toast" id="ask-toast" hidden role="status"></p>
       </div>
-      <div class="illo rv d2" title="Illustration — questions">
-        <svg viewBox="0 0 320 240" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="60" y="60" width="200" height="120" rx="24"/><path d="M110 190l-20 30 50-30"/><path d="M110 100h100M110 124h70M110 148h90"/><circle cx="240" cy="70" r="16"/><path d="M236 64v8l6 4"/></svg>
-        <span class="cap">Illustration · questions</span>
-      </div>
+      <figure class="illo rv d2"><img src="img/questions.jpg" alt="A person beside a speech bubble showing a Day 1, 09:00–17:00 clock" loading="lazy" decoding="async"></figure>
     </div>
   </section>
 
@@ -324,8 +312,13 @@
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce || !('IntersectionObserver' in window)) { items.forEach(function(el){ el.classList.add('in'); }); }
     else {
-      var io = new IntersectionObserver(function(entries){ entries.forEach(function(e){ if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { threshold: 0.18, rootMargin: '0px 0px -8% 0px' });
+      var io = new IntersectionObserver(function(entries){ entries.forEach(function(e){ if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { threshold: 0, rootMargin: '0px 0px -40px 0px' });
       items.forEach(function(el){ io.observe(el); });
+      // belt and braces: anything whose top has entered the viewport is revealed, even if the observer is late
+      var ticking = false;
+      function sweep(){ ticking = false; var h = window.innerHeight; items.forEach(function(el){ if (!el.classList.contains('in') && el.getBoundingClientRect().top < h - 40) el.classList.add('in'); }); }
+      window.addEventListener('scroll', function(){ if (!ticking) { ticking = true; requestAnimationFrame(sweep); } }, { passive: true });
+      window.addEventListener('resize', sweep); window.addEventListener('load', sweep);
       // hero plays immediately on load
       requestAnimationFrame(function(){ document.querySelectorAll('.hero .rv').forEach(function(el){ el.classList.add('in'); }); });
     }
