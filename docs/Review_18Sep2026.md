@@ -58,7 +58,7 @@ those notes plus the decisions behind them.
 ### Marketing (new, `Marketing · …` frames)
 
 * **W1 Coming Soon** (waitlist) — desktop + mobile. Photo dissolves into a solid navy band so the Medra mark and wordmark read; email pill; socials. Awaiting a final hero image (brief: health-record subject, composition on the outer thirds so the centre copy is not covered).
-* **P1 Home** (landing) — desktop, from the video reference. The scroll animation (cream sheets sliding up over the gradient, staggered reveals, hover lifts) is delivered as an **HTML prototype**, not in Figma: `docs/site/landing-prototype.html`. Illustration placeholders are labelled; prompts are in §3.
+* **P1 Home** (landing) — desktop, from the video reference, now with the six final photos. Figma prototype: nav/footer links scroll to their section, CTAs go to W1 / M6, and the *Marketing · Landing* flow opens on three *Enter* frames that stage the hero in. **Live HTML:** https://clepbo.github.io/Medra-24/site/landing-prototype.html The scroll animation (cream sheets sliding up over the gradient, staggered reveals, hover lifts) is delivered as an **HTML prototype**, not in Figma: `docs/site/landing-prototype.html`. Illustration placeholders are labelled; prompts are in §3.
 
 ---
 
