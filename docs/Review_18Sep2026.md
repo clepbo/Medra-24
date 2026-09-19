@@ -104,4 +104,4 @@ exist only in Figma and in the builder scripts kept with the figma-cli session.
   screens (Loading / Offline / Error, desktop + mobile) are unreachable by design — they are flow
   starting points.
 * Doctor: 121 new interactions wired for the calendar drawers, booking sheets, payout screens.
-* Canvas: 0 overlapping frames; every change note sits clear of neighbouring frames.
+* Canvas (19 Sep): **every screen now shows its full content** — 253 frames whose content ran past the 900 / 844 floor (mostly org, member, doctor consult and auth mobile screens) were expanded to their content height instead of clipping. The whole canvas was then re-flowed row by row: 200 px between screen rows, 360 px before a function banner, 720 px before a persona banner; 0 overlapping frames; every change note sits clear of its neighbours. Frames are taller than the device viewport on purpose — the prototype still scrolls inside 1440×900 / 390×844.
