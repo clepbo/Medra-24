@@ -406,7 +406,7 @@
         <div><h4>Product</h4><ul><li><a href="#members">For members</a></li><li><a href="#doctors">For doctors</a></li><li><a href="#hospitals">For hospitals &amp; labs</a></li><li><a href="#how">How it works</a></li></ul></div>
         <div><h4>Company</h4><ul><li><a href="#">About</a></li><li><a href="#">Careers</a></li><li><a href="#">Press</a></li></ul></div>
         <div><h4>Legal</h4><ul><li><a href="#">Privacy</a></li><li><a href="#">Terms</a></li><li><a href="#">Provider agreement</a></li></ul></div>
-        <div><h4>Contact</h4><ul><li><a href="mailto:hello@medra.health">hello@medra.health</a></li><li><a href="tel:+234800633720">+234 800 MEDRA</a></li><li><a href="#talk">Abuja · Lagos</a></li></ul></div>
+        <div><h4>Contact</h4><ul><li><a href="mailto:info@medra24.com">info@medra24.com</a></li><li><a href="tel:+2349033851587">+234 903 385 1587</a></li><li><a href="#talk">Abuja · Lagos</a></li></ul></div>
       </div>
       <div class="foot-bottom">
         <span>© 2026 Medra Health. All rights reserved.</span>
@@ -444,6 +444,14 @@
     var secs = ['how', 'everyone', 'talk'].map(function(id){ return document.getElementById(id); }).filter(Boolean); var links = document.querySelectorAll('.menu a');
     function activeNav(){ var y = window.scrollY + window.innerHeight * 0.45; var cur = null; secs.forEach(function(s){ if (s.offsetTop <= y) cur = s.id; }); links.forEach(function(a){ a.classList.toggle('active', a.getAttribute('data-sec') === cur); }); }
     window.addEventListener('scroll', activeNav, { passive: true }); activeNav();
+
+    // A sheet taller than the viewport would pin at the top and hide its lower half under the next sheet.
+    // Pin those by their bottom edge instead, so the whole sheet scrolls into view first.
+    var panels = document.querySelectorAll('.panel');
+    function fitPanels(){ var vh = window.innerHeight; panels.forEach(function(p){ var h = p.offsetHeight; p.style.top = (h > vh ? (vh - h) : 0) + 'px'; }); }
+    fitPanels(); window.addEventListener('resize', fitPanels); window.addEventListener('load', fitPanels);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitPanels);
+    if ('ResizeObserver' in window) { var ro = new ResizeObserver(function(){ fitPanels(); }); panels.forEach(function(p){ ro.observe(p); }); }
 
     // reveals
     var items = document.querySelectorAll('.rv');
