@@ -70,6 +70,29 @@ nowhere, and the platform admin had no way to answer anyone. Both halves of the 
 themselves: Medra answers in the app and never rings you, and Medra never asks for a password,
 card PIN or one-time code.
 
+### Navigation and table fixes — 25 September
+
+Found while reviewing the new Support item, and fixed across the admin:
+
+* **Three nav items looked selected at once** on the Plans screens (G1–G3). The Verification and
+  Support items had been cloned from whichever item was resting on a *sample* frame — on the Plans
+  screens that sample was Plans itself, so the clones inherited the active style. Every platform
+  frame now derives its active item from its own section: exactly one, no exceptions.
+* **Two pairs of nav items shared an icon** — Verification reused Directory's building, Support
+  reused Escalations' siren. All eleven items now carry a distinct Lucide glyph
+  (dashboard, building-2, badge-check, scroll-text, bar-chart-3, credit-card, layers, siren,
+  life-buoy, shield-check, users), redrawn on 33 frames in both active and resting colour.
+* **`Audit Log — L3 History` highlighted Compliance.** It now highlights Audit Log, matching its own
+  section. (If L3 is meant to live under Compliance in the IA, say so and it goes back.)
+* **No platform mobile had an active tab.** 49 tab bars fixed: Home, Directory, Activity and
+  Insights highlight themselves; everything else highlights More. Member support screens highlight
+  Profile rather than the Records tab they were cloned from.
+* **Status chips were clipped** in Q1 Verification, R5 Members and G3 Subscriber Pricing
+  ("Licence iss…", "Awaiting ch…"). Chips now hug their text, and two over-wide tables
+  (Q1 and N1 Revenue) were rebalanced so every column fits inside the card.
+* The 11 new support mobiles grew to their content instead of clipping at 844 px, in line with the
+  19 September reveal pass.
+
 ### Two-factor — 25 September (corrected and completed)
 
 The old PA2 said *"We sent a 6-digit code to the authenticator app"* and *"Code not arriving?"*.
