@@ -70,6 +70,30 @@ nowhere, and the platform admin had no way to answer anyone. Both halves of the 
 themselves: Medra answers in the app and never rings you, and Medra never asks for a password,
 card PIN or one-time code.
 
+### Canvas re-arranged by function — 25 September
+
+The canvas had grown into a single ~140,000 px vertical strip that was impossible to scroll to the
+end of. It is now a **grid of persona blocks**, roughly 76,000 × 74,000, so zoom-to-fit shows the
+whole product:
+
+* **A block per persona**, in the order the product tells its story: Member → Doctor (own practice)
+  → Organisation admin → Front desk → Doctor (inside an organisation) → Nurse → Laboratory →
+  Pharmacy → Imaging → Billing → Referrals → Outside party → Platform admin → Marketing.
+* **Inside a block, one band per function**, with its `◇ Function:` banner on top, the desktop
+  screens in rows of six, and that function's mobile screens tucked underneath. A block wraps into
+  another column when it passes ~17,000 px, so no column runs away vertically.
+* Blocks are laid on shelves up to ~86,000 px wide, then wrap to the next shelf.
+* **89 function bands** in total. Five bands had never had a banner (the three *Get help* bands and
+  the two Marketing pages); those were created to match the house style.
+* Stray Unsplash placeholder rectangles that belonged to no band are parked in a strip to the right
+  of the last block rather than deleted.
+
+Two grouping bugs surfaced while doing this, and both are fixed in the map the arranger uses:
+personas that sat **side by side** on the same row (Doctor-inside-an-organisation, Laboratory,
+Imaging) had been folded into their left-hand neighbour, and a few admin screens had been attached
+to a member function. The same fault is in the 22 September PDF export — **re-export it** to get
+the corrected grouping.
+
 ### Navigation and table fixes — 25 September
 
 Found while reviewing the new Support item, and fixed across the admin:
