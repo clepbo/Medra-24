@@ -55,6 +55,33 @@ those notes plus the decisions behind them.
 | 3 · Calendar | K6 *Week* (+mobile), **K6 · Day drawer**, **K6 · Appointment drawer** (new), mobile sheets *Appointment* and *Block a day* (new) | Week grid 08:00–18:00, today tinted, red now-line, Day/Week/Month switch, *+ Add booking*, *Block a day*. Mobile is a day view with a date strip. |
 | 4 · 1.5 % fee | S6 *Subscription* → **S6 *Fees & Payouts*** (+mobile, sub-sheet *Payout account*); X1 *Subscription Locked* → **X1 *Payout Account Needed*** (+mobile sheets); S2 *Types & Fees*; S5 *Earnings*; the sidebar "Free trial" card on every doctor frame; K9 | Payout table (fees, Medra 1.5 %, bank charge, paid to you), payout account + schedule, worked example. X1 now covers "earning but no bank account on file" — nothing is hidden or paused, only payouts are held. S2/S5 deduction line is *Medra fee · 1.5 %*. Plans/subscription sheets deleted. |
 
+### Support — 25 September (new, nothing existed before)
+
+Medra had no support screen anywhere: every persona had a **Help** button in the sidebar that led
+nowhere, and the platform admin had no way to answer anyone. Both halves of the loop are now designed.
+
+| Side | Screens | What it does |
+|---|---|---|
+| Members, doctors, organisations | `<Persona> · Support — T1 Help & Support`, `T2 New Ticket`, `T3 My Ticket` (each +mobile, 18 frames) | Search, common topics for that persona, and the tickets they already raised. The form attaches the booking / payout / seat the ticket is about, so it arrives with a reference. The ticket screen is a plain conversation with Medra, plus "this is sorted — close it" and "it is still wrong". |
+| Platform admin | `Platform · Support — S1 Ticket Queue`, `S2 Ticket Detail` (+mobile) | One queue across all personas, oldest waiting first, with the reply promise, topic mix and who is carrying what. The detail screen holds the conversation, internal notes the member never sees, the reply box, and the booking or refund the ticket is about. `Escalate` hands it to E1. |
+
+**Support** is now in the platform sidebar (32 frames) and the mobile *More* menu; every persona's
+**Help** button opens its own T1. 378 interactions wired. Two rules are stated on the screens
+themselves: Medra answers in the app and never rings you, and Medra never asks for a password,
+card PIN or one-time code.
+
+### Two-factor — 25 September (corrected and completed)
+
+The old PA2 said *"We sent a 6-digit code to the authenticator app"* and *"Code not arriving?"*.
+**Medra does not send this code** — Google Authenticator generates it on the admin's phone. PA2 now
+says so, and three screens were added for the part that was missing (PA2 only ever showed the state
+*after* an app was connected):
+
+* `Auth · Platform — PA5 Set Up Authenticator` — install **Google Authenticator** (the only app
+  supported at launch), scan the QR or type the setup key, confirm with a code.
+* `Auth · Platform — PA6 Recovery Codes` — ten single-use codes, shown once, must be confirmed saved.
+* `Auth · Platform — PA7 Use a Recovery Code` — the way back in when the phone is lost.
+
 ### Marketing (new, `Marketing · …` frames)
 
 * **W1 Coming Soon** (waitlist) — desktop + mobile. Photo dissolves into a solid navy band so the Medra mark and wordmark read; email pill; socials. Awaiting a final hero image (brief: health-record subject, composition on the outer thirds so the centre copy is not covered).
